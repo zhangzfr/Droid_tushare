@@ -69,14 +69,24 @@ class DataProcessor:
                 logger.info(f"{table_name}: 检测到多参数 Range 覆盖模式，开始统一存储合并后的 {len(range_dfs)} 个数据集")
                 final_df = pd.concat(range_dfs, ignore_index=True)
                 # 统一调用存储（触发一次性删除 + 插入）
+                # 统一调用存储（触发一次性删除 + 插入）
                 request_start = date_list[0]
                 request_end = date_list[-1]
+
+                # === 针对快照表的覆盖优化 ===
+                overwrite_start = request_start
+                overwrite_end = request_end
+                if not api_config_entry.get('requires_date', True):
+                     logger.info(f"{table_name}: 检测到快照表覆盖模式 (Batch)，将执行全表删除")
+                     overwrite_start = None
+                     overwrite_end = None
+                
                 total_stored = self.storage.store_data(
                     table_name, final_df, unique_keys,
                     date_column=date_column_in_db,
                     storage_mode='replace',
-                    overwrite_start_date=request_start,
-                    overwrite_end_date=request_end,
+                    overwrite_start_date=overwrite_start,
+                    overwrite_end_date=overwrite_end,
                     ts_code=ts_code,
                     api_config_entry=api_config_entry
                 )
@@ -180,12 +190,21 @@ class DataProcessor:
         
         if df is not None and not df.empty:
             storage_mode = 'replace' if overwrite else 'insert_new'
+            
+            # === User Requested Logic: 针对快照表的覆盖优化 ===
+            overwrite_start = request_start
+            overwrite_end = request_end
+            if overwrite and not api_config_entry.get('requires_date', True):
+                 logger.info(f"{table_name}: 检测到快照表覆盖模式 (Single)，将执行全表删除")
+                 overwrite_start = None
+                 overwrite_end = None
+            
             return self.storage.store_data(
                 table_name, df, unique_keys,
                 date_column=date_column_in_db,
                 storage_mode=storage_mode,
-                overwrite_start_date=request_start,
-                overwrite_end_date=request_end,
+                overwrite_start_date=overwrite_start,
+                overwrite_end_date=overwrite_end,
                 ts_code=ts_code,
                 api_config_entry=api_config_entry
             )

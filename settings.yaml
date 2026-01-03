@@ -1395,7 +1395,7 @@ bond:
       requires_date: false
       date_column: list_date
       date_type: trade
-      date_param_mode: full_paging
+      date_param_mode: range
     cb_issue:
       fields:
       - ts_code
