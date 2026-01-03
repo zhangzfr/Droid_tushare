@@ -2,6 +2,8 @@
 
 # 1. Exclude agent directory
 .agent/
+.vscode/
+.vscode/settings.json
 
 # 2. Exclude all logs (root and subdirectories)
 logs/

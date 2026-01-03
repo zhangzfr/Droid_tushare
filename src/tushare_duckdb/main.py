@@ -8,7 +8,7 @@ from .processor import DataProcessor
 from .utils import (
     init_tables_for_category, get_connection, get_trade_dates,
     init_tables_for_category, get_connection, get_trade_dates,
-    get_all_dates, table_exists, show_table_statistics
+    get_all_dates, table_exists, show_table_statistics, get_quarterly_dates
 )
 from .logger import logger
 import pandas as pd
@@ -52,6 +52,10 @@ INIT_TABLES_MAP = {
     ]),
     'stock_list': lambda conn: init_tables_for_category(conn, ['stock_basic', 'stock_company']),
     'stock_events': lambda conn: init_tables_for_category(conn, ['namechange', 'hs_const', 'stk_managers', 'stk_rewards', 'trade_cal']),
+    'finance': lambda conn: init_tables_for_category(conn, [
+        'income', 'balance', 'cashflow', 'forecast', 'express', 
+        'dividend', 'fina_indicator', 'fina_audit', 'fina_mainbz', 'disclosure_date'
+    ]),
 }
 
 # ==================== 交互式输入工具函数 ====================
@@ -121,33 +125,43 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
         )
         start_date = max(start_date or earliest_date, earliest_date)
 
-        get_dates_func = get_all_dates if (date_type == 'natural' or not requires_date) else get_trade_dates
-        db_for_dates = BASIC_DB_PATH if (date_type == 'trade' and requires_date) else db_path
-
+        if category == 'finance':
+            get_dates_func = get_quarterly_dates
+            # 财务数据通常无需查交易日历库，直接算日期
+            db_for_dates = None 
+        else:
+            get_dates_func = get_all_dates if (date_type == 'natural' or not requires_date) else get_trade_dates
+            db_for_dates = BASIC_DB_PATH if (date_type == 'trade' and requires_date) else db_path
+        
         # 生成日期集合
         date_sets = {}
         if years:
             for year in years:
-                s, e = f"{year}0101", f"{year}1231"
-                if date_type == 'trade' and requires_date:
-                    use_conn = conn if db_for_dates == db_path else None
-                    dates = get_dates_func(db_for_dates, s, e, exchange, conn=use_conn)
+                y_start = f"{year}0101"
+                y_end = f"{year}1231"
+                if category == 'finance':
+                     # 财务数据按年生成4个季度末
+                     dates = get_dates_func(y_start, y_end)
+                elif date_type == 'trade' and requires_date:
+                     # Use 'exchange' parameter from function args, and 'conn' for db_for_dates if it's the current db
+                     dates = get_dates_func(db_for_dates, y_start, y_end, exchange, conn=(conn if db_for_dates == db_path else None))
                 else:
-                    dates = get_all_dates(s, e)
+                     dates = get_dates_func(y_start, y_end)
                 
                 if dates:
                     date_sets[year] = dates
         else:
-            if date_type == 'trade' and requires_date:
-                use_conn = conn if db_for_dates == db_path else None
-                dates = get_dates_func(db_for_dates, start_date, end_date, exchange, conn=use_conn)
+            if category == 'finance':
+                date_sets[None] = get_dates_func(start_date, end_date)
+            elif date_type == 'trade' and requires_date:
+                # Use 'exchange' parameter from function args, and 'conn' for db_for_dates if it's the current db
+                date_sets[None] = get_dates_func(db_for_dates, start_date, end_date, exchange, conn=(conn if db_for_dates == db_path else None))
             else:
-                dates = get_all_dates(start_date, end_date)
+                date_sets[None] = get_dates_func(start_date, end_date)
             
-            if not dates:
+            if not date_sets[None]: # Check the generated dates for the 'None' key
                 logger.warning(f"警告：{start_date} ~ {end_date} 无{'交易日' if date_type == 'trade' else '自然日'}，已跳过")
                 return 0
-            date_sets[None] = dates
 
         logger.info(f"日期范围: {start_date} ~ {end_date}，共 {len(dates)} 个{'交易日' if date_type == 'trade' else '自然日'}")
 
@@ -209,7 +223,7 @@ def main():
     category_map = {
         '1': 'stock', '2': 'index_daily', '3': 'fund', '4': 'option', '5': 'future',
         '6': 'bond', '7': 'margin', '8': 'moneyflow', '9': 'reference', '10': 'marco',
-        '12': 'stock_list', '13': 'stock_events'
+        '12': 'stock_list', '13': 'stock_events', '14': 'finance'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -224,7 +238,7 @@ def main():
         print(" [ 4] 期权行情         [ 5] 期货行情         [ 6] 债卷行情")
         print(" [ 7] 融资融券         [ 8] 资金流向         [ 9] 参考数据")
         print(" [10] 宏观数据         [12] 股票列表         [13] 股票事件")
-        print(" [11] 查看数据         [ 0] 退出")
+        print(" [14] 财务数据         [11] 查看数据         [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':

@@ -1401,8 +1401,8 @@ TABLE_SCHEMAS = {
                   asset_disp_income DOUBLE,         -- 资产处置收益
                   continued_net_profit DOUBLE,      -- 持续经营净利润
                   end_net_profit DOUBLE,            -- 终止经营净利润
-                  update_flag VARCHAR,              -- 更新标识 (1 表示更新)
-                  PRIMARY KEY (ts_code, end_date, ann_date, f_ann_date, update_flag)
+                  update_flag VARCHAR DEFAULT '0',  -- 更新标识 (1 表示更新)
+                  PRIMARY KEY (ts_code, end_date, ann_date, update_flag)
               )
               ''',
     'balance': '''
@@ -1565,8 +1565,8 @@ TABLE_SCHEMAS = {
         accounts_pay DOUBLE,                    -- 应付票据及应付账款
         oth_rcv_total DOUBLE,                   -- 其他应收款(合计)(元)
         fix_assets_total DOUBLE,                -- 固定资产(合计)(元)
-        update_flag VARCHAR,                    -- 更新标识
-        PRIMARY KEY (ts_code, end_date, ann_date, f_ann_date, update_flag)
+        update_flag VARCHAR DEFAULT '0',        -- 更新标识
+        PRIMARY KEY (ts_code, end_date, ann_date, update_flag)
         )
         ''',
     'cashflow': '''
@@ -1668,8 +1668,8 @@ TABLE_SCHEMAS = {
                     beg_bal_cash DOUBLE,                -- 减:现金的期初余额
                     end_bal_cash_equ DOUBLE,            -- 加:现金等价物的期末余额
                     beg_bal_cash_equ DOUBLE,            -- 减:现金等价物的期初余额
-                    update_flag VARCHAR,                -- 更新标志(1最新)
-                    PRIMARY KEY (ts_code, end_date, ann_date, f_ann_date, update_flag)
+                    update_flag VARCHAR DEFAULT '0',    -- 更新标志(1最新)
+                    PRIMARY KEY (ts_code, end_date, ann_date, update_flag)
                 )
                 ''',
     'forecast': '''

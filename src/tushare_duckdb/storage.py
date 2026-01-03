@@ -40,6 +40,42 @@ class DuckDBStorage:
                     logger.info(f"{table_name}: 字段重命名成功: {rename_dict}")
         # === 映射结束 ===
 
+        # === Finance Pre-processing Hook ===
+        # 针对财务数据的特殊清洗逻辑
+        # 判断依据：config category='finance' (但这里没直接传 category)，或者根据 table_name 判断
+        # 简单起见，如果 DataFrame 同时包含 ann_date 和 end_date，且 unique_keys 包含它们，就认为是财务表逻辑适用
+        # 或者更明确：检查 api_config_entry
+        if api_config_entry and 'ann_date' in unique_keys and 'end_date' in unique_keys:
+             if 'ann_date' in processed_df.columns:
+                 # 1. 尝试用 f_ann_date 填充
+                 if 'f_ann_date' in processed_df.columns:
+                     mask = processed_df['ann_date'].isna() | (processed_df['ann_date'] == '')
+                     processed_df.loc[mask, 'ann_date'] = processed_df.loc[mask, 'f_ann_date']
+                 
+                 # 2. 尝试用 end_date 填充
+                 if 'end_date' in processed_df.columns:
+                     mask = processed_df['ann_date'].isna() | (processed_df['ann_date'] == '')
+                     processed_df.loc[mask, 'ann_date'] = processed_df.loc[mask, 'end_date']
+                 
+                 # 3. 仍然为空则丢弃
+                 mask = processed_df['ann_date'].isna() | (processed_df['ann_date'] == '')
+                 if mask.any():
+                     drop_count = mask.sum()
+                     logger.warning(f"{table_name}: 发现 {drop_count} 条 ann_date 缺失且无法填充，已丢弃")
+                     processed_df = processed_df[~mask]
+                     
+                 if processed_df.empty:
+                     logger.warning(f"{table_name}: 清洗后为空，跳过存储")
+                     return 0
+
+             # 4. 确保 update_flag 存在
+             if 'update_flag' in unique_keys:
+                 if 'update_flag' not in processed_df.columns:
+                     processed_df['update_flag'] = '0'
+                 else:
+                     processed_df['update_flag'] = processed_df['update_flag'].fillna('0').astype(str)
+        # === End Finance Hook ===
+
         # === 核心逻辑：日期格式归一化 (YYYY-MM-DD -> YYYYMMDD) ===
         # 根据 api_config_entry['date_columns'] 列表进行批量洗数
         date_cols_to_fix = api_config_entry.get('date_columns', [])

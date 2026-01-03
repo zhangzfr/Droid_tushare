@@ -9,6 +9,8 @@ except ImportError:
 
 from contextlib import contextmanager
 from itertools import product
+import calendar
+from dateutil.relativedelta import relativedelta
 
 
 # === 连接管理 ===
@@ -61,6 +63,63 @@ def _query_trade_dates(conn, start_date, end_date, exchange):
     query = "SELECT cal_date FROM trade_cal WHERE cal_date >= ? AND cal_date <= ? AND exchange = ? AND is_open = 1 ORDER BY cal_date"
     trade_dates = conn.execute(query, (start_date, end_date, exchange)).fetchall()
     return [d[0] for d in trade_dates]
+
+
+def get_quarterly_dates(start_date, end_date):
+    """
+    生成标准财务季度末日期列表 (0331, 0630, 0930, 1231)
+    返回格式: ['20230331', '20230630', ...]
+    """
+    quarters = []
+    try:
+        current = datetime.strptime(str(start_date), '%Y%m%d')
+        end_dt = datetime.strptime(str(end_date), '%Y%m%d')
+    except ValueError as e:
+        print(f"错误：日期格式无效 ({start_date}, {end_date}): {e}")
+        return []
+
+    while current <= end_dt:
+        month = current.month
+        # 确定下一个季度末月份
+        if month <= 3:
+            q_month = 3
+        elif month <= 6:
+            q_month = 6
+        elif month <= 9:
+            q_month = 9
+        else:
+            q_month = 12
+            # 如果当前已是12月之后（实际上逻辑是 10,11,12 -> 12，但如果是 12月31日，loop update logic handles valid check）
+            # 特殊情况：如果输入是 1231， current=1231 -> q_month=12.
+            # 下面 logic 会生成 当年1231.
+            # loop step: current = q_end + 1 day = Next Jan 1.
+
+        q_year = current.year
+        # Handle year rollover if December processing logic was tricky in loop, 
+        # but here simple mapping 1..3->3, ... 10..12->12 works for "current or next quarter end".
+        # Wait, if I am at Jan 1st 2023. q_month=3. q_end=20230331. Valid.
+        # If I am at Dec 31st 2023. q_month=12. q_end=20231231. Valid.
+        # If I am at Nov 15. q_month=12. q_end=20231231.
+
+        # What if start_date is 20230401 (April 1st)?
+        # q_month -> 6. q_end -> 20230630.
+        
+        _, last_day = calendar.monthrange(q_year, q_month)
+        q_end_dt = datetime(q_year, q_month, last_day)
+
+        # Check if calculated quarter end is within range [current, end_dt]?
+        # No, within [start_dt, end_dt]. My loop 'current' advances.
+        # The logic in interactive_finance_update.py:
+        # if q_end_dt >= current and q_end_dt <= end_dt:
+        # This ensures we don't add 20230331 if start_date was 20230401.
+
+        if q_end_dt >= current and q_end_dt <= end_dt:
+             quarters.append(q_end_dt.strftime('%Y%m%d'))
+        
+        # Advance to start of next quarter relative to the calculated quarter end
+        current = q_end_dt + relativedelta(days=1)
+        
+    return quarters
 
 
 def generate_param_grid(required_params):
