@@ -2231,7 +2231,7 @@ finance:
       - f_ann_date
       - end_date
       - update_flag
-      param_name: period
+      date_param: period
     balance:
       api_table: balancesheet_vip
       table_name: balance
@@ -2403,7 +2403,7 @@ finance:
       - f_ann_date
       - end_date
       - update_flag
-      param_name: period
+      date_param: period
     cashflow:
       api_table: cashflow_vip
       table_name: cashflow
@@ -2508,7 +2508,7 @@ finance:
       - end_bal_cash_equ
       - beg_bal_cash_equ
       - update_flag
-      param_name: period
+      date_param: period
     fina_indicator:
       api_table: fina_indicator_vip
       table_name: fina_indicator
@@ -2518,7 +2518,7 @@ finance:
       - f_ann_date
       - end_date
       - update_flag
-      param_name: period
+      date_param: period
       date_column: end_date
       limit: 12000
       is_full: false
@@ -2690,7 +2690,7 @@ finance:
       - equity_yoy
       - rd_exp
       - update_flag
-      param_name: period
+      date_param: period
     fina_audit:
       api_table: fina_audit_vip
       table_name: fina_audit
@@ -2709,7 +2709,7 @@ finance:
       - ts_code
       - ann_date
       - end_date
-      param_name: period
+      date_param: period
     fina_mainbz:
       api_table: fina_mainbz_vip
       table_name: fina_mainbz
@@ -2732,7 +2732,7 @@ finance:
       - bz_item
       - bz_code
       - update_flag
-      param_name: period
+      date_param: period
     dividend:
       api_table: dividend_vip
       table_name: dividend
@@ -2763,7 +2763,7 @@ finance:
       - end_date
       - div_proc
       - update_flag
-      param_name: period
+      date_param: period
     forecast:
       api_table: forecast_vip
       table_name: forecast
@@ -2790,7 +2790,7 @@ finance:
       - end_date
       - type
       - update_flag
-      param_name: period
+      date_param: period
     express:
       api_table: express_vip
       table_name: express
@@ -2836,7 +2836,7 @@ finance:
       - ann_date
       - end_date
       - update_flag
-      param_name: period
+      date_param: period
     disclosure_date:
       api_table: disclosure_date
       table_name: disclosure_date
@@ -2850,4 +2850,4 @@ finance:
       - pre_date
       - actual_date
       - modify_date
-      param_name: end_date
+      date_param: end_date
