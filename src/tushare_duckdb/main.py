@@ -221,11 +221,11 @@ def main():
     while True:
         print("\n" + "-" * 60)
         print("主菜单：")
-        print("  [1] 股票日线行情      [2] 指数日线数据      [3] 基金日线")
-        print("  [4] 期权日线         [5] 期货日线          [6] 可转债日线")
-        print("  [7] 融资融券         [8] 资金流向          [9] 参考数据")
-        print(" [10] 宏观数据         [12] 股票列表(无日期)  [13] 股票事件/日历")
-        print(" [11] 查看数据库状态                          [0] 退出")
+        print(" [ 1] 股票行情         [ 2] 指数行情         [ 3] 基金行情")
+        print(" [ 4] 期权行情         [ 5] 期货行情         [ 6] 债卷行情")
+        print(" [ 7] 融资融券         [ 8] 资金流向         [ 9] 参考数据")
+        print(" [10] 宏观数据         [12] 股票列表         [13] 股票事件")
+        print(" [11] 查看数据         [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
@@ -258,8 +258,8 @@ def main():
             for num, cat in status_menu.items():
                 if num != 'all':
                     desc = {
-                        'stock': '股票日线', 'index_daily': '指数日线', 'fund': '基金', 'option': '期权',
-                        'future': '期货', 'bond': '可转债', 'margin': '融资融券', 'moneyflow': '资金流向',
+                        'stock': '股票行情', 'index_daily': '指数行情', 'fund': '基金行情', 'option': '期权行情',
+                        'future': '期货行情', 'bond': '券债行情', 'margin': '融资融券', 'moneyflow': '资金流向',
                         'reference': '参考数据', 'marco': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")

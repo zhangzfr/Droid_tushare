@@ -17,6 +17,9 @@ test_db_data/
 *.py[cod]
 *$py.class
 
+# 5. Exclude utils diretory
+utils/
+
 # --- General Python Environment ---
 .venv/
 venv/
