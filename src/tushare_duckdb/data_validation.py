@@ -1,4 +1,3 @@
-# 文件：/Users/robert/Developer/ProjectQuant/tushare/tushare_2_duckdb/Droid_tushare/ts_duckdb_data_validation_1210.py
 from pathlib import Path
 import numpy as np
 from .utils import get_connection, table_exists, get_table_schema, show_table_statistics

@@ -1,4 +1,3 @@
-# 文件：/Users/robert/Developer/Quant/tushare/tushare_2_duckdb/Droid_tushare/ts_duckdb_utils_1210.py
 from .schema import TABLE_SCHEMAS
 from datetime import datetime, timedelta
 import duckdb

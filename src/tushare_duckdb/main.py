@@ -1,4 +1,3 @@
-# 文件：/Users/robert/Developer/ProjectQuant/tushare/tushare_2_duckdb/src_w/interactive_daily_update_1209.py
 from datetime import datetime, timedelta
 from tabulate import tabulate
 from .metadata import init_metadata, update_metadata

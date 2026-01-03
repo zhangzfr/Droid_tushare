@@ -1,4 +1,3 @@
-# 文件：/Users/robert/Developer/Quant/tushare/tushare_2_duckdb/Droid_tushare/ts_duckdb_metadata.py
 from datetime import datetime
 from .utils import table_exists, get_columns
 

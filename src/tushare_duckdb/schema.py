@@ -1,5 +1,3 @@
-# 文件：/Users/robert/Developer/ProjectQuant/tushare/tushare_2_duckdb/Droid_tushare/ts_duckdb_schema.py
-
 # 统一表结构配置：{table_name: "CREATE TABLE SQL"}
 TABLE_SCHEMAS = {
     # === stock 相关 ===
