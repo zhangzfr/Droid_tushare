@@ -1,0 +1,29 @@
+# --- Custom Exclusions ---
+
+# 1. Exclude agent directory
+.agent/
+
+# 2. Exclude all logs (root and subdirectories)
+logs/
+**/logs/
+*.log
+
+# 3. Exclude test database files
+test_db_data/
+*.db
+
+# 4. Exclude Python bytecode and cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# --- General Python Environment ---
+.venv/
+venv/
+env/
+.env
+
+# --- OS generated files ---
+.DS_Store
+.DS_Store?
+._*

@@ -1,0 +1,2802 @@
+stock_list:
+  db_path: ${DB_ROOT}/tushare_duck_basic.db
+  list_exchange: SSE
+  tables:
+    stock_basic:
+      fields:
+      - ts_code
+      - symbol
+      - name
+      - area
+      - industry
+      - fullname
+      - enname
+      - cnspell
+      - market
+      - exchange
+      - curr_type
+      - list_status
+      - list_date
+      - delist_date
+      - is_hs
+      - act_name
+      - act_ent_type
+      unique_keys:
+      - ts_code
+      date_column: list_date
+      date_type: trade
+      earliest_date: '19900101'
+      requires_paging: false
+      requires_date: false
+      required_params:
+        list_status:
+        - L
+        - D
+        - P
+      is_daily: false
+      date_param_mode: range
+      statistics_queries:
+        - label: "股票上市状态分布"
+          query: "SELECT list_status, count(*) as count FROM stock_basic GROUP BY 1"
+          map: {"L": "上市", "D": "退市", "P": "暂停上市"}
+        - label: "最近18个月上市/退市趋势(Top 18)"
+          query: |
+            SELECT 
+              strftime(strptime(list_date, '%Y%m%d'), '%Y-%m') as month,
+              count(CASE WHEN list_status = 'L' THEN 1 END) as New_Listed,
+              count(CASE WHEN list_status = 'D' THEN 1 END) as Delisted
+            FROM stock_basic 
+            WHERE list_date IS NOT NULL AND list_date != '' 
+              AND strptime(list_date, '%Y%m%d') >= (current_date - interval 18 month)
+            GROUP BY 1 ORDER BY 1 DESC LIMIT 18
+    stock_company:
+      fields:
+      - ts_code
+      - com_name
+      - com_id
+      - exchange
+      - chairman
+      - manager
+      - secretary
+      - reg_capital
+      - setup_date
+      - province
+      - city
+      - introduction
+      - website
+      - email
+      - office
+      - employees
+      - main_business
+      - business_scope
+      unique_keys:
+      - ts_code
+      date_column: setup_date
+      earliest_date: '19900101'
+      requires_date: false
+      requires_paging: false
+      required_params:
+        exchange:
+        - SSE
+        - SZSE
+      is_daily: false
+      date_param_mode: range
+      statistics_queries:
+        - label: "各交易所上市公司分布"
+          query: "SELECT exchange, count(*) FROM stock_company GROUP BY 1"
+        - label: "各省份上市公司分布TOP10"
+          query: "SELECT province, count(*) FROM stock_company GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+stock_events:
+  db_path: ${DB_ROOT}/tushare_duck_basic.db
+  list_exchange: SSE
+  tables:
+    namechange:
+      fields:
+      - ts_code
+      - name
+      - start_date
+      - end_date
+      - ann_date
+      - change_reason
+      unique_keys:
+      - ts_code
+      - name
+      - start_date
+      - ann_date
+      earliest_date: '19900101'
+      requires_date: true
+      date_column: ann_date
+      limit: 10000
+      requires_paging: true
+      is_daily: false
+      date_param_mode: range
+    hs_const:
+      fields:
+      - ts_code
+      - hs_type
+      - in_date
+      - out_date
+      - is_new
+      unique_keys:
+      - ts_code
+      - hs_type
+      - in_date
+      date_column: in_date
+      earliest_date: '19900101'
+      requires_date: true
+      requires_paging: false
+      required_params:
+        hs_type:
+        - SH
+        - SZ
+      is_daily: false
+      date_param_mode: range
+    stk_managers:
+      fields:
+      - ts_code
+      - ann_date
+      - name
+      - gender
+      - lev
+      - title
+      - edu
+      - national
+      - birthday
+      - begin_date
+      - end_date
+      - resume
+      unique_keys:
+      - ts_code
+      - name
+      - ann_date
+      - begin_date
+      date_column: begin_date
+      earliest_date: '19900101'
+      requires_date: true
+      limit: 4000
+      requires_paging: true
+      is_daily: false
+      date_param_mode: range
+    stk_rewards:
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - name
+      - title
+      - reward
+      - hold_vol
+      unique_keys:
+      - ts_code
+      - name
+      - ann_date
+      date_column: end_date
+      earliest_date: '19900101'
+      requires_date: true
+      limit: 4000
+      requires_paging: true
+      required_params:
+      - ts_code
+      is_daily: false
+      date_param_mode: range
+    trade_cal:
+      fields:
+      - exchange
+      - cal_date
+      - is_open
+      - pretrade_date
+      unique_keys:
+      - exchange
+      - cal_date
+      earliest_date: '19900101'
+      requires_date: true
+      requires_paging: false
+      required_params:
+        exchange:
+        - CFFEX
+        - DCE
+        - CZCE
+        - SHFE
+        - INE
+        - SZSE
+        - SSE
+      date_column: cal_date
+      is_daily: false
+      date_type: natural
+      date_param_mode: range
+stock:
+  db_path: ${DB_ROOT}/tushare_duck_stock.db
+  tables:
+    daily:
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - high
+      - low
+      - close
+      - pre_close
+      - change
+      - pct_chg
+      - vol
+      - amount
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      limit: 6000
+      earliest_date: '19901219'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    adj_factor:
+      fields:
+      - ts_code
+      - trade_date
+      - adj_factor
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 6000
+      requires_paging: true
+      earliest_date: '19901219'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    daily_basic:
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - turnover_rate
+      - turnover_rate_f
+      - volume_ratio
+      - pe
+      - pe_ttm
+      - pb
+      - ps
+      - ps_ttm
+      - dv_ratio
+      - dv_ttm
+      - total_share
+      - float_share
+      - free_share
+      - total_mv
+      - circ_mv
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 6000
+      requires_paging: true
+      earliest_date: '19901219'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    stk_limit:
+      fields:
+      - ts_code
+      - trade_date
+      - pre_close
+      - up_limit
+      - down_limit
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 7800
+      requires_paging: true
+      earliest_date: '20070104'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    suspend_d:
+      fields:
+      - ts_code
+      - trade_date
+      - suspend_timing
+      - suspend_type
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 5000
+      requires_paging: true
+      earliest_date: '19990504'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+    bak_basic:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - industry
+      - area
+      - pe
+      - float_share
+      - total_share
+      - total_assets
+      - liquid_assets
+      - fixed_assets
+      - reserved
+      - reserved_pershare
+      - eps
+      - bvps
+      - pb
+      - list_date
+      - undp
+      - per_undp
+      - rev_yoy
+      - profit_yoy
+      - gpr
+      - npr
+      - holder_num
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 7000
+      requires_paging: true
+      earliest_date: '20160809'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+reference:
+  db_path: ${DB_ROOT}/tushare_duck_ref.db
+  tables:
+    block_trade:
+      fields:
+      - ts_code
+      - trade_date
+      - price
+      - vol
+      - amount
+      - buyer
+      - seller
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 1000
+      earliest_date: '20020319'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+margin:
+  db_path: ${DB_ROOT}/tushare_duck_margin.db
+  tables:
+    margin:
+      fields:
+      - trade_date
+      - exchange_id
+      - rzye
+      - rzmre
+      - rzche
+      - rqye
+      - rqmcl
+      - rzrqye
+      - rqyl
+      limit: 4000
+      earliest_date: '20100331'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      - exchange_id
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    margin_detail:
+      fields:
+      - trade_date
+      - ts_code
+      - rzye
+      - rqye
+      - rzmre
+      - rqyl
+      - rzche
+      - rqchl
+      - rqmcl
+      - rzrqye
+      limit: 4000
+      earliest_date: '20100331'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    margin_secs:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - exchange
+      limit: 6000
+      earliest_date: '20100329'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      - ts_code
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    slb_len:
+      fields:
+      - trade_date
+      - ob
+      - auc_amount
+      - repo_amount
+      - repay_amount
+      - cb
+      limit: 6000
+      earliest_date: '20140102'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    slb_len_mm:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - ope_inv
+      - lent_qnt
+      - cls_inv
+      - end_bal
+      limit: 5000
+      earliest_date: '20221114'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      - ts_code
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    slb_sec:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - ope_inv
+      - lent_qnt
+      - cls_inv
+      - end_bal
+      limit: 5000
+      earliest_date: '20130228'
+      latest_date: '20240930'
+      unique_keys:
+      - trade_date
+      - ts_code
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    slb_sec_detail:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - tenor
+      - fee_rate
+      - lent_qnt
+      limit: 6000
+      earliest_date: '20190722'
+      latest_date: '20240710'
+      unique_keys:
+      - trade_date
+      - ts_code
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+moneyflow:
+  db_path: ${DB_ROOT}/tushare_duck_moneyflow.db
+  tables:
+    moneyflow:
+      fields:
+      - ts_code
+      - trade_date
+      - buy_sm_vol
+      - buy_sm_amount
+      - sell_sm_vol
+      - sell_sm_amount
+      - buy_md_vol
+      - buy_md_amount
+      - sell_md_vol
+      - sell_md_amount
+      - buy_lg_vol
+      - buy_lg_amount
+      - sell_lg_vol
+      - sell_lg_amount
+      - buy_elg_vol
+      - buy_elg_amount
+      - sell_elg_vol
+      - sell_elg_amount
+      - net_mf_vol
+      - net_mf_amount
+      limit: 6000
+      earliest_date: '20000101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_ths:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - pct_change
+      - latest
+      - net_amount
+      - net_d5_amount
+      - buy_lg_amount
+      - buy_lg_amount_rate
+      - buy_md_amount
+      - buy_md_amount_rate
+      - buy_sm_amount
+      - buy_sm_amount_rate
+      limit: 6000
+      earliest_date: '20241219'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_dc:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - pct_change
+      - close
+      - net_amount
+      - net_amount_rate
+      - buy_elg_amount
+      - buy_elg_amount_rate
+      - buy_lg_amount
+      - buy_lg_amount_rate
+      - buy_md_amount
+      - buy_md_amount_rate
+      - buy_sm_amount
+      - buy_sm_amount_rate
+      limit: 6000
+      earliest_date: '20230911'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_ind_ths:
+      fields:
+      - trade_date
+      - ts_code
+      - industry
+      - lead_stock
+      - close
+      - pct_change
+      - company_num
+      - pct_change_stock
+      - close_price
+      - net_buy_amount
+      - net_sell_amount
+      - net_amount
+      limit: 5000
+      earliest_date: '20240910'
+      latest_date: null
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_ind_dc:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - pct_change
+      - close
+      - net_amount
+      - net_amount_rate
+      - buy_elg_amount
+      - buy_elg_amount_rate
+      - buy_lg_amount
+      - buy_lg_amount_rate
+      - buy_md_amount
+      - buy_md_amount_rate
+      - buy_sm_amount
+      - buy_sm_amount_rate
+      - buy_sm_amount_stock
+      - rank
+      limit: 5000
+      requires_paging: true
+      earliest_date: '20230912'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_mkt_dc:
+      fields:
+      - trade_date
+      - close_sh
+      - pct_change_sh
+      - close_sz
+      - pct_change_sz
+      - net_amount
+      - net_amount_rate
+      - buy_elg_amount
+      - buy_elg_amount_rate
+      - buy_lg_amount
+      - buy_lg_amount_rate
+      - buy_md_amount
+      - buy_md_amount_rate
+      - buy_sm_amount
+      - buy_sm_amount_rate
+      limit: 3000
+      requires_paging: true
+      earliest_date: '20230417'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    moneyflow_cnt_ths:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - lead_stock
+      - close_price
+      - pct_change
+      - industry_index
+      - company_num
+      - pct_change_stock
+      - net_buy_amount
+      - net_sell_amount
+      - net_amount
+      limit: 4000
+      earliest_date: '20240910'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      - name
+      requires_date: true
+      requires_paging: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+index_info:
+  db_path: ${DB_ROOT}/tushare_duck_index.db
+  tables:
+    index_basic:
+      fields:
+      - ts_code
+      - name
+      - fullname
+      - market
+      - publisher
+      - index_type
+      - category
+      - base_date
+      - base_point
+      - list_date
+      - weight_rule
+      - desc
+      - exp_date
+      limit: 8000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      date_column: list_date
+    sw_index_classify_2014:
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      limit: 4000
+      earliest_date: '20140101'
+      latest_date: null
+      src: SW2014
+      is_daily: false
+      unique_keys:
+      - index_code
+    sw_index_classify_2021:
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      limit: 4000
+      earliest_date: '20210101'
+      latest_date: null
+      src: SW2021
+      is_daily: false
+      unique_keys:
+      - index_code
+    sw_index_member_all:
+      fields:
+      - l1_code
+      - l1_name
+      - l2_code
+      - l2_name
+      - l3_code
+      - l3_name
+      - ts_code
+      - name
+      - in_date
+      - out_date
+      - is_new
+      limit: 3000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - l3_code
+      - in_date
+      requires_paging: true
+    ths_member:
+      fields:
+      - ts_code
+      - con_code
+      - con_name
+      - weight
+      - in_date
+      - out_date
+      - is_new
+      limit: 6000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - con_code
+      requires_paging: true
+    dc_member:
+      fields:
+      - trade_date
+      - ts_code
+      - con_code
+      - name
+      limit: 5000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      requires_paging: true
+      date_column: trade_date
+    tdx_member:
+      fields:
+      - ts_code
+      - trade_date
+      - con_code
+      - con_name
+      limit: 3000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      requires_paging: true
+    ths_index:
+      fields:
+      - ts_code
+      - name
+      - count
+      - exchange
+      - list_date
+      - type
+      limit: null
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      requires_paging: false
+      date_column: list_date
+index_weight:
+  db_path: ${DB_ROOT}/tushare_duck_index_weight.db
+  tables:
+    index_weight:
+      fields:
+      - index_code
+      - con_code
+      - trade_date
+      - weight
+      limit: 6000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - index_code
+      - con_code
+      - trade_date
+      is_daily: true
+      date_column: trade_date
+index_daily:
+  db_path: ${DB_ROOT}/tushare_duck_index.db
+  tables:
+    index_daily:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - open
+      - high
+      - low
+      - pre_close
+      - change
+      - pct_chg
+      - vol
+      - amount
+      earliest_date: '19900101'
+      limit: 8000
+      requires_date: true
+      required_params:
+        ts_codes:
+        - 000001.SH
+        - 000005.SH
+        - 000006.SH
+        - 000016.SH
+        - 000300.SH
+        - 000905.SH
+        - 399001.SZ
+        - 399005.SZ
+        - 399006.SZ
+        - 399016.SZ
+        - 399300.SZ
+        - 399905.SZ
+        - 399107.SZ
+        - 000688.SH
+        - 399102.SZ
+        - 399852.SZ
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    index_dailybasic:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - total_mv
+      - float_mv
+      - total_share
+      - float_share
+      - free_share
+      - turnover_rate
+      - turnover_rate_f
+      - pe
+      - pe_ttm
+      - pb
+      earliest_date: '20040101'
+      limit: 3000
+      requires_date: true
+      use_trade_dates: true
+      date_column: trade_date
+      filter_null_dates_metadata: false
+      required_params:
+        ts_codes:
+        - 000001.SH
+        - 000005.SH
+        - 000006.SH
+        - 000016.SH
+        - 000300.SH
+        - 000905.SH
+        - 399001.SZ
+        - 399005.SZ
+        - 399006.SZ
+        - 399016.SZ
+        - 399300.SZ
+        - 399905.SZ
+      date_type: trade
+      is_daily: true
+    daily_info:
+      unique_keys:
+      - trade_date
+      - ts_code
+      fields:
+      - trade_date
+      - ts_code
+      - ts_name
+      - com_count
+      - total_share
+      - float_share
+      - total_mv
+      - float_mv
+      - amount
+      - vol
+      - trans_count
+      - pe
+      - tr
+      - exchange
+      earliest_date: '19990104'
+      limit: 4000
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    sz_daily_info:
+      unique_keys:
+      - trade_date
+      - ts_code
+      fields:
+      - trade_date
+      - ts_code
+      - count
+      - amount
+      - vol
+      - total_share
+      - total_mv
+      - float_share
+      - float_mv
+      earliest_date: '20200617'
+      limit: 4000
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    ths_daily:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - high
+      - low
+      - close
+      - pre_close
+      - avg_price
+      - change
+      - pct_change
+      - vol
+      - turnover_rate
+      earliest_date: '20230101'
+      limit: 3000
+      requires_paging: true
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    dc_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - open
+      - high
+      - low
+      - change
+      - pct_change
+      - vol
+      - amount
+      - swing
+      - turnover_rate
+      limit: 2000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      requires_date: true
+      use_trade_dates: true
+      date_column: trade_date
+      fetch_by_date_range: true
+      filter_null_dates_metadata: false
+      date_type: trade
+    ci_daily:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - low
+      - high
+      - close
+      - pre_close
+      - change
+      - pct_change
+      - vol
+      - amount
+      earliest_date: '20100101'
+      limit: 4000
+      requires_paging: true
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    sw_daily:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - open
+      - low
+      - high
+      - close
+      - change
+      - pct_change
+      - vol
+      - amount
+      - pe
+      - pb
+      - float_mv
+      - total_mv
+      earliest_date: '20120801'
+      limit: 4000
+      requires_paging: true
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      is_daily: true
+    index_global:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - close
+      - high
+      - low
+      - pre_close
+      - change
+      - pct_chg
+      - swing
+      - vol
+      - amount
+      earliest_date: '20000101'
+      limit: 4000
+      requires_date: true
+      date_column: trade_date
+      date_type: natural
+      is_daily: true
+    dc_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - leading
+      - leading_code
+      - pct_change
+      - leading_pct
+      - total_mv
+      - turnover_rate
+      - up_num
+      - down_num
+      limit: 5000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      field_mappings:
+        leading: leading_stock
+      date_column: trade_date
+    tdx_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - idx_type
+      - idx_count
+      - total_share
+      - float_share
+      - total_mv
+      - float_mv
+      limit: 1000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: false
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      date_column: trade_date
+      force_daily: true
+    tdx_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - open
+      - high
+      - low
+      - pre_close
+      - change
+      - pct_change
+      - vol
+      - amount
+      - rise
+      - vol_ratio
+      - turnover_rate
+      - swing
+      - up_num
+      - down_num
+      - limit_up_num
+      - limit_down_num
+      - lu_days
+      - 3day
+      - 5day
+      - 10day
+      - 20day
+      - 60day
+      - mtd
+      - ytd
+      - 1year
+      - pe
+      - pb
+      - float_mv
+      - ab_total_mv
+      - float_share
+      - total_share
+      - bm_buy_net
+      - bm_buy_ratio
+      - bm_net
+      - bm_ratio
+      limit: 3000
+      earliest_date: '19900101'
+      latest_date: null
+      is_daily: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      requires_date: true
+      use_trade_dates: true
+      date_column: trade_date
+      fetch_by_date_range: true
+      filter_null_dates_metadata: false
+      date_type: trade
+fund_info:
+  db_path: ${DB_ROOT}/tushare_duck_fund.db
+  tables:
+    fund_basic:
+      fields:
+      - ts_code
+      - name
+      - management
+      - custodian
+      - fund_type
+      - found_date
+      - due_date
+      - list_date
+      - issue_date
+      - delist_date
+      - issue_amount
+      - m_fee
+      - c_fee
+      - duration_year
+      - p_value
+      - min_amount
+      - exp_return
+      - benchmark
+      - status
+      - invest_type
+      - type
+      - trustee
+      - purc_startdate
+      - redm_startdate
+      - market
+      limit: 15000
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: false
+      requires_paging: true
+      required_params:
+        market:
+        - E
+        - O
+      unique_keys:
+      - ts_code
+      date_column: list_date
+      is_daily: false
+    fund_company:
+      fields:
+      - name
+      - shortname
+      - province
+      - city
+      - address
+      - phone
+      - office
+      - website
+      - chairman
+      - manager
+      - reg_capital
+      - setup_date
+      - end_date
+      - employees
+      - main_business
+      - org_code
+      - credit_code
+      limit: 2000
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: false
+      unique_keys:
+      - name
+      date_column: setup_date
+      is_daily: false
+fund:
+  db_path: ${DB_ROOT}/tushare_duck_fund.db
+  tables:
+    fund_nav:
+      fields:
+      - ts_code
+      - ann_date
+      - nav_date
+      - unit_nav
+      - accum_nav
+      - accum_div
+      - net_asset
+      - total_netasset
+      - adj_nav
+      - update_flag
+      limit: 10500
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - nav_date
+      date_column: nav_date
+      date_type: natural
+      date_param_mode: single
+      date_param: nav_date
+    fund_portfolio:
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - symbol
+      - mkv
+      - amount
+      - stk_mkv_ratio
+      - stk_float_ratio
+      limit: 4000
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: true
+      unique_keys:
+      - ts_code
+      - end_date
+      - symbol
+      requires_paging: true
+      date_column: ann_date
+      date_type: natural
+      date_param: ann_date
+      date_param_mode: single
+    fund_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - pre_close
+      - open
+      - high
+      - low
+      - close
+      - change
+      - pct_chg
+      - vol
+      - amount
+      limit: 2000
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      date_param_mode: single
+      date_param: trade_date
+bond:
+  db_path: ${DB_ROOT}/tushare_duck_bond.db
+  tables:
+    cb_basic:
+      fields:
+      - ts_code
+      - bond_full_name
+      - bond_short_name
+      - cb_code
+      - stk_code
+      - stk_short_name
+      - maturity
+      - par
+      - issue_price
+      - issue_size
+      - remain_size
+      - value_date
+      - maturity_date
+      - rate_type
+      - coupon_rate
+      - add_rate
+      - pay_per_year
+      - list_date
+      - delist_date
+      - exchange
+      - conv_start_date
+      - conv_end_date
+      - conv_stop_date
+      - first_conv_price
+      - conv_price
+      - rate_clause
+      - put_clause
+      - maturity_put_price
+      - call_clause
+      - reset_clause
+      - conv_clause
+      - guarantor
+      - guarantee_type
+      - issue_rating
+      - newest_rating
+      - rating_comp
+      unique_keys:
+      - ts_code
+      limit: 2000
+      requires_paging: false
+      earliest_date: '19900101'
+      latest_date: null
+      requires_date: false
+      date_column: list_date
+      date_type: trade
+      date_param_mode: full_paging
+    cb_issue:
+      fields:
+      - ts_code
+      - ann_date
+      - res_ann_date
+      - plan_issue_size
+      - issue_size
+      - issue_price
+      - issue_type
+      - issue_cost
+      - onl_code
+      - onl_name
+      - onl_date
+      - onl_size
+      - onl_pch_vol
+      - onl_pch_num
+      - onl_pch_excess
+      - onl_winning_rate
+      - shd_ration_code
+      - shd_ration_name
+      - shd_ration_date
+      - shd_ration_record_date
+      - shd_ration_pay_date
+      - shd_ration_price
+      - shd_ration_ratio
+      - shd_ration_size
+      - shd_ration_vol
+      - shd_ration_num
+      - shd_ration_excess
+      - offl_size
+      - offl_deposit
+      - offl_pch_vol
+      - offl_pch_num
+      - offl_pch_excess
+      - offl_winning_rate
+      - lead_underwriter
+      - lead_underwriter_vol
+      limit: 2000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - ann_date
+      date_column: ann_date
+      is_daily: false
+      force_daily_fetch: false
+      requires_date: true
+    cb_call:
+      fields:
+      - ts_code
+      - call_type
+      - is_call
+      - ann_date
+      - call_date
+      - call_price
+      - call_price_tax
+      - call_vol
+      - call_amount
+      - payment_date
+      - call_reg_date
+      limit: 2000
+      earliest_date: '20200730'
+      latest_date: null
+      requires_date: false
+      display_as_daily: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - ann_date
+      date_column: ann_date
+      is_daily: false
+      force_daily_fetch: false
+    cb_rate:
+      fields:
+      - ts_code
+      - rate_freq
+      - rate_start_date
+      - rate_end_date
+      - coupon_rate
+      limit: 2000
+      earliest_date: '20100101'
+      latest_date: null
+      requires_date: false
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - rate_start_date
+      date_column: rate_start_date
+      is_daily: false
+    cb_share:
+      fields:
+      - ts_code
+      - bond_short_name
+      - publish_date
+      - end_date
+      - issue_size
+      - convert_price_initial
+      - convert_price
+      - convert_val
+      - convert_vol
+      - convert_ratio
+      - acc_convert_val
+      - acc_convert_vol
+      - acc_convert_ratio
+      - remain_size
+      - total_shares
+      unique_keys:
+      - ts_code
+      - publish_date
+      - end_date
+      earliest_date: '19900101'
+      requires_date: false
+      limit: 2000
+      requires_paging: true
+      date_column: publish_date
+      is_daily: true
+      date_type: trade
+      date_param: ann_date
+      date_param_mode: range
+    cb_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - pre_close
+      - open
+      - high
+      - low
+      - close
+      - change
+      - pct_chg
+      - vol
+      - amount
+      - bond_value
+      - bond_over_rate
+      - cb_value
+      - cb_over_rate
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 2000
+      requires_date: true
+      earliest_date: '20100101'
+      latest_date: null
+      filter_null_dates_metadata: false
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+    bond_blk:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - price
+      - vol
+      - amount
+      unique_keys:
+      - trade_date
+      - ts_code
+      limit: 1000
+      requires_date: true
+      earliest_date: '20100101'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+    bond_blk_detail:
+      fields:
+      - trade_date
+      - ts_code
+      - name
+      - price
+      - vol
+      - amount
+      - buy_dp
+      - sell_dp
+      unique_keys:
+      - trade_date
+      - ts_code
+      limit: 1000
+      requires_date: true
+      earliest_date: '20100101'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+    repo_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - repo_maturity
+      - pre_close
+      - open
+      - high
+      - low
+      - close
+      - weight
+      - weight_r
+      - amount
+      - num
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 2000
+      requires_date: true
+      earliest_date: '20100101'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+    yc_cb:
+      fields:
+      - trade_date
+      - ts_code
+      - curve_name
+      - curve_type
+      - curve_term
+      - yield
+      unique_keys:
+      - trade_date
+      - ts_code
+      - curve_type
+      - curve_term
+      limit: 4000
+      requires_date: true
+      earliest_date: '20160613'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+option:
+  db_path: ${DB_ROOT}/tushare_duck_opt.db
+  tables:
+    opt_basic:
+      fields:
+      - ts_code
+      - exchange
+      - name
+      - per_unit
+      - opt_code
+      - opt_type
+      - call_put
+      - exercise_type
+      - exercise_price
+      - s_month
+      - maturity_date
+      - list_price
+      - list_date
+      - delist_date
+      - last_edate
+      - last_ddate
+      - quote_unit
+      - min_price_chg
+      unique_keys:
+      - ts_code
+      limit: 12000
+      requires_paging: true
+      earliest_date: '20000101'
+      latest_date: null
+      date_column: list_date
+      date_type: trade
+      date_param_mode: full_paging
+    opt_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - exchange
+      - pre_settle
+      - pre_close
+      - open
+      - high
+      - low
+      - close
+      - settle
+      - vol
+      - amount
+      - oi
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 15000
+      requires_paging: true
+      earliest_date: '20150209'
+      latest_date: null
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+future_info:
+  db_path: ${DB_ROOT}/tushare_duck_future.db
+  tables:
+    fut_basic:
+      fields:
+      - ts_code
+      - symbol
+      - exchange
+      - name
+      - fut_code
+      - multiplier
+      - trade_unit
+      - per_unit
+      - quote_unit
+      - quote_unit_desc
+      - d_mode_desc
+      - list_date
+      - delist_date
+      - d_month
+      - last_ddate
+      - trade_time_desc
+      unique_keys:
+      - ts_code
+      earliest_date: '19900101'
+      is_daily: false
+      requires_date: false
+      requires_paging: false
+      limit: 1000
+      required_params:
+        exchange:
+        - CFFEX
+        - DCE
+        - CZCE
+        - SHFE
+        - INE
+        - GFEX
+        - INE
+        - SSE
+      date_column: list_date
+    trade_cal_future:
+      fields:
+      - exchange
+      - cal_date
+      - is_open
+      - pretrade_date
+      unique_keys:
+      - exchange
+      - cal_date
+      earliest_date: '19900101'
+      requires_date: false
+      requires_paging: false
+      required_params:
+        exchange:
+        - CFFEX
+        - DCE
+        - CZCE
+        - SHFE
+        - INE
+        - GFEX
+        - INE
+        - SSE
+      date_column: cal_date
+      date_type: trade
+      is_daily: false
+future:
+  db_path: ${DB_ROOT}/tushare_duck_future.db
+  tables:
+    fut_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - pre_close
+      - pre_settle
+      - open
+      - high
+      - low
+      - close
+      - settle
+      - change1
+      - change2
+      - vol
+      - amount
+      - oi
+      - oi_chg
+      - delv_settle
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 2000
+      requires_paging: false
+      earliest_date: '19900101'
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    fut_wsr:
+      fields:
+      - trade_date
+      - symbol
+      - fut_name
+      - warehouse
+      - wh_id
+      - pre_vol
+      - vol
+      - vol_chg
+      - area
+      - year
+      - grade
+      - brand
+      - place
+      - pd
+      - is_ct
+      - unit
+      - exchange
+      unique_keys:
+      - trade_date
+      - symbol
+      - fut_name
+      - warehouse
+      limit: 1000
+      requires_paging: true
+      earliest_date: '19900101'
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    fut_settle:
+      fields:
+      - ts_code
+      - trade_date
+      - settle
+      - trading_fee_rate
+      - trading_fee
+      - delivery_fee
+      - b_hedging_margin_rate
+      - s_hedging_margin_rate
+      - long_margin_rate
+      - short_margin_rate
+      - offset_today_fee
+      - exchange
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 1000
+      requires_paging: true
+      earliest_date: '19900101'
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    fut_holding:
+      fields:
+      - trade_date
+      - symbol
+      - broker
+      - vol
+      - vol_chg
+      - long_hld
+      - long_chg
+      - short_hld
+      - short_chg
+      - exchange
+      unique_keys:
+      - trade_date
+      - symbol
+      - broker
+      earliest_date: '19900101'
+      limit: 4000
+      requires_paging: true
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: single
+    fut_index_daily:
+      api_table: index_daily
+      table_name: fut_index_daily
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - open
+      - high
+      - low
+      - pre_close
+      - change
+      - pct_chg
+      - vol
+      - amount
+      unique_keys:
+      - ts_code
+      - trade_date
+      limit: 6000
+      requires_paging: true
+      earliest_date: '20040601'
+      required_params:
+        ts_codes:
+        - NHAI.NH
+        - NHCI.NH
+        - NHECI.NH
+        - NHFI.NH
+        - NHII.NH
+        - NHMI.NH
+        - NHNFI.NH
+        - NHPMI.NH
+        - A.NH
+        - AG.NH
+        - AL.NH
+        - AP.NH
+        - AU.NH
+        - BB.NH
+        - BU.NH
+        - C.NH
+        - CF.NH
+        - CS.NH
+        - CU.NH
+        - CY.NH
+        - ER.NH
+        - FB.NH
+        - FG.NH
+        - FU.NH
+        - HC.NH
+        - I.NH
+        - J.NH
+        - JD.NH
+        - JM.NH
+        - JR.NH
+        - L.NH
+        - LR.NH
+        - M.NH
+        - ME.NH
+        - NI.NH
+        - P.NH
+        - PB.NH
+        - PP.NH
+        - RB.NH
+        - RM.NH
+        - RO.NH
+        - RS.NH
+        - RU.NH
+        - SC.NH
+        - SF.NH
+        - SM.NH
+        - SN.NH
+        - SP.NH
+        - SR.NH
+        - TA.NH
+        - TC.NH
+        - V.NH
+        - WR.NH
+        - WS.NH
+        - Y.NH
+        - ZN.NH
+        - AO.NH
+        - B.NH
+        - BC.NH
+        - BR.NH
+        - CJ.NH
+        - EB.NH
+        - EC.NH
+        - EG.NH
+        - IC.NH
+        - IF.NH
+        - IH.NH
+        - IM.NH
+        - LC.NH
+        - LH.NH
+        - LU.NH
+        - NHAECI.NH
+        - NHBMI.NH
+        - NHCCI.NH
+        - NHCIMi.NH
+        - NHEI.NH
+        - NHFMI.NH
+        - NHOOI.NH
+        - NHPCI.NH
+        - NR.NH
+        - PF.NH
+        - PG.NH
+        - PK.NH
+        - PR.NH
+        - PX.NH
+        - RR.NH
+        - SA.NH
+        - SH.NH
+        - SI.NH
+        - SS.NH
+        - T.NH
+        - TF.NH
+        - TL.NH
+        - TS.NH
+        - UR.NH
+      date_column: trade_date
+      date_type: trade
+      date_param: trade_date
+      date_param_mode: range
+      note: 多代码日线表，覆盖模式请逐个代码删除插入，禁用批量删除优化
+marco:
+  db_path: ${DB_ROOT}/tushare_duck_marco.db
+  tables:
+    shibor:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - 'on'
+      - 1w
+      - 2w
+      - 1m
+      - 3m
+      - 6m
+      - 9m
+      - 1y
+      earliest_date: '20061008'
+      limit: 2000
+      date_column: date
+      date_type: natural
+      date_param: date
+      date_param_mode: range
+    shibor_quote:
+      unique_keys:
+      - date
+      - bank
+      fields:
+      - date
+      - bank
+      - on_b
+      - on_a
+      - 1w_b
+      - 1w_a
+      - 2w_b
+      - 2w_a
+      - 1m_b
+      - 1m_a
+      - 3m_b
+      - 3m_a
+      - 6m_b
+      - 6m_a
+      - 9m_b
+      - 9m_a
+      - 1y_b
+      - 1y_a
+      earliest_date: '20130101'
+      limit: 4000
+      date_column: date
+      date_type: natural
+      date_param: date
+      date_param_mode: range
+    us_tycr:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - m1
+      - m2
+      - m3
+      - m6
+      - y1
+      - y2
+      - y3
+      - y5
+      - y7
+      - y10
+      - y20
+      - y30
+      earliest_date: '20060101'
+      limit: 2000
+      date_column: date
+      date_type: natural
+      is_daily: true
+    us_trycr:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - y5
+      - y7
+      - y10
+      - y20
+      - y30
+      earliest_date: '20090101'
+      limit: 2000
+      date_column: date
+      date_type: natural
+      is_daily: true
+    us_tltr:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - ltc
+      - cmt
+      - e_factor
+      earliest_date: '20070101'
+      limit: 2000
+      date_column: date
+      is_daily: true
+    us_trltr:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - ltr_avg
+      earliest_date: '20070101'
+      limit: 2000
+      date_column: date
+      date_type: natural
+      is_daily: true
+    us_tbr:
+      unique_keys:
+      - date
+      fields:
+      - date
+      - w4_bd
+      - w4_ce
+      - w8_bd
+      - w8_ce
+      - w13_bd
+      - w13_ce
+      - w17_bd
+      - w17_ce
+      - w26_bd
+      - w26_ce
+      - w52_bd
+      - w52_ce
+      earliest_date: '20060101'
+      limit: 2000
+      date_column: date
+      date_type: natural
+      is_daily: true
+finance:
+  db_path: ${DB_ROOT}/tushare_duck_finance.db
+  tables:
+    income:
+      api_table: income_vip
+      table_name: income
+      date_column: end_date
+      limit: 9000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - report_type
+      - comp_type
+      - end_type
+      - basic_eps
+      - diluted_eps
+      - total_revenue
+      - revenue
+      - int_income
+      - prem_earned
+      - comm_income
+      - n_commis_income
+      - n_oth_income
+      - n_oth_b_income
+      - prem_income
+      - out_prem
+      - une_prem_reser
+      - reins_income
+      - n_sec_tb_income
+      - n_sec_uw_income
+      - n_asset_mg_income
+      - oth_b_income
+      - fv_value_chg_gain
+      - invest_income
+      - ass_invest_income
+      - forex_gain
+      - total_cogs
+      - oper_cost
+      - int_exp
+      - comm_exp
+      - biz_tax_surchg
+      - sell_exp
+      - admin_exp
+      - fin_exp
+      - assets_impair_loss
+      - prem_refund
+      - compens_payout
+      - reser_insur_liab
+      - div_payt
+      - reins_exp
+      - oper_exp
+      - compens_payout_refu
+      - insur_reser_refu
+      - reins_cost_refund
+      - other_bus_cost
+      - operate_profit
+      - non_oper_income
+      - non_oper_exp
+      - nca_disploss
+      - total_profit
+      - income_tax
+      - n_income
+      - n_income_attr_p
+      - minority_gain
+      - oth_compr_income
+      - t_compr_income
+      - compr_inc_attr_p
+      - compr_inc_attr_m_s
+      - ebit
+      - ebitda
+      - insurance_exp
+      - undist_profit
+      - distable_profit
+      - rd_exp
+      - fin_exp_int_exp
+      - fin_exp_int_inc
+      - transfer_surplus_rese
+      - transfer_housing_imprest
+      - transfer_oth
+      - adj_lossgain
+      - withdra_legal_surplus
+      - withdra_legal_pubfund
+      - withdra_biz_devfund
+      - withdra_rese_fund
+      - withdra_oth_ersu
+      - workers_welfare
+      - distr_profit_shrhder
+      - prfshare_payable_dvd
+      - comshare_payable_dvd
+      - capit_comstock_div
+      - net_after_nr_lp_correct
+      - credit_impa_loss
+      - net_expo_hedging_benefits
+      - oth_impair_loss_assets
+      - total_opcost
+      - amodcost_fin_assets
+      - oth_income
+      - asset_disp_income
+      - continued_net_profit
+      - end_net_profit
+      - update_flag
+      param_name: period
+    balance:
+      api_table: balancesheet_vip
+      table_name: balance
+      date_column: end_date
+      limit: 7000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - report_type
+      - comp_type
+      - end_type
+      - total_share
+      - cap_rese
+      - undistr_porfit
+      - surplus_rese
+      - special_rese
+      - money_cap
+      - trad_asset
+      - notes_receiv
+      - accounts_receiv
+      - oth_receiv
+      - prepayment
+      - div_receiv
+      - int_receiv
+      - inventories
+      - amor_exp
+      - nca_within_1y
+      - sett_rsrv
+      - loanto_oth_bank_fi
+      - premium_receiv
+      - reinsur_receiv
+      - reinsur_res_receiv
+      - pur_resale_fa
+      - oth_cur_assets
+      - total_cur_assets
+      - fa_avail_for_sale
+      - htm_invest
+      - lt_eqt_invest
+      - invest_real_estate
+      - time_deposits
+      - oth_assets
+      - lt_rec
+      - fix_assets
+      - cip
+      - const_materials
+      - fixed_assets_disp
+      - produc_bio_assets
+      - oil_and_gas_assets
+      - intan_assets
+      - r_and_d
+      - goodwill
+      - lt_amor_exp
+      - defer_tax_assets
+      - decr_in_disbur
+      - oth_nca
+      - total_nca
+      - cash_reser_cb
+      - depos_in_oth_bfi
+      - prec_metals
+      - deriv_assets
+      - rr_reins_une_prem
+      - rr_reins_outstd_cla
+      - rr_reins_lins_liab
+      - rr_reins_lthins_liab
+      - refund_depos
+      - ph_pledge_loans
+      - refund_cap_depos
+      - indep_acct_assets
+      - client_depos
+      - client_prov
+      - transac_seat_fee
+      - invest_as_receiv
+      - total_assets
+      - lt_borr
+      - st_borr
+      - cb_borr
+      - depos_ib_deposits
+      - loan_oth_bank
+      - trading_fl
+      - notes_payable
+      - acct_payable
+      - adv_receipts
+      - sold_for_repur_fa
+      - comm_payable
+      - payroll_payable
+      - taxes_payable
+      - int_payable
+      - div_payable
+      - oth_payable
+      - acc_exp
+      - deferred_inc
+      - st_bonds_payable
+      - payable_to_reinsurer
+      - rsrv_insur_cont
+      - acting_trading_sec
+      - acting_uw_sec
+      - non_cur_liab_due_1y
+      - oth_cur_liab
+      - total_cur_liab
+      - bond_payable
+      - lt_payable
+      - specific_payables
+      - estimated_liab
+      - defer_tax_liab
+      - defer_inc_non_cur_liab
+      - oth_ncl
+      - total_ncl
+      - depos_oth_bfi
+      - deriv_liab
+      - depos
+      - agency_bus_liab
+      - oth_liab
+      - prem_receiv_adva
+      - depos_received
+      - ph_invest
+      - reser_une_prem
+      - reser_outstd_claims
+      - reser_lins_liab
+      - reser_lthins_liab
+      - indept_acc_liab
+      - pledge_borr
+      - indem_payable
+      - policy_div_payable
+      - total_liab
+      - treasury_share
+      - ordin_risk_reser
+      - forex_differ
+      - invest_loss_unconf
+      - minority_int
+      - total_hldr_eqy_exc_min_int
+      - total_hldr_eqy_inc_min_int
+      - total_liab_hldr_eqy
+      - lt_payroll_payable
+      - oth_comp_income
+      - oth_eqt_tools
+      - oth_eqt_tools_p_shr
+      - lending_funds
+      - acc_receivable
+      - st_fin_payable
+      - payables
+      - hfs_assets
+      - hfs_sales
+      - cost_fin_assets
+      - fair_value_fin_assets
+      - cip_total
+      - oth_pay_total
+      - long_pay_total
+      - debt_invest
+      - oth_debt_invest
+      - oth_eq_invest
+      - oth_illiq_fin_assets
+      - oth_eq_ppbond
+      - receiv_financing
+      - use_right_assets
+      - lease_liab
+      - contract_assets
+      - contract_liab
+      - accounts_receiv_bill
+      - accounts_pay
+      - oth_rcv_total
+      - fix_assets_total
+      - update_flag
+      param_name: period
+    cashflow:
+      api_table: cashflow_vip
+      table_name: cashflow
+      date_column: end_date
+      limit: 6400
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - comp_type
+      - report_type
+      - end_type
+      - net_profit
+      - finan_exp
+      - c_fr_sale_sg
+      - recp_tax_rends
+      - n_depos_incr_fi
+      - n_incr_loans_cb
+      - n_inc_borr_oth_fi
+      - prem_fr_orig_contr
+      - n_incr_insured_dep
+      - n_reinsur_prem
+      - n_incr_disp_tfa
+      - ifc_cash_incr
+      - n_incr_disp_faas
+      - n_incr_loans_oth_bank
+      - n_cap_incr_repur
+      - c_fr_oth_operate_a
+      - c_inf_fr_operate_a
+      - c_paid_goods_s
+      - c_paid_to_for_empl
+      - c_paid_for_taxes
+      - n_incr_clt_loan_adv
+      - n_incr_dep_cbob
+      - c_pay_claims_orig_inco
+      - pay_handling_chrg
+      - pay_comm_insur_plcy
+      - oth_cash_pay_oper_act
+      - st_cash_out_act
+      - n_cashflow_act
+      - oth_recp_ral_inv_act
+      - c_disp_withdrwl_invest
+      - c_recp_return_invest
+      - n_recp_disp_fiolta
+      - n_recp_disp_sobu
+      - stot_inflows_inv_act
+      - c_pay_acq_const_fiolta
+      - c_paid_invest
+      - n_disp_subs_oth_biz
+      - oth_pay_ral_inv_act
+      - n_incr_pledge_loan
+      - stot_out_inv_act
+      - n_cashflow_inv_act
+      - c_recp_borrow
+      - proc_issue_bonds
+      - oth_cash_recp_ral_fnc_act
+      - stot_cash_in_fnc_act
+      - free_cashflow
+      - c_prepay_amt_borr
+      - c_pay_dist_dpcp_int_exp
+      - incl_dvd_profit_paid_sc_ms
+      - oth_cashpay_ral_fnc_act
+      - stot_cashout_fnc_act
+      - n_cash_flows_fnc_act
+      - eff_fx_flu_cash
+      - n_incr_cash_cash_equ
+      - c_cash_equ_beg_period
+      - c_cash_equ_end_period
+      - c_recp_cap_contrib
+      - incl_cash_rec_saims
+      - uncon_invest_loss
+      - prov_depr_assets
+      - depr_fa_coga_dpba
+      - amort_intang_assets
+      - lt_amort_deferred_exp
+      - decr_deferred_exp
+      - incr_acc_exp
+      - loss_disp_fiolta
+      - loss_scr_fa
+      - loss_fv_chg
+      - invest_loss
+      - decr_def_inc_tax_assets
+      - incr_def_inc_tax_liab
+      - decr_inventories
+      - decr_oper_payable
+      - incr_oper_payable
+      - others
+      - im_net_cashflow_oper_act
+      - conv_debt_into_cap
+      - conv_copbonds_due_within_1y
+      - fa_fnc_leases
+      - im_n_incr_cash_equ
+      - net_dism_capital_add
+      - net_cash_rece_sec
+      - credit_impa_loss
+      - use_right_asset_dep
+      - oth_loss_asset
+      - end_bal_cash
+      - beg_bal_cash
+      - end_bal_cash_equ
+      - beg_bal_cash_equ
+      - update_flag
+      param_name: period
+    fina_indicator:
+      api_table: fina_indicator_vip
+      table_name: fina_indicator
+      date_column: end_date
+      limit: 12000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - eps
+      - dt_eps
+      - total_revenue_ps
+      - revenue_ps
+      - capital_rese_ps
+      - surplus_rese_ps
+      - undist_profit_ps
+      - extra_item
+      - profit_dedt
+      - gross_margin
+      - current_ratio
+      - quick_ratio
+      - cash_ratio
+      - invturn_days
+      - arturn_days
+      - inv_turn
+      - ar_turn
+      - ca_turn
+      - fa_turn
+      - assets_turn
+      - op_income
+      - valuechange_income
+      - interst_income
+      - daa
+      - ebit
+      - ebitda
+      - fcff
+      - fcfe
+      - current_exint
+      - noncurrent_exint
+      - interestdebt
+      - netdebt
+      - tangible_asset
+      - working_capital
+      - networking_capital
+      - invest_capital
+      - retained_earnings
+      - diluted2_eps
+      - bps
+      - ocfps
+      - retainedps
+      - cfps
+      - ebit_ps
+      - fcff_ps
+      - fcfe_ps
+      - netprofit_margin
+      - grossprofit_margin
+      - cogs_of_sales
+      - expense_of_sales
+      - profit_to_gr
+      - saleexp_to_gr
+      - adminexp_of_gr
+      - finaexp_of_gr
+      - impai_ttm
+      - gc_of_gr
+      - op_of_gr
+      - ebit_of_gr
+      - roe
+      - roe_waa
+      - roe_dt
+      - roa
+      - npta
+      - roic
+      - roe_yearly
+      - roa2_yearly
+      - roe_avg
+      - opincome_of_ebt
+      - investincome_of_ebt
+      - n_op_profit_of_ebt
+      - tax_to_ebt
+      - dtprofit_to_profit
+      - salescash_to_or
+      - ocf_to_or
+      - ocf_to_opincome
+      - capitalized_to_da
+      - debt_to_assets
+      - assets_to_eqt
+      - dp_assets_to_eqt
+      - ca_to_assets
+      - nca_to_assets
+      - tbassets_to_totalassets
+      - int_to_talcap
+      - eqt_to_talcapital
+      - currentdebt_to_debt
+      - longdeb_to_debt
+      - ocf_to_shortdebt
+      - debt_to_eqt
+      - eqt_to_debt
+      - eqt_to_interestdebt
+      - tangibleasset_to_debt
+      - tangasset_to_intdebt
+      - tangibleasset_to_netdebt
+      - ocf_to_debt
+      - ocf_to_interestdebt
+      - ocf_to_netdebt
+      - ebit_to_interest
+      - longdebt_to_workingcapital
+      - ebitda_to_debt
+      - turn_days
+      - roa_yearly
+      - roa_dp
+      - fixed_assets
+      - profit_prefin_exp
+      - non_op_profit
+      - op_to_ebt
+      - nop_to_ebt
+      - ocf_to_profit
+      - cash_to_liqdebt
+      - cash_to_liqdebt_withinterest
+      - op_to_liqdebt
+      - op_to_debt
+      - roic_yearly
+      - total_fa_trun
+      - profit_to_op
+      - q_opincome
+      - q_investincome
+      - q_dtprofit
+      - q_eps
+      - q_netprofit_margin
+      - q_gsprofit_margin
+      - q_exp_to_sales
+      - q_profit_to_gr
+      - q_saleexp_to_gr
+      - q_adminexp_to_gr
+      - q_finaexp_to_gr
+      - q_impair_to_gr_ttm
+      - q_gc_to_gr
+      - q_op_to_gr
+      - q_roe
+      - q_dt_roe
+      - q_npta
+      - q_opincome_to_ebt
+      - q_investincome_to_ebt
+      - q_dtprofit_to_profit
+      - q_salescash_to_or
+      - q_ocf_to_sales
+      - q_ocf_to_or
+      - basic_eps_yoy
+      - dt_eps_yoy
+      - cfps_yoy
+      - op_yoy
+      - ebt_yoy
+      - netprofit_yoy
+      - dt_netprofit_yoy
+      - ocf_yoy
+      - roe_yoy
+      - bps_yoy
+      - assets_yoy
+      - eqt_yoy
+      - tr_yoy
+      - or_yoy
+      - q_gr_yoy
+      - q_gr_qoq
+      - q_sales_yoy
+      - q_sales_qoq
+      - q_op_yoy
+      - q_op_qoq
+      - q_profit_yoy
+      - q_profit_qoq
+      - q_netprofit_yoy
+      - q_netprofit_qoq
+      - equity_yoy
+      - rd_exp
+      - update_flag
+      param_name: period
+    fina_audit:
+      api_table: fina_audit_vip
+      table_name: fina_audit
+      date_column: ann_date
+      limit: 6000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - audit_result
+      - audit_agency
+      - audit_sign
+      param_name: period
+    fina_mainbz:
+      api_table: fina_mainbz_vip
+      table_name: fina_mainbz
+      date_column: end_date
+      limit: 10000
+      is_full: false
+      fields:
+      - ts_code
+      - end_date
+      - bz_item
+      - bz_code
+      - bz_sales
+      - bz_profit
+      - bz_cost
+      - curr_type
+      - update_flag
+      param_name: period
+    dividend:
+      api_table: dividend_vip
+      table_name: dividend
+      date_column: end_date
+      limit: 5000
+      is_full: true
+      fields:
+      - ts_code
+      - end_date
+      - ann_date
+      - div_proc
+      - stk_div
+      - stk_bo_rate
+      - stk_co_rate
+      - cash_div
+      - cash_div_tax
+      - record_date
+      - ex_date
+      - pay_date
+      - div_listdate
+      - imp_ann_date
+      - base_date
+      - base_share
+      - update_flag
+      param_name: period
+    forecast:
+      api_table: forecast_vip
+      table_name: forecast
+      date_column: end_date
+      limit: 3500
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - type
+      - p_change_min
+      - p_change_max
+      - net_profit_min
+      - net_profit_max
+      - last_parent_net
+      - first_ann_date
+      - summary
+      - change_reason
+      - update_flag
+      param_name: period
+    express:
+      api_table: express_vip
+      table_name: express
+      date_column: end_date
+      limit: 5000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - revenue
+      - operate_profit
+      - total_profit
+      - n_income
+      - total_assets
+      - total_hldr_eqy_exc_min_int
+      - diluted_eps
+      - diluted_roe
+      - yoy_net_profit
+      - bps
+      - yoy_sales
+      - yoy_op
+      - yoy_tp
+      - yoy_dedu_np
+      - yoy_eps
+      - yoy_roe
+      - growth_assets
+      - yoy_equity
+      - growth_bps
+      - or_last_year
+      - op_last_year
+      - tp_last_year
+      - np_last_year
+      - eps_last_year
+      - open_net_assets
+      - open_bps
+      - perf_summary
+      - is_audit
+      - remark
+      - update_flag
+      param_name: period
+    disclosure_date:
+      api_table: disclosure_date
+      table_name: disclosure_date
+      date_column: ann_date
+      limit: 6000
+      is_full: false
+      fields:
+      - ts_code
+      - ann_date
+      - end_date
+      - pre_date
+      - actual_date
+      - modify_date
+      param_name: end_date
