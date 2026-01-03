@@ -159,7 +159,8 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
             else:
                 date_sets[None] = get_dates_func(start_date, end_date)
             
-            if not date_sets[None]: # Check the generated dates for the 'None' key
+            dates = date_sets[None]
+            if not dates: # Check the generated dates for the 'None' key
                 logger.warning(f"警告：{start_date} ~ {end_date} 无{'交易日' if date_type == 'trade' else '自然日'}，已跳过")
                 return 0
 
@@ -328,7 +329,8 @@ def main():
                     start_date=start,
                     end_date=end,
                     detailed=detailed,
-                    exchange='SSE'
+                    exchange='SSE',
+                    frequency='quarterly' if cat == 'finance' else 'daily'
                 )
                 all_status.extend(status)
                 if daily:

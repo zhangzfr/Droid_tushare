@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy as np
 from .utils import get_connection, table_exists, get_table_schema, show_table_statistics
-from .utils import get_all_dates, get_trade_dates
+from .utils import get_all_dates, get_trade_dates, get_quarterly_dates
 from .config import API_CONFIG
 from .logger import logger
 
@@ -9,11 +9,12 @@ from .logger import logger
 def get_database_status(db_path, basic_db_path=None, tables=None, start_date=None, end_date=None,
                         detailed=False, use_trade_dates=False, exchange='SSE', irregular=False,
                         calendar_db_path=None, calendar_type='stock', field_style='standard',
-                        verbose=True):
+                        verbose=True, frequency='daily'):
     """
     获取数据库状态，返回 (table_status, daily_data) 元组。
     table_status: 表状态列表
-    daily_data: 逐日数据量详情列表（使用自然日，包含“是否交易日”列，Y/N）
+    daily_data: 逐日/逐期数据量详情列表
+    frequency: 'daily' (默认) 或 'quarterly'
     """
     if not tables:
         logger.error("错误：未提供表列表")
@@ -44,11 +45,16 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                 elif use_trade_dates:
                     basic_db_path = basic_db_path or db_path
                     valid_days = get_trade_dates(basic_db_path, start_date, end_date, exchange)
+                elif frequency == 'quarterly':
+                    valid_days = get_quarterly_dates(start_date, end_date)
                 else:
                     valid_days = get_all_dates(start_date, end_date)
 
             if detailed and is_range_check and valid_days and not irregular:
-                daily_data = [{'日期': date, '是否交易日': 'Y' if date in trade_days else 'N'} for date in valid_days]
+                if frequency == 'quarterly':
+                     daily_data = [{'日期': date, '类型': 'Q'} for date in valid_days]
+                else:
+                     daily_data = [{'日期': date, '是否交易日': 'Y' if date in trade_days else 'N'} for date in valid_days]
 
             expected_keys = ['数据库名称', '表名', '最早日期', '最晚日期', '记录数']
             if not irregular:
