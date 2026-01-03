@@ -1507,7 +1507,7 @@ bond:
       - publish_date
       - end_date
       earliest_date: '19900101'
-      requires_date: false
+      requires_date: True
       limit: 2000
       requires_paging: true
       date_column: publish_date
@@ -1515,6 +1515,10 @@ bond:
       date_type: trade
       date_param: ann_date
       date_param_mode: range
+      api_date_format: "YYYY-MM-DD"
+      date_columns:
+        - publish_date
+        - end_date
     cb_daily:
       fields:
       - ts_code

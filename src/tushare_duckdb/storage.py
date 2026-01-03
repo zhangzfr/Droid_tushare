@@ -40,10 +40,38 @@ class DuckDBStorage:
                     logger.info(f"{table_name}: 字段重命名成功: {rename_dict}")
         # === 映射结束 ===
 
+        # === 核心逻辑：日期格式归一化 (YYYY-MM-DD -> YYYYMMDD) ===
+        # 根据 api_config_entry['date_columns'] 列表进行批量洗数
+        date_cols_to_fix = api_config_entry.get('date_columns', [])
+        # 兼容旧逻辑：如果只配了 date_column，也要处理
+        if date_column and date_column not in date_cols_to_fix:
+             date_cols_to_fix.append(date_column)
+        
+        for col in date_cols_to_fix:
+            if col in processed_df.columns: # Use processed_df here
+                try:
+                    # 统一转为 datetime 再转回 YYYYMMDD 字符串
+                    # errors='coerce' 会将无法解析的变成 NaT，fillna('') 变为空字符串
+                    processed_df[col] = pd.to_datetime(processed_df[col], errors='coerce').dt.strftime('%Y%m%d').fillna('')
+                except Exception as e:
+                    logger.warning(f"列 {col} 日期格式化失败: {e}")
+
+        # 确保日期列格式正确 (旧逻辑保留作为兜底)
+        if date_column and date_column in processed_df.columns:
+             # date_cols_to_fix 已经处理过了，这里可能是多余的，但为了安全保留或做最后的检查
+             # 因为上面已经转成了 YYYYMMDD string，这里如果再 to_datetime 可能没必要，
+             # 但 storage 后面如果依赖类型... DuckDB 插入时 string 'YYYYMMDD' 对应 date 类型是没问题的 (ISO format prefer YYYY-MM-DD but DuckDB handles YYYYMMDD usually if configured? No wait. DuckDB DATE type usually expects YYYY-MM-DD or strict ISO. 
+             # Wait, Tushare standard here is YYYYMMDD strings in DB? 
+             # Looking at other tables: earliest_date: '19900101', date_column: trade_date.
+             # If the DB column is VARCHAR, YYYYMMDD is fine. If DATA, it might need casting.
+             # In `utils.py` `get_all_dates` works with YYYYMMDD. 
+             # Let's assume the project standard IS YYYYMMDD string for storage or at least consistency.
+             # The user explicitly asked: "ensure入库数据全为 YYYYMMDD 字符串".
+             pass
+
+        # === 新增：过滤 NULL ===
+        # This block should apply to the primary date_column after all formatting
         if date_column in processed_df.columns:
-            # 统一日期格式化，增强健壮性
-            processed_df[date_column] = pd.to_datetime(processed_df[date_column], errors='coerce').dt.strftime('%Y%m%d')
-            # === 新增：过滤 NULL ===
             null_count = processed_df[date_column].isnull().sum()
             if null_count > 0:
                 logger.warning(f"{table_name}: 发现 {null_count} 条日期为 NULL，自动丢弃")

@@ -86,7 +86,20 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
     # === 日期参数逻辑（基于 date_param_mode）===
     config = extra_params.get('config', {})
     
-    # 如果配置明确不需要日期，则直接跳过日期参数注入
+    # === 日期格式适配 (YYYY-MM-DD vs YYYYMMDD) ===
+    # Tushare 一般使用 YYYYMMDD，但部分接口（如 cb_share）可能要求 YYYY-MM-DD
+    # 我们统一在内部使用 YYYYMMDD，仅在请求参数构建时进行转换
+    target_format = config.get('api_date_format')
+    
+    def format_date(d_str):
+        if not target_format or not d_str: return d_str
+        try:
+            if target_format == 'YYYY-MM-DD' and '-' not in d_str and len(d_str) == 8:
+                return f"{d_str[:4]}-{d_str[4:6]}-{d_str[6:]}"
+            return d_str
+        except:
+            return d_str
+
     if config.get('requires_date') is False:
         pass
     else:
@@ -94,12 +107,13 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
         single_param = config.get('date_param')
 
         if mode == 'range':
-            params['start_date'] = start_date
-            params['end_date'] = end_date
+            params['start_date'] = format_date(start_date)
+            params['end_date'] = format_date(end_date)
         else:
             key = single_param or 'trade_date'
             # 范围查询时，取 end_date（最常见需求）
-            params[key] = end_date if start_date != end_date else start_date
+            raw_date = end_date if start_date != end_date else start_date
+            params[key] = format_date(raw_date)
 
     # === 特殊处理：fut_index_daily 需要 ts_code 参数名 ===
     if table_name in ['fut_index_daily', 'index_daily', 'index_dailybasic']:
