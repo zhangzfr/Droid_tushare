@@ -2225,6 +2225,12 @@ finance:
       - continued_net_profit
       - end_net_profit
       - update_flag
+      unique_keys:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - update_flag
       param_name: period
     balance:
       api_table: balancesheet_vip
@@ -2391,6 +2397,12 @@ finance:
       - oth_rcv_total
       - fix_assets_total
       - update_flag
+      unique_keys:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - update_flag
       param_name: period
     cashflow:
       api_table: cashflow_vip
@@ -2500,6 +2512,13 @@ finance:
     fina_indicator:
       api_table: fina_indicator_vip
       table_name: fina_indicator
+      unique_keys:
+      - ts_code
+      - ann_date
+      - f_ann_date
+      - end_date
+      - update_flag
+      param_name: period
       date_column: end_date
       limit: 12000
       is_full: false
@@ -2685,6 +2704,11 @@ finance:
       - audit_result
       - audit_agency
       - audit_sign
+      - audit_sign
+      unique_keys:
+      - ts_code
+      - ann_date
+      - end_date
       param_name: period
     fina_mainbz:
       api_table: fina_mainbz_vip
@@ -2701,6 +2725,12 @@ finance:
       - bz_profit
       - bz_cost
       - curr_type
+      - update_flag
+      unique_keys:
+      - ts_code
+      - end_date
+      - bz_item
+      - bz_code
       - update_flag
       param_name: period
     dividend:
@@ -2727,6 +2757,12 @@ finance:
       - base_date
       - base_share
       - update_flag
+      unique_keys:
+      - ts_code
+      - ann_date
+      - end_date
+      - div_proc
+      - update_flag
       param_name: period
     forecast:
       api_table: forecast_vip
@@ -2747,6 +2783,12 @@ finance:
       - first_ann_date
       - summary
       - change_reason
+      - update_flag
+      unique_keys:
+      - ts_code
+      - ann_date
+      - end_date
+      - type
       - update_flag
       param_name: period
     express:
@@ -2788,6 +2830,11 @@ finance:
       - perf_summary
       - is_audit
       - remark
+      - update_flag
+      unique_keys:
+      - ts_code
+      - ann_date
+      - end_date
       - update_flag
       param_name: period
     disclosure_date:

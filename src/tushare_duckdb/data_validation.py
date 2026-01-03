@@ -1,5 +1,7 @@
 from pathlib import Path
 import numpy as np
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from .utils import get_connection, table_exists, get_table_schema, show_table_statistics
 from .utils import get_all_dates, get_trade_dates, get_quarterly_dates
 from .config import API_CONFIG
@@ -15,6 +17,10 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
     table_status: 表状态列表
     daily_data: 逐日/逐期数据量详情列表
     frequency: 'daily' (默认) 或 'quarterly'
+    
+    如果是 frequency='quarterly' (财务数据):
+    table_status 将包含: 数据库名称, 表名, 报告期, 记录数, TS_CODE计数
+    daily_data 结构会有所不同，以报告期为 key。
     """
     if not tables:
         logger.error("错误：未提供表列表")
@@ -34,7 +40,21 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
             valid_days = []
             trade_days = set()
             if is_range_check:
-                if detailed and not irregular:
+                if frequency == 'quarterly':
+                     if not start_date or not end_date:
+                         # Default to last 8 quarters if no range specified
+                         today = datetime.now()
+                         # Start from current or previous quarter
+                         # Simple logic: go back 24 months and filter quarters
+                         check_start = (today - relativedelta(months=24)).strftime('%Y%m%d')
+                         check_end = today.strftime('%Y%m%d')
+                         all_qs = get_quarterly_dates(check_start, check_end)
+                         valid_days = all_qs[-8:] if len(all_qs) > 8 else all_qs
+                         # Update start/end for query context if needed (though based on valid_days logic below, it's fine)
+                     else:
+                        valid_days = get_quarterly_dates(start_date, end_date)
+                
+                elif detailed and not irregular:
                     valid_days = get_all_dates(start_date, end_date)
                     basic_db_path = basic_db_path or db_path
                     try:
@@ -45,16 +65,20 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                 elif use_trade_dates:
                     basic_db_path = basic_db_path or db_path
                     valid_days = get_trade_dates(basic_db_path, start_date, end_date, exchange)
-                elif frequency == 'quarterly':
-                    valid_days = get_quarterly_dates(start_date, end_date)
                 else:
                     valid_days = get_all_dates(start_date, end_date)
 
             if detailed and is_range_check and valid_days and not irregular:
                 if frequency == 'quarterly':
-                     daily_data = [{'日期': date, '类型': 'Q'} for date in valid_days]
-                else:
-                     daily_data = [{'日期': date, '是否交易日': 'Y' if date in trade_days else 'N'} for date in valid_days]
+                     daily_data = [{'报告期': date, '类型': 'Q'} for date in valid_days]
+                # Re-enable daily data logic for non-quarterly if range check is valid or frequency is quarterly (which implies range check fulfilled by default logic)
+            
+            # Special handling for quarterly default range enablement
+            if frequency == 'quarterly' and daily_data:
+                 # Ensure we have data container even if is_range_check was false initially
+                 pass
+            elif detailed and is_range_check and valid_days and not irregular:
+                 daily_data = [{'日期': date, '是否交易日': 'Y' if date in trade_days else 'N'} for date in valid_days]
 
             expected_keys = ['数据库名称', '表名', '最早日期', '最晚日期', '记录数']
             if not irregular:
@@ -97,15 +121,63 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                     anomaly_dates = 'N/A'
 
                     if date_column and not irregular:
-                        query = f"SELECT MIN(\"{date_column}\"), MAX(\"{date_column}\") FROM \"{table_name}\" WHERE \"{date_column}\" IS NOT NULL"
-                        result = conn.execute(query).fetchone()
-                        earliest_date = str(result[0]) if result and result[0] else 'N/A'
-                        latest_date = str(result[1] if result and result[1] else 'N/A')
-                        earliest_table_date = earliest_date if earliest_date != 'N/A' else '19900101'
+                        if frequency == 'quarterly':
+                             # 财务模式：特殊的统计逻辑，不需要最早/最晚日期等常规指标
+                             pass
+                        else:
+                            query = f"SELECT MIN(\"{date_column}\"), MAX(\"{date_column}\") FROM \"{table_name}\" WHERE \"{date_column}\" IS NOT NULL"
+                            result = conn.execute(query).fetchone()
+                            earliest_date = str(result[0]) if result and result[0] else 'N/A'
+                            latest_date = str(result[1] if result and result[1] else 'N/A')
+                            earliest_table_date = earliest_date if earliest_date != 'N/A' else '19900101'
                     else:
                         logger.warning(f"表 {table_name} 缺少日期列 {date_column}，标记为 N/A")
                         irregular = True
+                    
+                    # Finance specific logic
+                    if frequency == 'quarterly' and not irregular:
+                         # 我们需要按报告期聚合统计
+                         effective_start_date = valid_days[0] if valid_days else '19900101'
+                         effective_end_date = valid_days[-1] if valid_days else '21000101'
+                         
+                         # Check columns
+                         has_ts_code = 'ts_code' in target_columns
+                         
+                         query = f"""
+                            SELECT "{date_column}", COUNT(*), COUNT(DISTINCT {'ts_code' if has_ts_code else '1'})
+                            FROM "{table_name}"
+                            WHERE "{date_column}" IN ({','.join([f"'{d}'" for d in valid_days])})
+                            GROUP BY "{date_column}"
+                            ORDER BY "{date_column}" DESC
+                         """
+                         try:
+                             rows = conn.execute(query).fetchall()
+                             # rows: [(date, count, distinct_ts_code_count), ...]
+                             # 将结果填入 daily_data
+                             row_map = {str(r[0]): {'count': r[1], 'distinct': r[2]} for r in rows}
+                             
+                             if daily_data:
+                                 for i in range(len(valid_days)):
+                                     d = valid_days[i]
+                                     if d in row_map:
+                                         daily_data[i][table_name] = f"{row_map[d]['distinct']}家/{row_map[d]['count']}条"
+                                     else:
+                                         daily_data[i][table_name] = "0/0"
+                             
+                             # 更新 table_status (对于财务表，主要信息都在 daily_data 里了，这里只留基本信息)
+                             status = {
+                                '数据库名称': db_name,
+                                '表名': table_name,
+                                '记录数': total_records # 总记录数依然有参考价值
+                             }
+                             table_status.append(status)
+                             continue # Skip standard logic
+                             
+                         except Exception as e:
+                             logger.error(f"财务统计查询失败: {e}")
+                             irregular = True # Fallback
 
+                    earliest_table_date = earliest_date if earliest_date != 'N/A' else '19900101'
                     effective_start_date = max(start_date,
                                                earliest_table_date) if is_range_check and earliest_table_date != 'N/A' else start_date
                     effective_valid_days = [d for d in valid_days if

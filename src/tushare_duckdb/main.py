@@ -265,6 +265,7 @@ def main():
                 '10': 'marco',  # 宏观数据
                 '12': 'stock_list', # 股票列表
                 '13': 'stock_events', # 股票事件
+                '14': 'finance',    # 财务数据
                 'all': 'all'  # 全部
             }
 
@@ -274,7 +275,8 @@ def main():
                     desc = {
                         'stock': '股票行情', 'index_daily': '指数行情', 'fund': '基金行情', 'option': '期权行情',
                         'future': '期货行情', 'bond': '券债行情', 'margin': '融资融券', 'moneyflow': '资金流向',
-                        'reference': '参考数据', 'marco': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件'
+                        'reference': '参考数据', 'marco': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件',
+                        'finance': '财务数据'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
             print("  [all] 所有类别")
@@ -288,7 +290,7 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '13']:
+                elif user_input in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '13', '14']:
                     selected_key = user_input
                     break
                 else:
@@ -298,9 +300,19 @@ def main():
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
 
             # === 第三步：日期范围与详情选项（保持您原习惯）===
-            start = get_input("开始日期（YYYYMMDD，默认 20251101）: ", default='20251101')
-            end = get_input(f"结束日期（YYYYMMDD，默认今天 {datetime.now().strftime('%Y%m%d')}）: ",
-                            default=datetime.now().strftime('%Y%m%d'))
+            # === 第三步：日期范围与详情选项（保持您原习惯）===
+            default_start = '20251101'
+            default_end = datetime.now().strftime('%Y%m%d')
+            
+            if target_category == 'finance':
+                # 财务数据默认不填日期，由校验函数自动取最近8期
+                default_start = ''
+                default_end = ''
+                print("提示：财务数据默认回溯最近 8 个报告期，直接回车即可。")
+
+            start = get_input(f"开始日期（YYYYMMDD{'，默认 ' + default_start if default_start else '，默认自动'}）: ", default=default_start)
+            end = get_input(f"结束日期（YYYYMMDD{'，默认 ' + default_end if default_end else '，默认自动'}）: ", default=default_end)
+            
             detailed_input = get_input("是否显示逐日数据量详情？(y/n，默认 y): ", default='y')
             detailed = detailed_input.lower() in ['y', 'yes', '1', '']
 
@@ -322,12 +334,29 @@ def main():
                     (t, config['tables'][t].get('date_column', 'trade_date'))
                     for t in config['tables']
                 ]
+                # 特殊逻辑：如果是财务校验且用户未输入日期，传递 None 给 validation 函数以触发默认8个季度逻辑
+                # 但 validation 函数签名里 start_date/end_date 是必须的吗？get_database_status(..., start_date=start, end_date=end)
+                # 我们传入的 start/end 是用户输入的值。
+                # 如果用户输入了默认值（main.py里有默认值），我们需要区分。
+                # Hack: 如果 cat == 'finance' 且 start/end 是默认值（或者我们修改 input 逻辑让 finance 默认空），
+                # 这里简单起见，如果 frequency='quarterly'，我们在 data_validation 里已经处理了 "if not start or not end".
+                # 问题是 main.py 在 lines 296-298 强制给了默认值。
+                # 我们修改 lines 296-298 的逻辑？不，那样会影响其他。
+                # 我们在这里做 override。
+                
+                val_start = start
+                val_end = end
+                # 如果是 finance，且用户使用了默认全范围（通常是 20251101-Now），这对于 finance 来说毫无意义（可能只有1个季度）
+                # 我们定一个规则：如果用户在 Finance Check 模式下输入了默认日期（或者我们识别出它是 Finance），
+                # 最好还是在 input 阶段就改。但 input 阶段是统一的。
+                # 可以在 input 阶段判断 target_category。
+                
                 status, daily = get_database_status(
                     db_path=config['db_path'],
                     basic_db_path=BASIC_DB_PATH,
                     tables=tables_list,
-                    start_date=start,
-                    end_date=end,
+                    start_date=val_start,
+                    end_date=val_end,
                     detailed=detailed,
                     exchange='SSE',
                     frequency='quarterly' if cat == 'finance' else 'daily'

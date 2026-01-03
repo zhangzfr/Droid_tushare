@@ -162,7 +162,7 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
         pass
     else:
         mode = config.get('date_param_mode', 'single')
-        single_param = config.get('date_param')
+        single_param = config.get('date_param') or config.get('param_name')
 
         if mode == 'range':
             params['start_date'] = format_date(start_date)
