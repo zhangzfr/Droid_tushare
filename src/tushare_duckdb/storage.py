@@ -86,9 +86,15 @@ class DuckDBStorage:
         for col in date_cols_to_fix:
             if col in processed_df.columns: # Use processed_df here
                 try:
-                    # 统一转为 datetime 再转回 YYYYMMDD 字符串
+                    target_fmt = '%Y%m%d'
+                    parse_fmt = None
+                    if api_config_entry and api_config_entry.get('api_date_format') == 'YYYYMM':
+                        target_fmt = '%Y%m'
+                        parse_fmt = '%Y%m'
+                    
+                    # 统一转为 datetime 再转回目标格式字符串
                     # errors='coerce' 会将无法解析的变成 NaT，fillna('') 变为空字符串
-                    processed_df[col] = pd.to_datetime(processed_df[col], errors='coerce').dt.strftime('%Y%m%d').fillna('')
+                    processed_df[col] = pd.to_datetime(processed_df[col], format=parse_fmt, errors='coerce').dt.strftime(target_fmt).fillna('')
                 except Exception as e:
                     logger.warning(f"列 {col} 日期格式化失败: {e}")
 

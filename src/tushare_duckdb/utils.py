@@ -122,6 +122,55 @@ def get_quarterly_dates(start_date, end_date):
     return quarters
 
 
+def get_monthly_dates(start_date, end_date):
+    """
+    生成月份列表 (YYYYMM 或 YYYYMMDD格式取决于需求，这里返回 YYYYMM)
+    用于月度数据校验
+    """
+    months = []
+    try:
+        # 兼容 YYYYMM 和 YYYYMMDD 输入
+        s_str = str(start_date)
+        e_str = str(end_date)
+        
+        if len(s_str) == 6: s_str += '01'
+        if len(e_str) == 6: 
+            # End date YYYYMM -> end of that month
+            dt = datetime.strptime(e_str, '%Y%m')
+            _, last = calendar.monthrange(dt.year, dt.month)
+            e_str = f"{e_str}{last}"
+
+        current = datetime.strptime(s_str, '%Y%m%d')
+        end_dt = datetime.strptime(e_str, '%Y%m%d')
+        
+        # Adjust current to 1st of month to simplify loop
+        current = current.replace(day=1)
+        
+    except ValueError as e:
+        print(f"错误：日期格式无效 ({start_date}, {end_date}): {e}")
+        return []
+
+    while current <= end_dt:
+        # Check if this month is within range (at least partially? or fully? 
+        # Usually for checking if data exists for '202305', we just need '202305' key)
+        # We will return YYYYMM strings which are common for monthly tables (like cn_pmi)
+        ym_str = current.strftime('%Y%m')
+        
+        # Check strict range if needed. 
+        # If start is 20230115, do we include 202301? Maybe yes.
+        # Simple logic: if current month's end date >= start_date AND current month's start date <= end_date
+        _, last_day = calendar.monthrange(current.year, current.month)
+        m_end = current.replace(day=last_day)
+        
+        if m_end >= datetime.strptime(s_str, '%Y%m%d') and current <= end_dt:
+             months.append(ym_str)
+        
+        # Next month
+        current += relativedelta(months=1)
+        
+    return months
+
+
 def generate_param_grid(required_params):
     if not required_params:
         return [{}]
@@ -154,6 +203,8 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
         try:
             if target_format == 'YYYY-MM-DD' and '-' not in d_str and len(d_str) == 8:
                 return f"{d_str[:4]}-{d_str[4:6]}-{d_str[6:]}"
+            if target_format == 'YYYYMM' and len(d_str) == 8:
+                return d_str[:6]
             return d_str
         except:
             return d_str
@@ -165,8 +216,10 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
         single_param = config.get('date_param') or config.get('param_name')
 
         if mode == 'range':
-            params['start_date'] = format_date(start_date)
-            params['end_date'] = format_date(end_date)
+            start_key = config.get('start_param', 'start_date')
+            end_key = config.get('end_param', 'end_date')
+            params[start_key] = format_date(start_date)
+            params[end_key] = format_date(end_date)
         else:
             key = single_param or 'trade_date'
             # 范围查询时，取 end_date（最常见需求）

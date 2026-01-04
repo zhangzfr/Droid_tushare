@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from .utils import get_connection, table_exists, get_table_schema, show_table_statistics
-from .utils import get_all_dates, get_trade_dates, get_quarterly_dates
+from .utils import get_all_dates, get_trade_dates, get_quarterly_dates, get_monthly_dates
 from .config import API_CONFIG
 from .logger import logger
 
@@ -44,16 +44,20 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                      if not start_date or not end_date:
                          # Default to last 8 quarters if no range specified
                          today = datetime.now()
-                         # Start from current or previous quarter
-                         # Simple logic: go back 24 months and filter quarters
                          check_start = (today - relativedelta(months=24)).strftime('%Y%m%d')
                          check_end = today.strftime('%Y%m%d')
                          all_qs = get_quarterly_dates(check_start, check_end)
                          valid_days = all_qs[-8:] if len(all_qs) > 8 else all_qs
-                         # Update start/end for query context if needed (though based on valid_days logic below, it's fine)
                      else:
                         valid_days = get_quarterly_dates(start_date, end_date)
                 
+                elif frequency == 'monthly':
+                    # 月度数据校验逻辑
+                    valid_days = get_monthly_dates(start_date, end_date)
+                    if not valid_days: 
+                         # fallback if generation failed
+                         valid_days = []
+
                 elif detailed and not irregular:
                     valid_days = get_all_dates(start_date, end_date)
                     basic_db_path = basic_db_path or db_path
@@ -71,6 +75,8 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
             if detailed and is_range_check and valid_days and not irregular:
                 if frequency == 'quarterly':
                      daily_data = [{'报告期': date, '类型': 'Q'} for date in valid_days]
+                elif frequency == 'monthly':
+                     daily_data = [{'日期': date, '类型': 'M'} for date in valid_days]
                 # Re-enable daily data logic for non-quarterly if range check is valid or frequency is quarterly (which implies range check fulfilled by default logic)
             
             # Special handling for quarterly default range enablement
@@ -135,6 +141,141 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                         irregular = True
                     
                     # Finance specific logic
+                    if frequency == 'quarterly' and not irregular:
+                         # ... (Existing Quarterly Logic) ...
+                         # We need a robust way to determine which date column to use for "Report Period" validation
+                         # Default to 'end_date' for finance tables if it exists, otherwise use config date_column
+                         
+                         report_date_col = 'end_date' if 'end_date' in target_columns else date_column
+                         
+                         # Check columns
+                         has_ts_code = 'ts_code' in target_columns
+                         
+                         query = f"""
+                            SELECT "{report_date_col}", COUNT(*), COUNT(DISTINCT {'ts_code' if has_ts_code else '1'})
+                            FROM "{table_name}"
+                            WHERE "{report_date_col}" IN ({','.join([f"'{d}'" for d in valid_days])})
+                            GROUP BY "{report_date_col}"
+                            ORDER BY "{report_date_col}" DESC
+                         """
+                         try:
+                             rows = conn.execute(query).fetchall()
+                             # rows: [(date, count, distinct_ts_code_count), ...]
+                             # 将结果填入 daily_data
+                             row_map = {str(r[0]): {'count': r[1], 'distinct': r[2]} for r in rows}
+                             
+                             if daily_data:
+                                 for i in range(len(valid_days)):
+                                     d = valid_days[i]
+                                     if d in row_map:
+                                         daily_data[i][table_name] = f"{row_map[d]['distinct']}家/{row_map[d]['count']}条"
+                                     else:
+                                         daily_data[i][table_name] = "0/0"
+                             
+                             # 获取最早/最晚报告期
+                             min_max_query = f"SELECT MIN(\"{report_date_col}\"), MAX(\"{report_date_col}\") FROM \"{table_name}\""
+                             min_max_res = conn.execute(min_max_query).fetchone()
+                             earliest_report = str(min_max_res[0]) if min_max_res and min_max_res[0] else 'N/A'
+                             latest_report = str(min_max_res[1]) if min_max_res and min_max_res[1] else 'N/A'
+
+                             # 更新 table_status
+                             status = {
+                                '数据库名称': db_name,
+                                '表名': table_name,
+                                '最早报告期': earliest_report,
+                                '最晚报告期': latest_report,
+                                '记录数': total_records
+                             }
+                             table_status.append(status)
+                             continue # Skip standard logic
+                             
+                         except Exception as e:
+                             logger.error(f"财务统计查询失败: {e}")
+                             irregular = True # Fallback
+
+                    # Monthly Macro Data Logic
+                    if frequency == 'monthly' and not irregular:
+                        # 宏观数据如 cn_pmi，date_column 往往是 'month' (YYYYMM)
+                        # 但也有可能是 'trade_date' (YYYYMMDD) 如 shibor
+                        # 我们需要根据 date_column 的值长度来匹配 valid_days (YYYYMM)
+                        
+                        # 检测 DB 中该列的格式样本 (取第一条非空)
+                        try:
+                            sample_q = f"SELECT CAST(\"{date_column}\" AS VARCHAR) FROM \"{table_name}\" WHERE \"{date_column}\" IS NOT NULL LIMIT 1"
+                            sample_res = conn.execute(sample_q).fetchone()
+                            sample_val = str(sample_res[0]) if sample_res else ''
+                            
+                            is_yyyymm = len(sample_val) == 6
+                            is_yyyymmdd = len(sample_val) == 8
+                            
+                            # 构建查询
+                            # 如果 DB 是 YYYYMM，直接匹配 valid_days
+                            # 如果 DB 是 YYYYMMDD，匹配 valid_days (YYYYMM) 为前缀，或匹配该月内任意一天
+                            
+                            if is_yyyymm:
+                                query = f"""
+                                    SELECT "{date_column}", COUNT(*)
+                                    FROM "{table_name}"
+                                    WHERE "{date_column}" IN ({','.join([f"'{d}'" for d in valid_days])})
+                                    GROUP BY "{date_column}"
+                                """
+                                rows = conn.execute(query).fetchall()
+                                count_dict = {str(r[0]): r[1] for r in rows}
+                            
+                            elif is_yyyymmdd:
+                                # 对于 shibor 这种日频数据，但在 monthly 模式下展示
+                                # 我们统计每个月的数据条数
+                                query_parts = []
+                                for ym in valid_days:
+                                    # valid_days are YYYYMM
+                                    start_m = ym + '01'
+                                    # calculate end of month
+                                    # simple logic: look for date LIKE 'YYYYMM%'
+                                    # DuckDB supports LIKE
+                                    # But aggregate might be slow via looping?
+                                    # Better: extract YYYYMM from date_column
+                                    pass
+                                
+                                # Optimized query: Group by substr(date, 1, 6)
+                                query = f"""
+                                    SELECT substr(CAST("{date_column}" AS VARCHAR), 1, 6) as ym, COUNT(*)
+                                    FROM "{table_name}"
+                                    WHERE substr(CAST("{date_column}" AS VARCHAR), 1, 6) IN ({','.join([f"'{d}'" for d in valid_days])})
+                                    GROUP BY ym
+                                """
+                                rows = conn.execute(query).fetchall()
+                                count_dict = {str(r[0]): r[1] for r in rows}
+                                
+                            else:
+                                count_dict = {}
+
+                            # 填充 daily_data
+                            if daily_data:
+                                for i in range(len(valid_days)):
+                                    d = valid_days[i]
+                                    daily_data[i][table_name] = count_dict.get(d, 0)
+
+                            # 计算覆盖率
+                            existing = [d for d in valid_days if count_dict.get(d, 0) > 0]
+                            coverage = f"{len(existing)}/{len(valid_days)}"
+                            
+                            status = {
+                                '数据库名称': db_name,
+                                '表名': table_name,
+                                '最早日期': earliest_date,
+                                '最晚日期': latest_date,
+                                '记录数': total_records,
+                                '覆盖率': coverage,
+                                '缺失范围': '见详情',
+                                '异常日期': 'N/A'
+                            }
+                            table_status.append(status)
+                            continue # Skip standard logic
+
+                        except Exception as e:
+                            logger.error(f"月度统计查询失败 ({table_name}): {e}")
+                            irregular = True # Fallback
+
                     if frequency == 'quarterly' and not irregular:
                          # We need a robust way to determine which date column to use for "Report Period" validation
                          # Default to 'end_date' for finance tables if it exists, otherwise use config date_column

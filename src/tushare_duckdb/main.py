@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import calendar
 from tabulate import tabulate
 from .metadata import init_metadata, update_metadata
 from .data_validation import get_database_status
@@ -351,16 +352,68 @@ def main():
                 # 最好还是在 input 阶段就改。但 input 阶段是统一的。
                 # 可以在 input 阶段判断 target_category。
                 
-                status, daily = get_database_status(
-                    db_path=config['db_path'],
-                    basic_db_path=BASIC_DB_PATH,
-                    tables=tables_list,
-                    start_date=val_start,
-                    end_date=val_end,
-                    detailed=detailed,
-                    exchange='SSE',
-                    frequency='quarterly' if cat == 'finance' else 'daily'
-                )
+                # Special validation logic for 'marco' to support mixed frequencies
+                if cat == 'marco':
+                    # Identify monthly vs daily tables
+                    # Currently hardcoding cn_pmi as monthly based on user requirement
+                    monthly_tables = [t for t, _ in tables_list if t == 'cn_pmi']
+                    daily_tables = [t for t, _ in tables_list if t != 'cn_pmi']
+                    
+                    status_batch = []
+                    daily_batch = []
+
+                    # 1. Monthly Tables
+                    if monthly_tables:
+                        m_list = [(t, col) for t, col in tables_list if t in monthly_tables]
+                        s, d = get_database_status(
+                            db_path=config['db_path'],
+                            basic_db_path=BASIC_DB_PATH,
+                            tables=m_list,
+                            start_date=val_start,
+                            end_date=val_end,
+                            detailed=detailed,
+                            exchange='SSE',
+                            frequency='monthly'
+                        )
+                        status_batch.extend(s)
+                        if d: daily_batch.extend(d)
+
+                    # 2. Daily Tables
+                    if daily_tables:
+                        d_list = [(t, col) for t, col in tables_list if t in daily_tables]
+                        s, d = get_database_status(
+                            db_path=config['db_path'],
+                            basic_db_path=BASIC_DB_PATH,
+                            tables=d_list,
+                            start_date=val_start,
+                            end_date=val_end,
+                            detailed=detailed,
+                            exchange='SSE',
+                            frequency='daily'
+                        )
+                        status_batch.extend(s)
+                        if d: daily_batch.extend(d)
+                        
+                    # Assign back to main loop variables
+                    status = status_batch
+                    daily = daily_batch
+                
+                else:
+                    # Standard logic for other categories
+                    frequency = 'daily'
+                    if cat == 'finance':
+                        frequency = 'quarterly'
+
+                    status, daily = get_database_status(
+                        db_path=config['db_path'],
+                        basic_db_path=BASIC_DB_PATH,
+                        tables=tables_list,
+                        start_date=val_start,
+                        end_date=val_end,
+                        detailed=detailed,
+                        exchange='SSE',
+                        frequency=frequency
+                    )
                 all_status.extend(status)
                 if daily:
                     all_daily = daily  # 只保留最后一个类别的逐日详情（避免混淆）
@@ -416,19 +469,36 @@ def main():
                 start_date = datetime.now().strftime('%Y%m%d')
                 end_date = start_date
             else:
-                start_date = get_input(f"开始日期（YYYYMMDD，默认 {start_date_default}）: ", allow_zero=True, default=start_date_default)
-                if start_date is None: continue
-                end_date = get_input(f"结束日期（YYYYMMDD，默认 {end_date_default}）: ", allow_zero=True, default=end_date_default)
-                if end_date is None: continue
+                raw_start = get_input(f"开始日期（YYYYMMDD/YYYYMM，默认 {start_date_default}）: ", allow_zero=True, default=start_date_default)
+                if raw_start is None: continue
+                raw_end = get_input(f"结束日期（YYYYMMDD/YYYYMM，默认 {end_date_default}）: ", allow_zero=True, default=end_date_default)
+                if raw_end is None: continue
+
+                # === 日期模糊处理 (YYYYMM -> YYYYMMDD) ===
+                def parse_fuzzy_date(d_str, is_end=False):
+                    if len(d_str) == 6:
+                        try:
+                            dt = datetime.strptime(d_str, '%Y%m')
+                            if is_end:
+                                _, last_day = calendar.monthrange(dt.year, dt.month)
+                                return f"{d_str}{last_day}"
+                            else:
+                                return f"{d_str}01"
+                        except:
+                            return d_str
+                    return d_str
+
+                start_date = parse_fuzzy_date(raw_start, is_end=False)
+                end_date = parse_fuzzy_date(raw_end, is_end=True)
 
                 try:
                     datetime.strptime(start_date, '%Y%m%d')
                     datetime.strptime(end_date, '%Y%m%d')
                     if start_date > end_date:
-                        print("错误：开始日期不能晚于结束日期")
+                        print(f"错误：开始日期 {start_date} 不能晚于结束日期 {end_date}")
                         continue
                 except:
-                    print("日期格式错误，必须为 YYYYMMDD")
+                    print(f"日期格式错误，支持 YYYYMMDD 或 YYYYMM")
                     continue
 
             # 交易所选择改为从配置获取
