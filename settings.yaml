@@ -2103,8 +2103,25 @@ marco:
       - pmi020900
       - pmi021000
       - pmi030000
-      earliest_date: '200501'
+      earliest_date: '20050101'
       limit: 1000
+      date_column: month
+      date_type: natural
+      date_param: month
+      date_param_mode: range
+      start_param: start_m
+      end_param: end_m
+      api_date_format: YYYYMM
+    sf_month:
+      unique_keys:
+      - month
+      fields:
+      - month
+      - inc_month
+      - inc_cumval
+      - stk_endval
+      earliest_date: '20150101'
+      limit: 2000
       date_column: month
       date_type: natural
       date_param: month

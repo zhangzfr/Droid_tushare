@@ -982,6 +982,92 @@ TABLE_SCHEMAS = {
             last_updated VARCHAR
         )
     """,
+    'cn_pmi': """
+        CREATE TABLE cn_pmi (
+            month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
+            pmi010000 DOUBLE,              -- 制造业PMI
+            pmi010100 DOUBLE,              -- 大型企业PMI
+            pmi010200 DOUBLE,              -- 中型企业PMI
+            pmi010300 DOUBLE,              -- 小型企业PMI
+            pmi010400 DOUBLE,              -- 生产指数
+            pmi010401 DOUBLE,
+            pmi010402 DOUBLE,
+            pmi010403 DOUBLE,
+            pmi010500 DOUBLE,              -- 新订单指数
+            pmi010501 DOUBLE,
+            pmi010502 DOUBLE,
+            pmi010503 DOUBLE,
+            pmi010600 DOUBLE,              -- 新出口订单指数
+            pmi010601 DOUBLE,
+            pmi010602 DOUBLE,
+            pmi010603 DOUBLE,
+            pmi010700 DOUBLE,
+            pmi010701 DOUBLE,
+            pmi010702 DOUBLE,
+            pmi010703 DOUBLE,
+            pmi010800 DOUBLE,
+            pmi010801 DOUBLE,
+            pmi010802 DOUBLE,
+            pmi010803 DOUBLE,
+            pmi010900 DOUBLE,
+            pmi010901 DOUBLE,
+            pmi010902 DOUBLE,
+            pmi010903 DOUBLE,
+            pmi011000 DOUBLE,
+            pmi011001 DOUBLE,
+            pmi011002 DOUBLE,
+            pmi011003 DOUBLE,
+            pmi011100 DOUBLE,
+            pmi011101 DOUBLE,
+            pmi011102 DOUBLE,
+            pmi011103 DOUBLE,
+            pmi011200 DOUBLE,
+            pmi011201 DOUBLE,
+            pmi011202 DOUBLE,
+            pmi011203 DOUBLE,
+            pmi011300 DOUBLE,
+            pmi011400 DOUBLE,
+            pmi011500 DOUBLE,
+            pmi011600 DOUBLE,
+            pmi011700 DOUBLE,
+            pmi011800 DOUBLE,
+            pmi011900 DOUBLE,
+            pmi012000 DOUBLE,
+            pmi020100 DOUBLE,              -- 非制造业PMI
+            pmi020101 DOUBLE,
+            pmi020102 DOUBLE,
+            pmi020200 DOUBLE,
+            pmi020201 DOUBLE,
+            pmi020202 DOUBLE,
+            pmi020300 DOUBLE,
+            pmi020301 DOUBLE,
+            pmi020302 DOUBLE,
+            pmi020400 DOUBLE,
+            pmi020401 DOUBLE,
+            pmi020402 DOUBLE,
+            pmi020500 DOUBLE,
+            pmi020501 DOUBLE,
+            pmi020502 DOUBLE,
+            pmi020600 DOUBLE,
+            pmi020601 DOUBLE,
+            pmi020602 DOUBLE,
+            pmi020700 DOUBLE,
+            pmi020800 DOUBLE,
+            pmi020900 DOUBLE,
+            pmi021000 DOUBLE,
+            pmi030000 DOUBLE,              -- 综合PMI
+            last_updated VARCHAR
+        )
+    """,
+    'sf_month': """
+        CREATE TABLE sf_month (
+            month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
+            inc_month DOUBLE,              -- 当月新增（亿元）
+            inc_cumval DOUBLE,             -- 累计值（亿元）
+            stk_endval DOUBLE,             -- 存量期末值（万亿元）
+            last_updated VARCHAR
+        )
+    """,
 
     # === bond 相关 ===
     'cb_basic': """
