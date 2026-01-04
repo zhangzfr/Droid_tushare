@@ -171,18 +171,39 @@ DEBUG=false
 - **本地数据**：直接读取 `opt_basic`、`opt_daily` 与 `shibor` 表，无需网络请求。
 - **完整可追溯**：计算结果保存在 `data/vix_result_YYYYMMDD_YYYYMMDD.csv`，其中包含 `near_term`、`next_term`、`r_near`、`r_next`、`sigma_sq_near`、`sigma_sq_next`、`F_near`、`F_next`、`K0_near`、`K0_next`、`weight`、`weighted_variance` 等中间变量，便于回溯。
 - **详细追溯文件**：`data/vix_details_near_*.csv` 与 `data/vix_details_next_*.csv` 分别记录近月和次近月每个期权合约的计算贡献、风险自由率、到期时间等信息。
-- **使用说明**：运行 `python -m src.vix.run --start_date YYYYMMDD --end_date YYYYMMDD` 即可生成上述文件。更多使用细节与列含义请参阅 `docs/vix_calculation_explanation.md`。
+- **使用说明**：运行 `python -m src.vix.run --start_date YYYYMMDD --end_date YYYYMMDD --underlying 510050.SH` 即可生成上述文件。支持的标的包括但不限于 `510050.SH` (上证50ETF), `510300.SH` (沪深300ETF), `588000.SH` (科创50ETF) 等。更多使用细节与列含义请参阅 `docs/vix_calculation_explanation.md`。
 
 ### 示例
 ```bash
+# 计算上证50ETF波动率 (默认)
 python -m src.vix.run --start_date 20230101 --end_date 20230110
+
+# 计算沪深300ETF波动率
+python -m src.vix.run --start_date 20230101 --end_date 20230110 --underlying 510300.SH
+
 # 生成:
-# data/vix_result_20230101_20230110.csv
-# data/vix_details_near_20230101_20230110.csv
-# data/vix_details_next_20230101_20230110.csv
+# data/vix_result_510300.SH_20230101_20230110.csv
+# data/vix_details_near_510300.SH_20230101_20230110.csv
+# data/vix_details_next_510300.SH_20230101_20230110.csv
 ```
 
 该模块已通过本地数据验证，详细的计算方法与数据来源解释已在文档中说明，便于用户进行二次验证与研究。
+
+## 📋 支持的 VIX 标的（Underlying）
+
+| 标的代码 | 说明（中文） | 对应指数代码 | 交易所 |
+|----------|--------------|--------------|--------|
+| `510050.SH` | 华夏上证 50ETF | `000016.SH` | SSE |
+| `510300.SH` | 华泰柏瑞沪深 300ETF | `000300.SH` | SSE |
+| `588080.SH` | 易方达上证科创板 50ETF | `000688.SH` | SSE |
+| `588000.SH` | 华夏上证科创板 50ETF | `000688.SH` | SSE |
+| `159922.SZ` | 嘉实中证 500ETF | `399905.SZ` | SZSE |
+| `510500.SH` | 南方中证 500ETF | `000905.SH` | SSE |
+| `159901.SZ` | 易方达深证 100ETF | `399330.SZ` | SZSE |
+| `159919.SZ` | 嘉实沪深 300ETF | `399300.SZ` | SZSE |
+| `159915.SZ` | 易方达创业板ETF | `399102.SZ` | SZSE |
+
+> **使用方法**：在运行 VIX 计算时通过 `--underlying` 参数指定上述任意标的代码，例如 `--underlying 510300.SH`。如果不指定，默认使用 `510050.SH`（上证 50ETF）。
 
 **注意**：
 - `DB_ROOT` 目录将自动创建多个 `.db` 文件，每个类别一个数据库文件

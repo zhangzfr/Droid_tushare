@@ -8,19 +8,19 @@ import os
 
 # Adjust path to allow importing from src based on project structure if needed
 # However, if running as module from root, it should be fine.
-from .config import OPT_DB_PATH, MARCO_DB_PATH
+from .config import OPT_DB_PATH, MARCO_DB_PATH, ETF_OPTIONS, INDEX_OPTIONS
 
 # Constants
 YEARS = 365
 
-def fetch_option_data(start_date: str, end_date: str, underlying_code: str = '510050.SH') -> pd.DataFrame:
+def fetch_option_data(start_date: str, end_date: str, underlying: str = '510050.SH') -> pd.DataFrame:
     """
     Fetches and prepares option data from DuckDB for VIX calculation.
     
     Args:
         start_date (str): Start date in 'YYYYMMDD' format.
         end_date (str): End date in 'YYYYMMDD' format.
-        underlying_code (str): Underlying ETF code. Default '510050.SH'.
+        underlying (str): Underlying ETF or Index code. Default '510050.SH'.
         
     Returns:
         pd.DataFrame: Formatted option data with columns:
@@ -42,32 +42,32 @@ def fetch_option_data(start_date: str, end_date: str, underlying_code: str = '51
         # Note: opt_basic has 'ts_code', 'call_put', 'exercise_price', 'maturity_date', 'list_date'
         # underlying_code check? opt_basic might not have underlying_code column in the simple schema I saw earlier? 
         # Checking schema.py: opt_basic has: ts_code, exchange, name, ..., opt_code, ...
-        # It DOES NOT seem to have underlying_code explicitly in the Create Table statement I saw earlier?
-        # Wait, let me re-check schema.py content from previous turns.
-        # step 39: opt_basic definition lines 213-234. No underlying_code. 
-        # But `utils/VIX/run.py` called `pro.opt_basic(..., underlying_ts_code=underlying_code, ...)`
-        # If the local DB `opt_basic` table doesn't have underlying info, we might be in trouble if there are multiple underlyings mixed.
-        # However, for now, let's assume the user might have only 510050 or 300ETFs. 
-        # Common practice in Tushare sync: maybe they fetch everything?
-        # Let's assume we proceed without filtering by underlying in SQL if the column is missing, filtering later if needed.
-        # Actually, let's check one columns: `opt_daily` has `ts_code`.
+        # Resolve Underlying Config
+        target_config = ETF_OPTIONS.get(underlying) or INDEX_OPTIONS.get(underlying)
         
-        # Let's constructing the query.
-        # Filter for 50ETF options on SSE.
-        # ts_code usually starts with 1000 for ETF options on SSE.
-        # name usually contains '50ETF'.
+        if not target_config:
+            print(f"Warning: Underlying {underlying} not found in config. Using generic filter if possible or failing.")
+            # Fallback or strict fail? Let's fail for now to be safe.
+            raise ValueError(f"Underlying {underlying} not supported.")
+            
+        exchange = target_config['exchange']
+        # Use name prefix for filtering. 
+        # Note: opt_basic name usually starts with the ETF name. 
+        # e.g. "华夏上证50ETF" -> "华夏上证50ETF期权..."
+        name_filter = target_config['name']
+        
+        print(f"Fetching options for {name_filter} ({underlying}) on {exchange}...")
+        
+        # 1. Fetch Basic Info (Contract details)
+        # Filter by Exchange and Name pattern
         query_basic = f"""
-            SELECT ts_code, call_put, exercise_price, maturity_date
-            FROM opt_basic
-            WHERE list_date <= '{end_date}'
-              AND maturity_date >= '{start_date}'
-              AND exchange = 'SSE'
-              AND name LIKE '%50ETF%'
-        """
-        # If underlying logic is needed we might need another mapping table or it might be in opt_basic and I missed it 
-        # or it is valid to assume we want all options. 
-        # But '510050.SH' options are usually what we want for basic VIX.
-        
+                SELECT ts_code, call_put, exercise_price, maturity_date
+                FROM opt_basic
+                WHERE list_date <= '{end_date}'
+                  AND maturity_date >= '{start_date}'
+                  AND exchange = '{exchange}'
+                  AND name LIKE '{name_filter}%'
+            """
         df_basic = conn.execute(query_basic).fetchdf()
         
         # 2. Fetch Daily Prices (opt_daily)

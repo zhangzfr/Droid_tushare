@@ -15,6 +15,7 @@ def main():
     
     print(f"--- Starting Chinese VIX Calculation ---")
     print(f"Period: {args.start_date} to {args.end_date}")
+    print(f"Underlying: {args.underlying}")
     
     # 1. Load Data
     print("Loading data...")
@@ -82,7 +83,7 @@ def main():
         # Save Summary
         import os
         os.makedirs('data', exist_ok=True)
-        summary_file = f"data/vix_result_{args.start_date}_{args.end_date}.csv"
+        summary_file = f"data/vix_result_{args.underlying}_{args.start_date}_{args.end_date}.csv"
         df_result.to_csv(summary_file, index=False)
         print(f"Saved summary to {summary_file}")
         
@@ -94,8 +95,8 @@ def main():
             df_near = df_details[df_details['term_type'] == 'near']
             df_next = df_details[df_details['term_type'] == 'next']
             
-            near_file = f"data/vix_details_near_{args.start_date}_{args.end_date}.csv"
-            next_file = f"data/vix_details_next_{args.start_date}_{args.end_date}.csv"
+            near_file = f"data/vix_details_near_{args.underlying}_{args.start_date}_{args.end_date}.csv"
+            next_file = f"data/vix_details_next_{args.underlying}_{args.start_date}_{args.end_date}.csv"
             
             df_near.to_csv(near_file, index=False)
             df_next.to_csv(next_file, index=False)
