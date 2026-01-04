@@ -354,49 +354,51 @@ def main():
                 
                 # Special validation logic for 'marco' to support mixed frequencies
                 if cat == 'marco':
-                    # Identify monthly vs daily tables
-                    # Currently hardcoding cn_pmi as monthly based on user requirement
-                    monthly_tables = [t for t, _ in tables_list if t == 'cn_pmi']
-                    daily_tables = [t for t, _ in tables_list if t != 'cn_pmi']
+                    # Define monthly vs daily tables
+                    monthly_table_names = ['cn_pmi']
+                    daily_table_names = [t for t in config['tables'] if t not in monthly_table_names]
                     
-                    status_batch = []
-                    daily_batch = []
-
-                    # 1. Monthly Tables
-                    if monthly_tables:
-                        m_list = [(t, col) for t, col in tables_list if t in monthly_tables]
+                    # Prompt for sub-category
+                    print("\n宏观数据包含不同频率的表：")
+                    print("  1. 日频数据 (shibor, shibor_quote, us_*)")
+                    print("  2. 月频数据 (cn_pmi)")
+                    print("  3. 全部（分开显示）")
+                    sub_choice = get_input("请选择 [默认 3]: ", default='3')
+                    
+                    def run_marco_validation(table_names, freq, section_title):
+                        """Helper to run validation and display results for a subset of tables."""
+                        if not table_names:
+                            return
+                        t_list = [(t, config['tables'][t].get('date_column', 'trade_date')) for t in table_names]
                         s, d = get_database_status(
                             db_path=config['db_path'],
                             basic_db_path=BASIC_DB_PATH,
-                            tables=m_list,
+                            tables=t_list,
                             start_date=val_start,
                             end_date=val_end,
                             detailed=detailed,
                             exchange='SSE',
-                            frequency='monthly'
+                            frequency=freq
                         )
-                        status_batch.extend(s)
-                        if d: daily_batch.extend(d)
-
-                    # 2. Daily Tables
-                    if daily_tables:
-                        d_list = [(t, col) for t, col in tables_list if t in daily_tables]
-                        s, d = get_database_status(
-                            db_path=config['db_path'],
-                            basic_db_path=BASIC_DB_PATH,
-                            tables=d_list,
-                            start_date=val_start,
-                            end_date=val_end,
-                            detailed=detailed,
-                            exchange='SSE',
-                            frequency='daily'
-                        )
-                        status_batch.extend(s)
-                        if d: daily_batch.extend(d)
-                        
-                    # Assign back to main loop variables
-                    status = status_batch
-                    daily = daily_batch
+                        print(f"\n{'=' * 80}")
+                        print(f"=== {section_title} ===")
+                        if s:
+                            print(tabulate(s, headers='keys', tablefmt='psql', stralign='right'))
+                        if detailed and d:
+                            date_key = '日期' if freq == 'monthly' else '日期'
+                            print(f"\n逐{'月' if freq == 'monthly' else '日'}数据量详情（共 {len(d)} {'月' if freq == 'monthly' else '天'}，完整展示）：")
+                            print(tabulate(d, headers='keys', tablefmt='psql', stralign='right'))
+                    
+                    if sub_choice == '1':
+                        run_marco_validation(daily_table_names, 'daily', '日频宏观数据')
+                    elif sub_choice == '2':
+                        run_marco_validation(monthly_table_names, 'monthly', '月频宏观数据')
+                    else:  # '3' or default
+                        run_marco_validation(daily_table_names, 'daily', '日频宏观数据')
+                        run_marco_validation(monthly_table_names, 'monthly', '月频宏观数据')
+                    
+                    # Skip default display logic for marco
+                    continue
                 
                 else:
                     # Standard logic for other categories
