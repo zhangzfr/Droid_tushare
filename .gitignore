@@ -12,7 +12,9 @@ logs/
 
 # 3. Exclude test database files
 test_db_data/
+data/
 *.db
+*.csv
 
 # 4. Exclude Python bytecode and cache
 **/__pycache__/

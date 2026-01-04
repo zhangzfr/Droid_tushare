@@ -77,7 +77,9 @@ def main():
         print(df_result['vix'].describe())
         
         # Optional: Save to file?
-        output_file = f"vix_result_{args.start_date}_{args.end_date}.csv"
+        import os
+        os.makedirs('data', exist_ok=True)
+        output_file = f"data/vix_result_{args.start_date}_{args.end_date}.csv"
         df_result.to_csv(output_file, index=False)
         print(f"\nSaved results to {output_file}")
 
