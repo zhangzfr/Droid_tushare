@@ -163,6 +163,27 @@ LOG_LEVEL=INFO
 DEBUG=false
 ```
 
+## 📈 VIX 计算模块
+
+本项目新增了 `src/vix` 子模块，用于计算中国市场的波动率指数（VIX）。该模块基于本地 DuckDB 中的期权数据和 Shibor 利率进行无模型（Model‑Free）计算。
+
+### 关键特性
+- **本地数据**：直接读取 `opt_basic`、`opt_daily` 与 `shibor` 表，无需网络请求。
+- **完整可追溯**：计算结果保存在 `data/vix_result_YYYYMMDD_YYYYMMDD.csv`，其中包含 `near_term`、`next_term`、`r_near`、`r_next`、`sigma_sq_near`、`sigma_sq_next`、`F_near`、`F_next`、`K0_near`、`K0_next`、`weight`、`weighted_variance` 等中间变量，便于回溯。
+- **详细追溯文件**：`data/vix_details_near_*.csv` 与 `data/vix_details_next_*.csv` 分别记录近月和次近月每个期权合约的计算贡献、风险自由率、到期时间等信息。
+- **使用说明**：运行 `python -m src.vix.run --start_date YYYYMMDD --end_date YYYYMMDD` 即可生成上述文件。更多使用细节与列含义请参阅 `docs/vix_calculation_explanation.md`。
+
+### 示例
+```bash
+python -m src.vix.run --start_date 20230101 --end_date 20230110
+# 生成:
+# data/vix_result_20230101_20230110.csv
+# data/vix_details_near_20230101_20230110.csv
+# data/vix_details_next_20230101_20230110.csv
+```
+
+该模块已通过本地数据验证，详细的计算方法与数据来源解释已在文档中说明，便于用户进行二次验证与研究。
+
 **注意**：
 - `DB_ROOT` 目录将自动创建多个 `.db` 文件，每个类别一个数据库文件
 - 不要将 `.env` 文件提交到版本控制系统（已添加到 `.gitignore`）
