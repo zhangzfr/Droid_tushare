@@ -2060,7 +2060,8 @@ marco:
       limit: 2000
       date_column: date
       date_type: natural
-      is_daily: true
+      is_daily: false
+      date_param_mode: range
     us_trycr:
       unique_keys:
       - date
@@ -2075,7 +2076,8 @@ marco:
       limit: 2000
       date_column: date
       date_type: natural
-      is_daily: true
+      is_daily: false
+      date_param_mode: range
     us_tltr:
       unique_keys:
       - date
@@ -2087,7 +2089,8 @@ marco:
       earliest_date: '20070101'
       limit: 2000
       date_column: date
-      is_daily: true
+      is_daily: false
+      date_param_mode: range
     us_trltr:
       unique_keys:
       - date
@@ -2098,7 +2101,8 @@ marco:
       limit: 2000
       date_column: date
       date_type: natural
-      is_daily: true
+      is_daily: false
+      date_param_mode: range
     us_tbr:
       unique_keys:
       - date
@@ -2120,7 +2124,8 @@ marco:
       limit: 2000
       date_column: date
       date_type: natural
-      is_daily: true
+      is_daily: false
+      date_param_mode: range
 finance:
   db_path: ${DB_ROOT}/tushare_duck_finance.db
   tables:
