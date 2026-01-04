@@ -51,13 +51,48 @@ $$ \sigma^2 = \frac{2}{T} \sum_{i} \frac{\Delta K_i}{K_i^2} e^{RT} Q(K_i) - \fra
     - **关键风险点**: 如果数据库中缺失了深度虚值（Deep OTM）的 Put 合约（往往是在大跌时的黑天鹅保护），VIX 计算值会 **显著偏低**。
     - 官方计算会包含所有挂牌合约。本地数据的完整性至关重要。
 
-## 3. 总结
+## 3. 输出数据结构说明 (Output Data Dictionary)
 
-| 影响因子 | 本项目实现 | 官方/理想标准 | 偏差方向预估 | 影响程度 |
-| :--- | :--- | :--- | :--- | :--- |
-| **价格输入** | **收盘价 (Close)** | **中间价 (Mid-Quote)** | **随机 / 偏低** | **高 (High)** |
-| **无风险利率** | Shibor | 国债收益率 | 极微小 | 低 (Low) |
-| **时间精度** | 自然日 (Days) | 分钟 (Minutes) | 随机 | 中 (Medium) |
-| **合约完整性** | 依赖本地库 | 全市场快照 | 若缺失OTM则偏低 | 高 (High) |
+为了方便用户追溯计算过程，本项目生成了包含详细中间结果的 CSV 文件。以下是各列的含义说明。
 
-**建议**: 本项目的计算结果可作为 **日内趋势参考** 或 **历史波动率研究**，但在用于高精度的定价或套利策略时，需注意上述数据源带来的系统性偏差。如需逼近官方结果，首要改进点是将数据源切换为包含 **高频买卖盘口** 的数据，并使用中间价计算。
+### 3.1 汇总结果文件 (`vix_result_*.csv`)
+
+该文件每一行代表一个交易日的 VIX 计算结果及其核心中间变量。
+
+| 列名 (Column) | 含义 (Description) | 来源/计算公式 (Source) |
+| :--- | :--- | :--- |
+| `date` | 交易日期 (YYYYMMDD) | 输入参数 |
+| `vix` | 最终计算得到的 VIX 指数 (年化波动率%) | $100 \times \sqrt{\text{Weighted Variance} \times \frac{365}{30}}$ |
+| `near_term` | 近月合约剩余期限 (年) | $T_1$ |
+| `next_term` | 次近月合约剩余期限 (年) | $T_2$ |
+| `r_near` | 近月期限对应的无风险利率 | Shibor 插值 ($R_1$) |
+| `r_next` | 次近月期限对应的无风险利率 | Shibor 插值 ($R_2$) |
+| `sigma_sq_near` | 近月合约计算出的方差 ($\sigma_1^2$) | 见公式 $\sigma^2$ |
+| `sigma_sq_next` | 次近月合约计算出的方差 ($\sigma_2^2$) | 见公式 $\sigma^2$ |
+| `F_near` | 近月远期价格 (Forward Price) | $K_{min\_diff} + e^{RT} (Call - Put)$ |
+| `F_next` | 次近月远期价格 (Forward Price) | 同上 |
+| `K0_near` | 近月平值执行价 (Strike Cutoff) | 小于 $F$ 的最大执行价 |
+| `K0_next` | 次近月平值执行价 (Strike Cutoff) | 同上 |
+| `weight` | 30天在近月与次近月间的时间权重 | $\frac{T_2 - 30/365}{T_2 - T_1}$ |
+| `weighted_variance` | 加权后的30天方差 | $T_1 \sigma_1^2 w + T_2 \sigma_2^2 (1-w)$ |
+
+### 3.2 详细追溯文件 (`vix_details_near_*.csv` / `vix_details_next_*.csv`)
+
+这两个文件分别记录了 **近月** 和 **次近月** 计算过程中，每一个被纳入计算的期权合约的具体贡献。这是排查数据异常（如某个合约价格错误导致 VIX 暴涨）的最底层数据。
+
+| 列名 (Column) | 含义 (Description) | 来源 (Source) |
+| :--- | :--- | :--- |
+| `date` | 交易日期 | 对应汇总表的一行 |
+| `exercise_price` | 执行价 ($K_i$) | DuckDB `opt_basic` |
+| `call` | 认购期权价格 | DuckDB `opt_daily` (close) |
+| `put` | 认沽期权价格 | DuckDB `opt_daily` (close) |
+| `diff` | 执行价间距 ($\Delta K_i$) | $(K_{i+1} - K_{i-1}) / 2$ |
+| `risk_free_rate` | 该期限使用的无风险利率 ($R$) | Shibor 插值 |
+| `maturity` | 剩余期限 ($T$) | 计算值 |
+| `F` | 当期远期价格 | 中间变量 |
+| `K0` | 当期平值执行价cutoff | 中间变量 |
+| `Q_K` | **用于计算的价格** ($Q(K_i)$) | 若 $K < K_0$ 取Put, $K > K_0$ 取Call, $K=K_0$ 取均值 |
+| `contribution` | **该合约对波动率方差的贡献** | $\frac{\Delta K_i}{K_i^2} e^{RT} Q(K_i)$ |
+
+**使用建议**:
+如果发现某天 VIX 异常（例如突然跳变），请打开对应的 `details` CSV，筛选该日期，按 `contribution` 降序排列。通常你会发现某一个深度虚值得 Put 合约贡献了巨大的方差值，进而检查该合约的价格 (`Q_K`) 是否存在数据错误（如价格为 0 或异常高）。

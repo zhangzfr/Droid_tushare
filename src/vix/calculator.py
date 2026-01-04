@@ -43,8 +43,18 @@ def calculate_vix_for_date(date: pd.Timestamp,
         
     # 3. Calculate Sigma Squares
     try:
-        sigma_sq_near, F_near, K0_near = _calculate_sigma_square(valid_options, near_term, r_near)
-        sigma_sq_next, F_next, K0_next = _calculate_sigma_square(valid_options, next_term, r_next)
+        sigma_sq_near, F_near, K0_near, details_near = _calculate_sigma_square(valid_options, near_term, r_near)
+        sigma_sq_next, F_next, K0_next, details_next = _calculate_sigma_square(valid_options, next_term, r_next)
+        
+        # Add labels to details
+        details_near['term_type'] = 'near'
+        details_near['term_maturity'] = near_term
+        details_next['term_type'] = 'next'
+        details_next['term_maturity'] = next_term
+        
+        details_df = pd.concat([details_near, details_next])
+        details_df['date'] = date
+        
     except Exception as e:
         print(f"Error calculating sigma for {date}: {e}")
         return None
@@ -74,7 +84,8 @@ def calculate_vix_for_date(date: pd.Timestamp,
         'K0_near': K0_near,
         'K0_next': K0_next,
         'weight': weight,
-        'weighted_variance': weighted_variance
+        'weighted_variance': weighted_variance,
+        'details': details_df
     }
 
 
@@ -94,7 +105,7 @@ def _get_risk_free_rate(shibor_ser: pd.Series, term_years: float) -> float:
     except KeyError:
         return 0.03
 
-def _calculate_sigma_square(options: pd.DataFrame, term: float, r: float) -> Tuple[float, float, float]:
+def _calculate_sigma_square(options: pd.DataFrame, term: float, r: float) -> Tuple[float, float, float, pd.DataFrame]:
     """Calculates the variance (sigma^2) for a specific term."""
     term_options = options[np.isclose(options['maturity'], term)].copy()
     
@@ -154,5 +165,16 @@ def _calculate_sigma_square(options: pd.DataFrame, term: float, r: float) -> Tup
     term2 = (1.0 / term) * ((F / K0 - 1.0) ** 2)
     
     sigma_sq = term1 - term2
-    return sigma_sq, F, K0
+    
+    # Prepare Detail DataFrame
+    # Enrich strike_matrix with info
+    strike_matrix['Q_K'] = Q_K
+    strike_matrix['contribution'] = contribution
+    strike_matrix['F'] = F
+    strike_matrix['K0'] = K0
+    strike_matrix['risk_free_rate'] = r
+    strike_matrix['maturity'] = term
+    strike_matrix.reset_index(inplace=True) # make exercise_price a column
+    
+    return sigma_sq, F, K0, strike_matrix
 

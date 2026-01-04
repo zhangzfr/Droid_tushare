@@ -38,6 +38,7 @@ def main():
     dates = sorted(options_all['date'].unique())
     
     results = []
+    all_details = []
     
     print(f"Calculating VIX for {len(dates)} trading days...")
     
@@ -59,28 +60,46 @@ def main():
         result_dict = calculate_vix_for_date(current_date, daily_opts, daily_shibor)
         
         if result_dict is not None:
+            # Extract details
+            details_df = result_dict.pop('details')
+            
+            # Summary Record
             result_record = {'date': current_date.strftime('%Y%m%d')}
             result_record.update(result_dict)
             results.append(result_record)
+            
+            # Details Record (add to list, concat later)
+            all_details.append(details_df)
             
     # 3. Output
     if not results:
         print("No VIX Calculated.")
     else:
         df_result = pd.DataFrame(results)
-        print("\n--- Calculation Complete ---")
-        print(df_result)
+        print("\n--- Summary Result ---")
+        print(df_result.head())
         
-        # Simple stats
-        print("\nStatistics:")
-        print(df_result['vix'].describe())
-        
-        # Optional: Save to file?
+        # Save Summary
         import os
         os.makedirs('data', exist_ok=True)
-        output_file = f"data/vix_result_{args.start_date}_{args.end_date}.csv"
-        df_result.to_csv(output_file, index=False)
-        print(f"\nSaved results to {output_file}")
+        summary_file = f"data/vix_result_{args.start_date}_{args.end_date}.csv"
+        df_result.to_csv(summary_file, index=False)
+        print(f"Saved summary to {summary_file}")
+        
+        # Save Details
+        if all_details:
+            df_details = pd.concat(all_details)
+            
+            # Split into Near and Next for clarity/file size
+            df_near = df_details[df_details['term_type'] == 'near']
+            df_next = df_details[df_details['term_type'] == 'next']
+            
+            near_file = f"data/vix_details_near_{args.start_date}_{args.end_date}.csv"
+            next_file = f"data/vix_details_next_{args.start_date}_{args.end_date}.csv"
+            
+            df_near.to_csv(near_file, index=False)
+            df_next.to_csv(next_file, index=False)
+            print(f"Saved details to:\n  - {near_file}\n  - {next_file}")
 
 if __name__ == "__main__":
     main()
