@@ -8,4 +8,6 @@
 - [x] Implement `calculator.py`
 - [x] Implement `run.py`
 - [x] Verify implementation
-- [x] Document methodology and data discrepancies <!-- Completed -->
+- [x] Document methodology and data discrepancies
+- [x] Organize documentation and data
+- [/] Enhance result traceability (Verify) <!-- Current Stage -->

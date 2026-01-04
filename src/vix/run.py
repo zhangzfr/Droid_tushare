@@ -56,13 +56,12 @@ def main():
             continue
             
         # Calculate
-        vix = calculate_vix_for_date(current_date, daily_opts, daily_shibor)
+        result_dict = calculate_vix_for_date(current_date, daily_opts, daily_shibor)
         
-        if vix is not None:
-            results.append({
-                'date': current_date.strftime('%Y%m%d'),
-                'vix': vix
-            })
+        if result_dict is not None:
+            result_record = {'date': current_date.strftime('%Y%m%d')}
+            result_record.update(result_dict)
+            results.append(result_record)
             
     # 3. Output
     if not results:

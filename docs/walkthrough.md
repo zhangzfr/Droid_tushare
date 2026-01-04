@@ -33,14 +33,10 @@ Calculating VIX for 6 trading days...
 100%|██████████| 6/6 [00:00<00:00, 250.04it/s]
 
 --- Calculation Complete ---
-       date        vix
-0  20230103  16.910842
-1  20230104  16.742240
+       date        vix  near_term  next_term  ...  weighted_variance
+0  20230103  16.910842   0.073973   0.136986  ...           0.002350
+1  20230104  16.742240   0.071233   0.134247  ...           0.002304
 ...
 ```
 
-## Verification Results
-Verified correct calculation on 2023-01 data.
-- Filtered `opt_basic` correctly identifies 50ETF options.
-- `shibor` interpolation uses cubic spline (fallback to linear if numpy used) logic.
-- Calculation handles robustly missing dates.
+The output `data/vix_result_YYYYMMDD_YYYYMMDD.csv` now contains detailed intermediate results for traceability, including forward prices (F), strike cutoffs (K0), and term variances (sigma_sq).
