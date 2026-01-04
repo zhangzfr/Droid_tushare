@@ -2403,7 +2403,7 @@ finance:
       - f_ann_date
       - end_date
       - update_flag
-      date_param: period
+      param_name: period
     cashflow:
       api_table: cashflow_vip
       table_name: cashflow
@@ -2508,17 +2508,22 @@ finance:
       - end_bal_cash_equ
       - beg_bal_cash_equ
       - update_flag
-      date_param: period
-    fina_indicator:
-      api_table: fina_indicator_vip
-      table_name: fina_indicator
       unique_keys:
       - ts_code
       - ann_date
       - f_ann_date
       - end_date
       - update_flag
-      date_param: period
+      param_name: period
+    fina_indicator:
+      api_table: fina_indicator_vip
+      table_name: fina_indicator
+      unique_keys:
+      - ts_code
+      - ann_date
+      - end_date
+      - update_flag
+      param_name: period
       date_column: end_date
       limit: 12000
       is_full: false
@@ -2702,8 +2707,8 @@ finance:
       - ann_date
       - end_date
       - audit_result
+      - audit_fees
       - audit_agency
-      - audit_sign
       - audit_sign
       unique_keys:
       - ts_code
@@ -2720,7 +2725,6 @@ finance:
       - ts_code
       - end_date
       - bz_item
-      - bz_code
       - bz_sales
       - bz_profit
       - bz_cost
@@ -2730,7 +2734,6 @@ finance:
       - ts_code
       - end_date
       - bz_item
-      - bz_code
       - update_flag
       date_param: period
     dividend:

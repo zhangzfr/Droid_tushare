@@ -136,19 +136,20 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                     
                     # Finance specific logic
                     if frequency == 'quarterly' and not irregular:
-                         # 我们需要按报告期聚合统计
-                         effective_start_date = valid_days[0] if valid_days else '19900101'
-                         effective_end_date = valid_days[-1] if valid_days else '21000101'
+                         # We need a robust way to determine which date column to use for "Report Period" validation
+                         # Default to 'end_date' for finance tables if it exists, otherwise use config date_column
+                         
+                         report_date_col = 'end_date' if 'end_date' in target_columns else date_column
                          
                          # Check columns
                          has_ts_code = 'ts_code' in target_columns
                          
                          query = f"""
-                            SELECT "{date_column}", COUNT(*), COUNT(DISTINCT {'ts_code' if has_ts_code else '1'})
+                            SELECT "{report_date_col}", COUNT(*), COUNT(DISTINCT {'ts_code' if has_ts_code else '1'})
                             FROM "{table_name}"
-                            WHERE "{date_column}" IN ({','.join([f"'{d}'" for d in valid_days])})
-                            GROUP BY "{date_column}"
-                            ORDER BY "{date_column}" DESC
+                            WHERE "{report_date_col}" IN ({','.join([f"'{d}'" for d in valid_days])})
+                            GROUP BY "{report_date_col}"
+                            ORDER BY "{report_date_col}" DESC
                          """
                          try:
                              rows = conn.execute(query).fetchall()

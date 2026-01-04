@@ -1929,13 +1929,12 @@ TABLE_SCHEMAS = {
        ts_code     VARCHAR NOT NULL, -- TS代码
        end_date    VARCHAR NOT NULL, -- 报告期
        bz_item     VARCHAR NOT NULL, -- 主营业务
-       bz_code     VARCHAR NOT NULL, -- 主营业务代码
        bz_sales DOUBLE,              -- 主营业务收入
        bz_profit DOUBLE,             -- 主营业务利润
        bz_cost DOUBLE,               -- 主营业务成本
        curr_type   VARCHAR,          -- 货币代码
        update_flag VARCHAR,
-       PRIMARY KEY (ts_code, end_date, bz_item, bz_code, update_flag)
+       PRIMARY KEY (ts_code, end_date, bz_item, update_flag)
     )
     ''',
     'disclosure_date': '''
@@ -1957,9 +1956,10 @@ TABLE_SCHEMAS = {
       ann_date     VARCHAR,
       end_date     VARCHAR NOT NULL,
       audit_result VARCHAR,
+      audit_fees   DOUBLE,
       audit_agency VARCHAR,
       audit_sign   VARCHAR,
-      PRIMARY KEY (ts_code, end_date)
+      PRIMARY KEY (ts_code, end_date, ann_date)
     )
     ''',
     # 'stock_basic': """ ... """,
