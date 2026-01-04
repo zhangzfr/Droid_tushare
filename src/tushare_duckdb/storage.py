@@ -150,9 +150,10 @@ class DuckDBStorage:
 
             # === 2. 插入数据 ===
             columns_str = ", ".join([f'"{col}"' for col in processed_df.columns])
+            
+            before_count = self.conn.execute(f"SELECT COUNT(*) FROM \"{table_name}\"").fetchone()[0]
 
             if storage_mode == 'insert_new':
-                before_count = self.conn.execute(f"SELECT COUNT(*) FROM \"{table_name}\"").fetchone()[0]
 
                 # 构建主键去重条件
                 unique_conditions = " AND ".join(
@@ -177,8 +178,10 @@ class DuckDBStorage:
                     SELECT {columns_str} FROM "{temp_view_name}"
                 """
                 self.conn.execute(insert_query)
+                after_count = self.conn.execute(f"SELECT COUNT(*) FROM \"{table_name}\"").fetchone()[0]
+                net_change = after_count - before_count
                 inserted_count = len(processed_df)
-                logger.info(f"{table_name}: 插入 {inserted_count} 条记录（覆盖模式）")
+                logger.info(f"{table_name}: 插入 {inserted_count} 条记录（覆盖模式，净新增 {net_change} 条）")
 
             # === 3. 更新元数据 ===
             update_metadata(self.conn, table_name, date_column)

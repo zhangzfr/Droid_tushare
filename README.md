@@ -26,58 +26,380 @@
 
 ### 4. 🗂️ 全品种覆盖 (Ready-to-use)
 
-内置数十种金融表结构定义，开箱即用：
+项目内置 **50+ 张金融数据表**，涵盖股票、基金、期货、期权、债券、指数、宏观等全品种数据。所有表结构均基于 Tushare Pro API 标准，开箱即用，支持自动更新和数据校验。
 
-* **股票**：行情、复权因子、每日指标、备用列表。
-* **基金/期权/期货**：合约基础信息、日线行情、持仓、结算数据。
-* **宏观/债券**：Shibor、美债收益率、可转债基础及日线。
+#### 📈 股票数据 (Stock)
+- **基础信息**：`stock_basic` (股票列表), `stock_company` (公司信息)
+- **行情数据**：`daily` (日线行情), `adj_factor` (复权因子), `daily_basic` (每日指标)
+- **交易信息**：`stk_limit` (涨跌停), `suspend_d` (停复牌), `bak_basic` (备用行情)
+- **事件数据**：`namechange` (更名), `hs_const` (沪深港通), `stk_managers` (高管), `stk_rewards` (分红)
+
+#### 📊 指数数据 (Index)
+- **基础信息**：`index_basic` (指数列表), `sw_index_classify_2014/2021` (申万分类)
+- **行情数据**：`index_daily` (日线), `index_dailybasic` (每日指标), `daily_info` (大盘统计)
+- **成分股权重**：`index_weight` (权重), `ths_member` (同花顺成分), `sw_index_member_all` (申万成分)
+
+#### 💰 基金数据 (Fund)
+- **基础信息**：`fund_basic` (基金列表), `fund_company` (基金公司)
+- **净值数据**：`fund_nav` (净值), `fund_daily` (日线行情)
+- **持仓分析**：`fund_portfolio` (持仓明细)
+
+#### 🛢️ 期货数据 (Future)
+- **基础信息**：`fut_basic` (合约), `trade_cal_future` (交易日历)
+- **行情数据**：`fut_daily` (日线), `fut_index_daily` (指数日线)
+- **持仓结算**：`fut_wsr` (仓单), `fut_settle` (结算参数), `fut_holding` (持仓排名)
+
+#### 📋 期权数据 (Option)
+- **基础信息**：`opt_basic` (期权合约)
+- **行情数据**：`opt_daily` (日线行情)
+
+#### 🏦 债券数据 (Bond)
+- **可转债**：`cb_basic` (基础), `cb_daily` (日线), `cb_issue` (发行), `cb_call` (赎回)
+- **现券交易**：`bond_blk` (大宗交易), `repo_daily` (质押式回购)
+- **收益率曲线**：`yc_cb` (可转债收益率)
+
+#### 💹 资金流向 (Moneyflow)
+- **个股资金流**：`moneyflow` (资金流向)
+- **同花顺数据**：`moneyflow_ths` (同花顺), `moneyflow_dc` (东财)
+- **板块资金流**：`moneyflow_ind_ths` (行业), `moneyflow_mkt_dc` (市场)
+
+#### 💼 融资融券 (Margin)
+- **融资融券**：`margin` (汇总), `margin_detail` (明细), `margin_secs` (标的券)
+- **转融通**：`slb_len` (转融通余额), `slb_sec` (转融通明细)
+
+#### 🌐 宏观数据 (Marco)
+- **利率数据**：`shibor` (Shibor 利率)
+- **其他宏观指标**：根据配置可扩展更多宏观数据
+
+#### 🔄 数据同步特性
+- **自动分页**：处理 API 2000/5000 行限制
+- **增量更新**：智能检测新增数据，避免重复下载
+- **多表关联**：支持跨表数据一致性校验
+- **异常检测**：自动识别数据缺失和异常值
 
 ---
 
 ## 🏗️ 架构设计
 
+### 系统架构图
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Interface│    │  Data Processor │    │  Tushare API    │
+│                 │    │                 │    │                 │
+│ • Interactive   │◄──►│ • Date Range     │◄──►│ • Pagination     │
+│   Menu          │    │   Generation     │    │ • Retry Logic   │
+│ • API Calls     │    │ • Parameter Grid  │    │ • Rate Limiting │
+│ • Validation    │    │ • Batch Control  │    │ • Error Handling│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Data Storage  │    │ Data Validation │    │   Metadata      │
+│                 │    │                 │    │                 │
+│ • DuckDB        │◄──►│ • Coverage       │◄──►│ • Min/Max Dates │
+│   Atomic Ops    │    │   Analysis       │    │ • Record Counts │
+│ • Insert/Replace│    │ • Anomaly        │    │ • Last Update   │
+│ • Deduplication │    │   Detection      │    │ • Statistics    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### 核心模块职责
+
 代码结构遵循**解耦设计**，确保长期可维护性：
 
-* **`fetcher.py`**：负责 API 通信、异常重试与分页。
-* **`processor.py`**：同步引擎核心，调度日期循环与参数矩阵。
-* **`storage.py`**：基于 DuckDB 的原子化存储，支持 `insert_new`（去重插入）与 `replace`（覆盖）。
-* **`data_validation.py`**：数据健康体检工具集。
+* **`config.py`**：配置加载器，解析 YAML 配置和环境变量
+* **`fetcher.py`**：API 通信层，处理分页、重试和限流
+* **`processor.py`**：同步引擎核心，调度数据处理流程
+* **`storage.py`**：DuckDB 存储层，支持原子化操作和去重
+* **`data_validation.py`**：数据质量校验工具集
+* **`schema.py`**：数据库表结构定义
+* **`metadata.py`**：元数据管理
+* **`utils.py`**：通用工具函数
+* **`logger.py`**：日志系统配置
+
+### 数据流
+
+1. **配置加载** → 2. **参数生成** → 3. **API 请求** → 4. **数据清洗** → 5. **存储写入** → 6. **元数据更新** → 7. **校验报告**
 
 ---
 
 ## 🚀 快速开始
 
+### 环境先决条件
+- **Python**: 版本 3.8 或更高
+- **Tushare 账户**: 需要有效的 Tushare Pro API Token（免费版有限制，高频数据需要积分）
+- **存储空间**: 至少 50GB 可用磁盘空间（取决于数据量）
+
 ### 1. 环境准备
 
 ```bash
+# 克隆仓库
 git clone https://github.com/robert/droid_tushare.git
 cd droid_tushare
+
+# 安装依赖（推荐使用 conda 或 venv 虚拟环境）
 pip install -r requirements.txt
 
+# 验证安装
+python -c "import tushare, duckdb; print('安装成功')"
 ```
 
-### 2. 配置秘钥
+### 2. 配置环境变量
 
-在项目根目录创建 `.env` 文件：
+在项目根目录创建 `.env` 文件并配置以下变量：
 
 ```env
-TUSHARE_TOKEN=您的Tushare_Token
-DB_ROOT=/您的数据存储路径/DuckDB
+# 必需：Tushare API Token（从 https://tushare.pro 获取）
+TUSHARE_TOKEN=your_tushare_token_here
 
+# 必需：数据库存储根目录（确保有写入权限）
+DB_ROOT=/path/to/your/database/directory
+
+# 可选：日志级别（DEBUG, INFO, WARNING, ERROR）
+LOG_LEVEL=INFO
+
+# 可选：是否启用调试模式
+DEBUG=false
 ```
+
+**注意**：
+- `DB_ROOT` 目录将自动创建多个 `.db` 文件，每个类别一个数据库文件
+- 不要将 `.env` 文件提交到版本控制系统（已添加到 `.gitignore`）
+- 如果没有 `.env` 文件，程序会尝试从环境变量读取
 
 ### 3. 运行交互式终端
 
 ```bash
+# 启动主程序
 python -m tushare_duckdb.main
-
 ```
 
-通过直观的菜单，您可以：
+#### 基本同步流程
 
-1. 选择分类同步数据。
-2. 输入 `11` 查看数据库状态与覆盖率报告。
-3. 执行特定代码或日期的强制覆盖。
+1. **选择数据类别**：输入数字选择如 `1`（股票）、`2`（指数）等
+2. **设置日期范围**：输入开始日期（YYYYMMDD），回车使用默认值（上次更新后一天）
+3. **选择表**：输入 `all` 同步该类别所有表，或指定表名如 `daily,adj_factor`
+4. **选择模式**：
+   - `1`: **增量插入**（推荐，快速，只插入新数据）
+   - `2`: **覆盖模式**（慎用，会删除指定日期范围数据）
+
+#### 示例操作
+
+```
+>>> 请选择数据类别 (输入数字):
+1. 股票 (Stock)
+2. 指数 (Index)
+3. 基金 (Fund)
+...
+>>> 1
+>>> 请输入开始日期 (YYYYMMDD, 回车使用默认):
+>>> 20240101
+>>> 请输入结束日期 (YYYYMMDD, 回车使用默认):
+>>> 20241231
+>>> 请输入要同步的表名 (all 或 表名列表):
+>>> daily,adj_factor,daily_basic
+>>> 请选择同步模式 (1=增量插入, 2=覆盖):
+>>> 1
+```
+
+#### 数据校验
+
+输入 `11` 查看数据库状态报告：
+
+```text
+>>>> [stock_daily] 数据校验报告 <<<<
+覆盖率: 95.2%
+最早日期: 19901219
+最晚日期: 20241231
+总记录数: 12,345,678
+异常天数: 23 (建议检查)
+```
+
+#### 高级用法
+
+- **特定代码同步**：在表名后添加 `@code` 如 `daily@000001.SZ`
+- **强制覆盖特定日期**：使用覆盖模式指定日期范围
+- **批量操作**：用逗号分隔多个表名
+
+### 4. 程序化使用（API 方式）
+
+除了交互式终端，您也可以在代码中直接调用：
+
+```python
+from tushare_duckdb.processor import DataProcessor
+
+# 初始化处理器
+processor = DataProcessor()
+
+# 同步股票日线数据
+processor.process_data(
+    category='stock',
+    table='daily',
+    start_date='20240101',
+    end_date='20241231',
+    mode='insert_new'  # 或 'replace'
+)
+
+# 同步多个表
+tables = ['daily', 'adj_factor', 'daily_basic']
+for table in tables:
+    processor.process_data(
+        category='stock',
+        table=table,
+        start_date='20240101',
+        end_date='20241231'
+    )
+
+# 数据校验
+from tushare_duckdb.data_validation import DataValidator
+validator = DataValidator()
+report = validator.get_coverage_report('stock', 'daily')
+print(report)
+```
+
+## 🔧 故障排除
+
+### 常见问题
+
+#### 1. API 频率限制
+**症状**：日志显示 "达到访问频率限制，等待重试"
+**解决方案**：
+- 免费用户受 500 次/分钟限制
+- 程序自动等待 65 秒后重试
+- 考虑升级到付费版获取更高限制
+
+#### 2. 数据库锁定错误
+**症状**：`IO Error: Cannot open file ... because it is being used by another process`
+**原因**：DuckDB 是单进程写锁数据库
+**解决方案**：
+- 确保没有其他程序（如 DBeaver）同时连接数据库
+- 等待当前同步完成后再访问
+- 读取操作通常不受影响
+
+#### 3. 数据覆盖率异常
+**症状**：校验报告显示覆盖率低于预期
+**解决方案**：
+- 检查日期范围是否正确
+- 验证 Tushare Token 是否有效
+- 查看日志中的错误信息
+- 对缺失日期使用覆盖模式重新同步
+
+#### 4. 内存不足
+**症状**：大表同步时程序崩溃
+**解决方案**：
+- 分批同步数据（减少日期范围）
+- 检查系统内存使用情况
+- 考虑使用覆盖模式分段处理
+
+#### 5. 表结构不匹配
+**症状**：插入失败，字段类型错误
+**解决方案**：
+- 检查 `settings.yaml` 中的字段定义
+- 如果数据库已存在旧表，可能需要手动删除重建
+- 查看日志中的详细错误信息
+
+### 调试模式
+
+启用调试日志获取更多信息：
+
+```bash
+# 在 .env 中设置
+LOG_LEVEL=DEBUG
+DEBUG=true
+
+# 或运行时设置
+export LOG_LEVEL=DEBUG
+python -m tushare_duckdb.main
+```
+
+### 日志文件位置
+
+所有日志保存在 `logs/` 目录下，按日期归档。最新日志文件包含详细的同步过程记录。
+
+## ⚙️ 配置详解
+
+### settings.yaml 结构说明
+
+项目核心配置位于 `settings.yaml` 文件，所有数据表定义、API 参数和同步逻辑均在此集中管理。
+
+#### 顶级结构
+```yaml
+category_name:        # 数据类别 (如 stock, index, fund)
+  db_path: ${DB_ROOT}/database_name.db  # 数据库文件路径
+  tables:             # 表定义集合
+    table_name:       # 具体表名
+      fields: [...]   # 字段列表
+      unique_keys: [...]  # 唯一键约束
+      # ... 其他配置
+```
+
+#### 关键配置项
+
+##### 数据库和分页配置
+- **`db_path`**: 数据库文件路径，支持环境变量插值
+- **`requires_paging`**: 是否需要分页处理 API 请求
+- **`limit`**: 单次 API 请求的最大记录数
+- **`requires_date`**: 是否需要日期参数
+
+##### 字段和约束
+- **`fields`**: API 返回的字段列表
+- **`unique_keys`**: 数据库唯一键，用于去重
+- **`date_column`**: 日期字段名，用于排序和校验
+
+##### 日期处理
+- **`earliest_date`**: 数据起始日期
+- **`latest_date`**: 数据结束日期（可选）
+- **`date_type`**: 日期类型 (`trade` 交易日, `natural` 自然日)
+- **`date_param_mode`**: 日期参数模式
+  - `single`: 单日期参数
+  - `range`: 日期范围参数
+  - `full_paging`: 全量分页（无日期限制）
+
+##### 高级选项
+- **`required_params`**: 必需的 API 参数（如交易所代码列表）
+- **`field_mappings`**: 字段名映射（API 字段 -> 数据库字段）
+- **`statistics_queries`**: 统计查询，用于生成业务报告
+
+#### 配置修改指南
+
+⚠️ **重要**：修改配置后，如果数据库中已存在表结构，可能需要手动调整或重建表。
+
+```bash
+# 示例：添加新字段到股票日线表
+stock:
+  tables:
+    daily:
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - high
+      - low
+      - close
+      - volume  # 新增字段
+      - amount
+      # ... 其他字段
+```
+
+#### 环境变量支持
+
+配置文件支持环境变量插值：
+
+```yaml
+db_path: ${DB_ROOT}/my_database.db
+```
+
+确保在 `.env` 文件或系统环境中设置了相应变量。
+
+#### 自定义配置
+
+如需添加新的数据表或修改现有逻辑：
+
+1. 在 `settings.yaml` 中添加表定义
+2. 确保字段名与 Tushare API 一致
+3. 设置合适的唯一键和分页参数
+4. 测试配置是否正确加载
 
 ---
 
@@ -99,6 +421,76 @@ python -m tushare_duckdb.main
 
 ---
 
+## 📝 更新日志
+
+### v1.0.0 (2024-12-XX)
+- ✨ 初始版本发布
+- 🏗️ 基于 DuckDB 的高性能本地数据存储
+- 🔄 支持 50+ 张金融数据表的自动同步
+- 🛡️ 内置智能分页和异常重试机制
+- 📊 完整的数据校验和覆盖率分析
+- 🎯 交互式命令行界面，支持增量和覆盖模式
+- ⚙️ 配置化设计，易于扩展新数据源
+
+### 近期计划
+- [ ] 支持更多数据源集成
+- [ ] 增加数据可视化面板
+- [ ] 优化内存使用和并发处理
+- [ ] 添加 REST API 接口
+
 ## 🤝 贡献与反馈
 
-本项目秉承 **"Slow is Fast"** 的开发哲学，优先考虑推理质量与长期的可维护性。如果您有任何优化建议，欢迎提交 Issue。
+### 开发哲学："Slow is Fast"
+
+本项目秉承 **"Slow is Fast"** 的开发理念：
+
+- **推理优先**：在编写代码前进行充分的思考和设计
+- **质量至上**：注重代码的可读性、可维护性和长期稳定性
+- **稳健第一**：优先确保系统的可靠性和数据一致性，而非追求极致的性能
+- **渐进优化**：通过持续的小改进实现长期的价值提升
+
+### 贡献指南
+
+欢迎各种形式的贡献！无论是修复 bug、添加新功能，还是改进文档。
+
+#### 开发流程
+1. **Fork** 本仓库
+2. **创建特性分支**：`git checkout -b feature/your-feature-name`
+3. **遵循代码规范**：保持现有代码风格，添加必要的注释
+4. **充分测试**：确保新功能不破坏现有逻辑
+5. **提交 PR**：提供清晰的描述和测试用例
+
+#### 代码规范
+- 使用类型提示和文档字符串
+- 保持函数单一职责
+- 添加单元测试（如果适用）
+- 更新相关文档
+
+#### Issue 提交
+- 使用清晰的标题和详细描述
+- 提供复现步骤和环境信息
+- 标记适当的标签（bug, enhancement, question）
+
+### 反馈渠道
+- **GitHub Issues**: 报告 bug 和功能请求
+- **Pull Requests**: 提交代码改进
+- **Discussions**: 技术讨论和使用经验分享
+
+感谢您的贡献，让我们一起构建更好的量化数据基础设施！
+
+## 📄 许可证
+
+本项目采用 **MIT License** 开源协议。详见 [LICENSE](LICENSE) 文件。
+
+您可以自由使用、修改和分发本项目，但请保留原作者信息和许可证声明。
+
+## 🙏 致谢
+
+- **Tushare**：提供优质的金融数据 API 服务
+- **DuckDB**：卓越的列式数据库引擎
+- **开源社区**：pandas、numpy 等优秀工具库的支持
+- **量化投资者**：使用和反馈帮助项目改进
+
+---
+
+**Droid-Tushare** - 让数据驱动投资决策 🚀

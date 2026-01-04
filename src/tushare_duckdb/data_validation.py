@@ -165,11 +165,19 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                                      else:
                                          daily_data[i][table_name] = "0/0"
                              
-                             # 更新 table_status (对于财务表，主要信息都在 daily_data 里了，这里只留基本信息)
+                             # 获取最早/最晚报告期
+                             min_max_query = f"SELECT MIN(\"{report_date_col}\"), MAX(\"{report_date_col}\") FROM \"{table_name}\""
+                             min_max_res = conn.execute(min_max_query).fetchone()
+                             earliest_report = str(min_max_res[0]) if min_max_res and min_max_res[0] else 'N/A'
+                             latest_report = str(min_max_res[1]) if min_max_res and min_max_res[1] else 'N/A'
+
+                             # 更新 table_status
                              status = {
                                 '数据库名称': db_name,
                                 '表名': table_name,
-                                '记录数': total_records # 总记录数依然有参考价值
+                                '最早报告期': earliest_report,
+                                '最晚报告期': latest_report,
+                                '记录数': total_records
                              }
                              table_status.append(status)
                              continue # Skip standard logic

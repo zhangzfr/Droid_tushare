@@ -2725,6 +2725,7 @@ finance:
       - ts_code
       - end_date
       - bz_item
+      - bz_code
       - bz_sales
       - bz_profit
       - bz_cost
