@@ -1,0 +1,18 @@
+# Anthropic-inspired light theme for Streamlit
+# Based on https://docs.anthropic.com design language
+
+[theme]
+# Primary accent color - Anthropic's signature coral/orange
+primaryColor = "#D97757"
+
+# Background colors - warm off-white like Anthropic docs
+backgroundColor = "#FDF6F0"
+
+# Secondary background for widgets
+secondaryBackgroundColor = "#F5EBE0"
+
+# Text color - dark warm gray
+textColor = "#1A1A1A"
+
+# Font - Anthropic uses a clean sans-serif (similar to Inter/Söhne)
+font = "sans serif"
