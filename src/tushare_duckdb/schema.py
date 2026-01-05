@@ -486,8 +486,7 @@ TABLE_SCHEMAS = {
             name VARCHAR,
             last_updated TIMESTAMP,
             PRIMARY KEY (ts_code, con_code, trade_date)
-        )
-    """,
+        )""",
     'index_daily': """
         CREATE TABLE index_daily (
             ts_code VARCHAR NOT NULL,      -- 指数代码
@@ -813,8 +812,7 @@ TABLE_SCHEMAS = {
             purc_startdate VARCHAR,
             redm_startdate VARCHAR,
             market VARCHAR
-        )
-    """,
+        )""",
     'fund_company': """
         CREATE TABLE fund_company (
             ts_code VARCHAR PRIMARY KEY,
@@ -834,8 +832,7 @@ TABLE_SCHEMAS = {
             email VARCHAR,
             main_business VARCHAR,
             PRIMARY KEY (ts_code)
-        )
-    """,
+        )""",
     'fund_nav': """
             CREATE TABLE fund_nav (
                 ts_code VARCHAR,
@@ -849,8 +846,7 @@ TABLE_SCHEMAS = {
                 adj_nav DOUBLE,
                 update_flag VARCHAR,
                 PRIMARY KEY (ts_code, nav_date)
-            )
-        """,
+            )""",
     'fund_portfolio': """
         CREATE TABLE fund_portfolio (
             ts_code VARCHAR,
@@ -862,8 +858,7 @@ TABLE_SCHEMAS = {
             stk_mkv_ratio DOUBLE,
             stk_float_ratio DOUBLE,
             PRIMARY KEY (ts_code, end_date, symbol)
-        )
-    """,
+        )""",
     'fund_daily': """
         CREATE TABLE fund_daily (
             ts_code VARCHAR,
@@ -878,8 +873,7 @@ TABLE_SCHEMAS = {
             vol DOUBLE,
             amount DOUBLE,
             PRIMARY KEY (ts_code, trade_date)
-        )
-    """,
+        )""",
 
     # === marco 相关 ===
     'shibor': """
@@ -894,8 +888,7 @@ TABLE_SCHEMAS = {
             "9m" DOUBLE,
             "1y" DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'shibor_quote': """
         CREATE TABLE shibor_quote (
             date VARCHAR,
@@ -917,8 +910,7 @@ TABLE_SCHEMAS = {
             "1y_b" DOUBLE,
             "1y_a" DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'us_tycr': """
         CREATE TABLE us_tycr (
             date VARCHAR,
@@ -935,8 +927,7 @@ TABLE_SCHEMAS = {
             y20 DOUBLE,
             y30 DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'us_trycr': """
         CREATE TABLE us_trycr (
             date VARCHAR,
@@ -946,8 +937,7 @@ TABLE_SCHEMAS = {
             y20 DOUBLE,
             y30 DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'us_tltr': """
         CREATE TABLE us_tltr (
             date VARCHAR,
@@ -955,15 +945,13 @@ TABLE_SCHEMAS = {
             cmt DOUBLE,
             e_factor VARCHAR,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'us_trltr': """
         CREATE TABLE us_trltr (
             date VARCHAR,
             ltr_avg DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'us_tbr': """
         CREATE TABLE us_tbr (
             date VARCHAR,
@@ -980,8 +968,7 @@ TABLE_SCHEMAS = {
             w52_bd DOUBLE,
             w52_ce DOUBLE,
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'cn_m': """
         CREATE TABLE cn_m (
             month VARCHAR PRIMARY KEY,
@@ -994,8 +981,7 @@ TABLE_SCHEMAS = {
             m2 DOUBLE,
             m2_yoy DOUBLE,
             m2_mom DOUBLE
-        )
-    """,
+        )""",
     'cn_pmi': """
         CREATE TABLE cn_pmi (
             month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
@@ -1071,8 +1057,7 @@ TABLE_SCHEMAS = {
             pmi021000 DOUBLE,
             pmi030000 DOUBLE,              -- 综合PMI
             last_updated VARCHAR
-        )
-    """,
+        )""",
     'sf_month': """
         CREATE TABLE sf_month (
             month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
@@ -1080,8 +1065,7 @@ TABLE_SCHEMAS = {
             inc_cumval DOUBLE,             -- 累计值（亿元）
             stk_endval DOUBLE,             -- 存量期末值（万亿元）
             last_updated VARCHAR
-        )
-    """,
+            )""",
 
     # === bond 相关 ===
     'cb_basic': """
@@ -1174,7 +1158,7 @@ TABLE_SCHEMAS = {
         coupon_rate DOUBLE,                -- 票面利率
         last_updated TIMESTAMP, -- << 新增
         PRIMARY KEY (ts_code, rate_start_date)
-    )""",
+        )""",
     'cb_share': """
         CREATE TABLE cb_share (
         ts_code VARCHAR,                   -- 债券代码
@@ -1194,7 +1178,7 @@ TABLE_SCHEMAS = {
         total_shares DOUBLE,               -- 转股后总股本
         last_updated TIMESTAMP,            -- 最后更新时间
         PRIMARY KEY (ts_code, publish_date, end_date)
-    )""",
+        )""",
     'cb_call': """
         CREATE TABLE cb_call (
             ts_code VARCHAR NOT NULL,          -- 转债代码
@@ -1300,8 +1284,7 @@ TABLE_SCHEMAS = {
             trade_time_desc VARCHAR,
             last_updated TIMESTAMP,
             PRIMARY KEY (ts_code)
-        )
-    """,
+        )""",
     'trade_cal_future': """
         CREATE TABLE trade_cal_future (
             exchange VARCHAR NOT NULL, 
@@ -1310,8 +1293,7 @@ TABLE_SCHEMAS = {
             pretrade_date VARCHAR, 
             last_updated TIMESTAMP,
             PRIMARY KEY (exchange, cal_date)
-        )
-    """,
+        )""",
     'fut_daily': """
         CREATE TABLE fut_daily (
             ts_code VARCHAR NOT NULL,      -- TS合约代码
@@ -1331,8 +1313,7 @@ TABLE_SCHEMAS = {
             oi_chg DOUBLE,                 -- 持仓量变化
             delv_settle DOUBLE,            -- 交割结算价
             PRIMARY KEY (ts_code, trade_date) -- 联合主键
-        )
-    """,
+        )""",
     'fut_wsr': """
         CREATE TABLE fut_wsr (
             trade_date VARCHAR,
@@ -1353,8 +1334,7 @@ TABLE_SCHEMAS = {
             unit VARCHAR,
             exchange VARCHAR,
             PRIMARY KEY (trade_date, symbol, fut_name, warehouse)
-        )
-    """,
+        )""",
     'fut_settle': """
         CREATE TABLE fut_settle (
             ts_code VARCHAR,
@@ -1370,8 +1350,7 @@ TABLE_SCHEMAS = {
             offset_today_fee DOUBLE,
             exchange VARCHAR,
             PRIMARY KEY (ts_code, trade_date)
-        )
-    """,
+        )""",
     'fut_holding': """
         CREATE TABLE fut_holding (
             trade_date VARCHAR,
@@ -1385,8 +1364,7 @@ TABLE_SCHEMAS = {
             short_chg INTEGER,
             exchange VARCHAR,
             PRIMARY KEY (trade_date, symbol, broker)
-        )
-    """,
+        )""",
     'fut_index_daily': """
         CREATE TABLE fut_index_daily (
             ts_code VARCHAR,
@@ -1401,8 +1379,7 @@ TABLE_SCHEMAS = {
             vol DOUBLE,
             amount DOUBLE,
             PRIMARY KEY (ts_code, trade_date)
-        )
-    """,
+        )""",
 
     # === 其他表（可继续扩展）===
     'income': '''
