@@ -6,6 +6,9 @@ def plot_pmi_trend(df):
     if df.empty:
         return None
     
+    # Ensure data is sorted by month to avoid disconnected/looped lines
+    df = df.sort_values('month')
+    
     # Mapping based on notebook
     # pmi010000: Manufacturing
     # pmi020100: Non-Manufacturing
@@ -85,7 +88,7 @@ def plot_heatmap(df):
     if not valid_cols:
         return None
         
-    heatmap_data = df[['month'] + valid_cols].set_index('month')
+    heatmap_data = df[['month'] + valid_cols].sort_values('month').set_index('month')
     
     # Transpose so indicators are Y-axis, time is X-axis
     heatmap_data = heatmap_data.T
@@ -117,3 +120,76 @@ def plot_heatmap(df):
     fig.update_layout(height=400 + 20 * len(heatmap_data.index))
     
     return fig
+
+def plot_sf_charts(df):
+    """Return 3 charts for Social Financing: inc_month, inc_cumval, stk_endval."""
+    if df.empty:
+        return None, None, None
+    
+    # inc_month
+    fig_inc = px.line(df, x='month', y='inc_month', 
+                      title='Social Financing: New Monthly Increase (inc_month)',
+                      labels={'month': 'Date', 'inc_month': 'Billion RMB'})
+    
+    # inc_cumval
+    fig_cum = px.line(df, x='month', y='inc_cumval',
+                      title='Social Financing: Cumulative Increase (inc_cumval)',
+                      labels={'month': 'Date', 'inc_cumval': 'Billion RMB'})
+    
+    # stk_endval
+    fig_stk = px.line(df, x='month', y='stk_endval',
+                      title='Social Financing: Stock End Value (stk_endval)',
+                      labels={'month': 'Date', 'stk_endval': 'Trillion RMB'})
+    
+    return fig_inc, fig_cum, fig_stk
+
+def plot_m_levels(df):
+    """Plot M0, M1, M2 levels as a bar chart."""
+    if df.empty:
+        return None
+    
+    cols = [c for c in ['m0', 'm1', 'm2'] if c in df.columns]
+    if not cols:
+        return None
+        
+    fig = px.bar(df, x='month', y=cols, 
+                 title='Money Supply: M0, M1, M2 Levels',
+                 labels={'month': 'Date', 'value': 'Level', 'variable': 'Category'},
+                 barmode='group')
+    return fig
+
+def plot_m_yoy(df):
+    """Plot M0, M1, M2 YoY growth."""
+    if df.empty:
+        return None
+        
+    cols = [c for c in ['m0_yoy', 'm1_yoy', 'm2_yoy'] if c in df.columns]
+    if not cols:
+        return None
+        
+    fig = px.line(df, x='month', y=cols,
+                  title='Money Supply: YoY Growth (%)',
+                  labels={'month': 'Date', 'value': 'YoY (%)', 'variable': 'Indicator'})
+    
+    names = {'m0_yoy': 'M0 YoY', 'm1_yoy': 'M1 YoY', 'm2_yoy': 'M2 YoY'}
+    fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
+    return fig
+
+def plot_m_mom(df):
+    """Plot M0, M1, M2 MoM growth."""
+    if df.empty:
+        return None
+        
+    cols = [c for c in ['m0_mom', 'm1_mom', 'm2_mom'] if c in df.columns]
+    if not cols:
+        return None
+        
+    fig = px.line(df, x='month', y=cols,
+                  title='Money Supply: MoM Growth (%)',
+                  labels={'month': 'Date', 'value': 'MoM (%)', 'variable': 'Indicator'})
+    
+    names = {'m0_mom': 'M0 MoM', 'm1_mom': 'M1 MoM', 'm2_mom': 'M2 MoM'}
+    fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
+    return fig
+
+

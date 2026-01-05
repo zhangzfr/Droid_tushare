@@ -850,6 +850,59 @@ index_weight:
       - trade_date
       is_daily: true
       date_column: trade_date
+      date_param_mode: range
+      requires_paging: true
+      required_params:
+        index_codes:
+        - 000300.SH
+        - 399300.SZ
+        - 000016.SH
+        - 000905.SH
+        - 399905.SZ
+        - 000852.SH
+        - h11030.CSI
+        - h11031.CSI
+        - h11041.CSI
+        - h11042.CSI
+        - h11043.CSI
+        - h11044.CSI
+        - h11045.CSI
+        - h11046.CSI
+        - h11047.CSI
+        - h11049.CSI
+        - h11050.CSI
+        - h30036.CSI
+        - h30037.CSI
+        - h30038.CSI
+        - h30039.CSI
+        - h30040.CSI
+        - h30041.CSI
+        - h30042.CSI
+        - h30043.CSI
+        - h30044.CSI
+        - h30045.CSI
+        - h30046.CSI
+        - h30047.CSI
+        - h30048.CSI
+        - h30049.CSI
+        - h30050.CSI
+        - h30051.CSI
+        - h30052.CSI
+        - h30053.CSI
+        - h30054.CSI
+        - h30055.CSI
+        - h30056.CSI
+        - h30057.CSI
+        - h30058.CSI
+        - h30059.CSI
+        - h30060.CSI
+        - h30061.CSI
+        - h30062.CSI
+        - h30063.CSI
+        - h30064.CSI
+        - h30065.CSI
+        - h30066.CSI
+        - h30067.CSI
 index_daily:
   db_path: ${DB_ROOT}/tushare_duck_index.db
   tables:

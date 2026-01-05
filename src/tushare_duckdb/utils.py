@@ -231,6 +231,11 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
         if 'ts_codes' in params:
             params['ts_code'] = params.pop('ts_codes')
 
+    # === 特殊处理：index_weight 需要 index_code 参数名 ===
+    if table_name == 'index_weight':
+        if 'index_codes' in params:
+            params['index_code'] = params.pop('index_codes')
+
     # === 兼容旧 ts_code 参数 ===
     if ts_code and 'ts_code' not in params:
         params['ts_code'] = ts_code

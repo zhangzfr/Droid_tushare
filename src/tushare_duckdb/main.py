@@ -59,6 +59,7 @@ INIT_TABLES_MAP = {
         'income', 'balance', 'cashflow', 'forecast', 'express', 
         'dividend', 'fina_indicator', 'fina_audit', 'fina_mainbz', 'disclosure_date'
     ]),
+    'index_weight': lambda conn: init_tables_for_category(conn, ['index_weight']),
 }
 
 # ==================== 交互式输入工具函数 ====================
@@ -227,7 +228,7 @@ def main():
     category_map = {
         '1': 'stock', '2': 'index_daily', '3': 'fund', '4': 'option', '5': 'future',
         '6': 'bond', '7': 'margin', '8': 'moneyflow', '9': 'reference', '10': 'marco',
-        '12': 'stock_list', '13': 'stock_events', '14': 'finance'
+        '12': 'stock_list', '13': 'stock_events', '14': 'finance', '15': 'index_weight'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -242,7 +243,8 @@ def main():
         print(" [ 4] 期权行情         [ 5] 期货行情         [ 6] 债卷行情")
         print(" [ 7] 融资融券         [ 8] 资金流向         [ 9] 参考数据")
         print(" [10] 宏观数据         [12] 股票列表         [13] 股票事件")
-        print(" [14] 财务数据         [11] 查看数据         [ 0] 退出")
+        print(" [14] 财务数据         [15] 指数权重         [11] 查看数据")
+        print(" [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
@@ -269,6 +271,7 @@ def main():
                 '12': 'stock_list', # 股票列表
                 '13': 'stock_events', # 股票事件
                 '14': 'finance',    # 财务数据
+                '15': 'index_weight',  # 指数权重
                 'all': 'all'  # 全部
             }
 
@@ -279,7 +282,7 @@ def main():
                         'stock': '股票行情', 'index_daily': '指数行情', 'fund': '基金行情', 'option': '期权行情',
                         'future': '期货行情', 'bond': '券债行情', 'margin': '融资融券', 'moneyflow': '资金流向',
                         'reference': '参考数据', 'marco': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件',
-                        'finance': '财务数据'
+                        'finance': '财务数据', 'index_weight': '指数权重'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
             print("  [all] 所有类别")
@@ -293,11 +296,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '13', '14']:
+                elif user_input in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '13', '14', '15']:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~10, 12, 13 或 all")
+                    print("输入无效，请输入 1~10, 12, 13, 14, 15 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")

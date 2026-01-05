@@ -42,6 +42,65 @@ def load_pmi_data():
     # List of columns to convert (add more as needed based on inspection)
     numeric_cols = [col for col in df.columns if col.startswith('pmi')]
     for col in numeric_cols:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    return df
+    return df.sort_values('month')
+
+@st.cache_data
+def load_sf_data():
+    """Fetch and preprocess Social Financing data from DuckDB."""
+    conn = get_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        df = conn.execute("SELECT * FROM sf_month").fetchdf()
+    except Exception as e:
+        st.error(f"Error executing query: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
+    if df.empty:
+        return df
+
+    if 'month' in df.columns:
+        df['month'] = pd.to_datetime(df['month'].astype(str) + '01', format='%Y%m%d', errors='coerce')
+    
+    # Preprocessing numeric columns
+    numeric_cols = ['inc_month', 'inc_cumval', 'stk_endval']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    return df.sort_values('month')
+
+@st.cache_data
+def load_m_data():
+    """Fetch and preprocess Money Supply data from DuckDB."""
+    conn = get_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        df = conn.execute("SELECT * FROM cn_m").fetchdf()
+    except Exception as e:
+        st.error(f"Error executing query: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
+    if df.empty:
+        return df
+
+    if 'month' in df.columns:
+        df['month'] = pd.to_datetime(df['month'].astype(str) + '01', format='%Y%m%d', errors='coerce')
+    
+    # Preprocessing numeric columns
+    numeric_cols = ['m0', 'm0_yoy', 'm0_mom', 'm1', 'm1_yoy', 'm1_mom', 'm2', 'm2_yoy', 'm2_mom']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    return df.sort_values('month')
