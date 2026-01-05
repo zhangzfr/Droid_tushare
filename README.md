@@ -145,9 +145,8 @@ pip install -r requirements.txt
 python -c "import tushare, duckdb; print('安装成功')"
 ```
 ```bash
-# 运行指数可视化仪表盘
-streamlit run dashboard/index_main.py
-```
+# 运行统一可视化仪表盘（推荐）
+streamlit run dashboard/app.py
 ```
 
 ### 2. 配置环境变量
