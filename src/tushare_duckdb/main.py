@@ -170,15 +170,6 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
 
         logger.info(f"日期范围: {start_date} ~ {end_date}，共 {len(dates)} 个{'交易日' if date_type == 'trade' else '自然日'}")
 
-        # 强制逐日检测
-        force_daily_tables = [
-            t for t in selected_tables_list
-            if config_group['tables'][t].get('force_daily_fetch', False)
-        ]
-        if force_daily_tables:
-            logger.info(f"检测到强制逐日表: {', '.join(force_daily_tables)} → 自动切换为逐日模式")
-            fetch_type = 'daily'
-
         # === 特殊处理：index_weight 从数据库动态提取 index_codes ===
         if category == 'index_weight' and table_exists(conn, 'index_weight'):
             db_index_codes = conn.execute(

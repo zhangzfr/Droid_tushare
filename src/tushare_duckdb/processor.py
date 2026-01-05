@@ -20,8 +20,8 @@ class DataProcessor:
         total_stored = 0
 
         required_params = api_config_entry.get('required_params', {})
-        if not api_config_entry.get('is_daily', True):
-            fetch_type = 'range'
+        # 统一通过 date_param_mode 控制获取策略（废弃 is_daily 参数）
+        # date_param_mode: 'single'(默认，逐日) | 'range'(范围) | 'full_paging'(智能分页)
 
         param_grid = []
         if ts_codes and any(ts_codes):
