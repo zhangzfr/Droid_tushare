@@ -13,6 +13,7 @@ from .utils import (
 )
 from .logger import logger
 import pandas as pd
+from .db_explorer import run_explorer
 try:
     from tabulate import tabulate
 except ImportError:
@@ -249,7 +250,7 @@ def main():
         print(" [ 7] 融资融券         [ 8] 资金流向         [ 9] 参考数据")
         print(" [10] 宏观数据         [12] 股票列表         [13] 股票事件")
         print(" [14] 财务数据         [15] 指数权重         [11] 查看数据")
-        print(" [ 0] 退出")
+        print(" [16] 数据库管理       [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
@@ -546,8 +547,11 @@ def main():
             except Exception as e:
                 logger.error(f"更新失败: {e}")
 
+        elif choice == '16':
+            run_explorer()
+
         else:
-            print("无效选择，请输入 0-13")
+            print("无效选择，请输入有效数字")
 
 
 if __name__ == "__main__":
