@@ -2112,6 +2112,29 @@ marco:
       start_param: start_m
       end_param: end_m
       api_date_format: YYYYMM
+    cn_m:
+      unique_keys:
+      - month
+      fields:
+      - month
+      - m0
+      - m0_yoy
+      - m0_mom
+      - m1
+      - m1_yoy
+      - m1_mom
+      - m2
+      - m2_yoy
+      - m2_mom
+      earliest_date: '19780101'
+      limit: 2000
+      date_column: month
+      date_type: natural
+      date_param: month
+      date_param_mode: range
+      start_param: start_m
+      end_param: end_m
+      api_date_format: YYYYMM
     sf_month:
       unique_keys:
       - month

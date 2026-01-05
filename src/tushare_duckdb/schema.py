@@ -982,6 +982,20 @@ TABLE_SCHEMAS = {
             last_updated VARCHAR
         )
     """,
+    'cn_m': """
+        CREATE TABLE cn_m (
+            month VARCHAR PRIMARY KEY,
+            m0 DOUBLE,
+            m0_yoy DOUBLE,
+            m0_mom DOUBLE,
+            m1 DOUBLE,
+            m1_yoy DOUBLE,
+            m1_mom DOUBLE,
+            m2 DOUBLE,
+            m2_yoy DOUBLE,
+            m2_mom DOUBLE
+        )
+    """,
     'cn_pmi': """
         CREATE TABLE cn_pmi (
             month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM

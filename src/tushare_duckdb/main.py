@@ -45,7 +45,7 @@ INIT_TABLES_MAP = {
         'fut_holding', 'fut_index_daily'
     ]),
     'marco': lambda conn: init_tables_for_category(conn, [
-        'shibor', 'shibor_quote', 'cn_pmi', 'sf_month', 'us_tycr', 'us_trycr', 'us_tltr', 'us_trltr', 'us_tbr'
+        'shibor', 'shibor_quote', 'cn_pmi', 'cn_m', 'sf_month', 'us_tycr', 'us_trycr', 'us_tltr', 'us_trltr', 'us_tbr'
     ]),
     'bond': lambda conn: init_tables_for_category(conn, [
         'cb_daily', 'bond_blk', 'fut_daily', 'bond_blk_detail', 'repo_daily',
@@ -355,7 +355,7 @@ def main():
                 # Special validation logic for 'marco' to support mixed frequencies
                 if cat == 'marco':
                     # Define monthly vs daily tables
-                    monthly_table_names = ['cn_pmi', 'sf_month']
+                    monthly_table_names = ['cn_pmi', 'cn_m', 'sf_month']
                     daily_table_names = [t for t in config['tables'] if t not in monthly_table_names]
                     
                     # Prompt for sub-category
