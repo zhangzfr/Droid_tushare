@@ -44,9 +44,11 @@ INIT_TABLES_MAP = {
         'fut_basic', 'trade_cal_future', 'fut_daily', 'fut_wsr', 'fut_settle',
         'fut_holding', 'fut_index_daily'
     ]),
-    'marco': lambda conn: init_tables_for_category(conn, [
-        'shibor', 'shibor_quote', 'cn_pmi', 'cn_m', 'sf_month', 'us_tycr', 'us_trycr', 'us_tltr', 'us_trltr', 'us_tbr'
-    ]),
+    'marco': lambda conn: init_tables_for_category(
+        conn, 
+        list(API_CONFIG.get('marco', {}).get('tables', {}).keys()),
+        API_CONFIG.get('marco', {}).get('tables', {})
+    ),
     'bond': lambda conn: init_tables_for_category(conn, [
         'cb_daily', 'bond_blk', 'fut_daily', 'bond_blk_detail', 'repo_daily',
         'yc_cb', 'cb_call', 'cb_issue', 'cb_share'
@@ -354,8 +356,11 @@ def main():
                 
                 # Special validation logic for 'marco' to support mixed frequencies
                 if cat == 'marco':
-                    # Define monthly vs daily tables
-                    monthly_table_names = ['cn_pmi', 'cn_m', 'sf_month']
+                    # Auto-detect monthly vs daily tables from config
+                    monthly_table_names = [
+                        t for t, cfg in config['tables'].items()
+                        if cfg.get('date_column') == 'month' or cfg.get('api_date_format') == 'YYYYMM'
+                    ]
                     daily_table_names = [t for t in config['tables'] if t not in monthly_table_names]
                     
                     # Prompt for sub-category

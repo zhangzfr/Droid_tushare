@@ -253,13 +253,52 @@ def get_existing_dates(conn, table_name, date_column, date_list):
     return set(r[0] for r in results if r[0])
 
 
-def init_table(conn, table_name):
-    """通用表初始化：仅执行配置的 SQL + 创建索引"""
-    if table_name not in TABLE_SCHEMAS:
-        print(f"错误：表 {table_name} 的结构未定义在 TABLE_SCHEMAS 中")
-        return False
+def generate_table_schema(table_name, config):
+    """
+    从 settings.yaml 配置自动生成 CREATE TABLE SQL。
+    用于在 schema.py 中未定义表结构时的兜底方案。
+    """
+    fields = config.get('fields', [])
+    unique_keys = config.get('unique_keys', [])
+    
+    if not fields:
+        print(f"错误：表 {table_name} 配置中缺少 fields 定义")
+        return None
+    
+    columns = []
+    for field in fields:
+        # 根据字段名推断类型
+        if field in unique_keys:
+            col_type = 'VARCHAR'
+        elif field.endswith('_yoy') or field.endswith('_mom') or field.endswith('_rate'):
+            col_type = 'DOUBLE'
+        elif field in ['month', 'date', 'trade_date', 'ann_date', 'end_date']:
+            col_type = 'VARCHAR'
+        else:
+            col_type = 'DOUBLE'  # 默认为数值类型
+        columns.append(f'"{field}" {col_type}')
+    
+    pk_clause = ""
+    if unique_keys:
+        pk_cols = ', '.join([f'"{k}"' for k in unique_keys])
+        pk_clause = f", PRIMARY KEY ({pk_cols})"
+    
+    sql = f"CREATE TABLE \"{table_name}\" ({', '.join(columns)}{pk_clause})"
+    return sql
 
-    sql = TABLE_SCHEMAS[table_name].strip()
+
+def init_table(conn, table_name, config=None):
+    """通用表初始化：优先使用 TABLE_SCHEMAS，不存在则从 config 自动生成"""
+    if table_name in TABLE_SCHEMAS:
+        sql = TABLE_SCHEMAS[table_name].strip()
+    elif config:
+        sql = generate_table_schema(table_name, config)
+        if not sql:
+            return False
+        print(f"  (自动生成表结构: {table_name})")
+    else:
+        print(f"错误：表 {table_name} 的结构未定义在 TABLE_SCHEMAS 中，且无配置信息")
+        return False
 
     try:
         # 1. 创建表
@@ -322,10 +361,16 @@ def get_columns(conn, table_name):
         return [], [], {}
 
 
-def init_tables_for_category(conn, category_tables):
+def init_tables_for_category(conn, category_tables, tables_config=None):
+    """
+    初始化类别中的所有表。
+    category_tables: 表名列表
+    tables_config: 可选，从 API_CONFIG 传入的 tables 配置字典，用于自动生成表结构
+    """
     for table_name in category_tables:
         if not table_exists(conn, table_name):
-            init_table(conn, table_name)
+            config = tables_config.get(table_name) if tables_config else None
+            init_table(conn, table_name, config)
         else:
             print(f"表 {table_name} 已存在，跳过创建")
 
