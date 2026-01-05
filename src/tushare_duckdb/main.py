@@ -45,10 +45,10 @@ INIT_TABLES_MAP = {
         'fut_basic', 'trade_cal_future', 'fut_daily', 'fut_wsr', 'fut_settle',
         'fut_holding', 'fut_index_daily'
     ]),
-    'marco': lambda conn: init_tables_for_category(
+    'macro': lambda conn: init_tables_for_category(
         conn, 
-        list(API_CONFIG.get('marco', {}).get('tables', {}).keys()),
-        API_CONFIG.get('marco', {}).get('tables', {})
+        list(API_CONFIG.get('macro', {}).get('tables', {}).keys()),
+        API_CONFIG.get('macro', {}).get('tables', {})
     ),
     'bond': lambda conn: init_tables_for_category(conn, [
         'cb_daily', 'bond_blk', 'fut_daily', 'bond_blk_detail', 'repo_daily',
@@ -233,7 +233,7 @@ def main():
 
     category_map = {
         '1': 'stock', '2': 'index_daily', '3': 'fund', '4': 'option', '5': 'future',
-        '6': 'bond', '7': 'margin', '8': 'moneyflow', '9': 'reference', '10': 'marco',
+        '6': 'bond', '7': 'margin', '8': 'moneyflow', '9': 'reference', '10': 'macro',
         '12': 'stock_list', '13': 'stock_events', '14': 'finance', '15': 'index_weight'
     }
 
@@ -273,7 +273,7 @@ def main():
                 '7': 'margin',  # 融资融券
                 '8': 'moneyflow',  # 资金流向
                 '9': 'reference',  # 参考数据
-                '10': 'marco',  # 宏观数据
+                '10': 'macro',  # 宏观数据
                 '12': 'stock_list', # 股票列表
                 '13': 'stock_events', # 股票事件
                 '14': 'finance',    # 财务数据
@@ -287,7 +287,7 @@ def main():
                     desc = {
                         'stock': '股票行情', 'index_daily': '指数行情', 'fund': '基金行情', 'option': '期权行情',
                         'future': '期货行情', 'bond': '券债行情', 'margin': '融资融券', 'moneyflow': '资金流向',
-                        'reference': '参考数据', 'marco': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件',
+                        'reference': '参考数据', 'macro': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件',
                         'finance': '财务数据', 'index_weight': '指数权重'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
@@ -363,8 +363,8 @@ def main():
                 # 最好还是在 input 阶段就改。但 input 阶段是统一的。
                 # 可以在 input 阶段判断 target_category。
                 
-                # Special validation logic for 'marco' to support mixed frequencies
-                if cat == 'marco':
+                # Special validation logic for 'macro' to support mixed frequencies
+                if cat == 'macro':
                     # Auto-detect monthly vs daily tables from config
                     monthly_table_names = [
                         t for t, cfg in config['tables'].items()
@@ -379,7 +379,7 @@ def main():
                     print("  3. 全部（分开显示）")
                     sub_choice = get_input("请选择 [默认 3]: ", default='3')
                     
-                    def run_marco_validation(table_names, freq, section_title):
+                    def run_macro_validation(table_names, freq, section_title):
                         """Helper to run validation and display results for a subset of tables."""
                         if not table_names:
                             return
@@ -404,12 +404,12 @@ def main():
                             print(tabulate(d, headers='keys', tablefmt='psql', stralign='right'))
                     
                     if sub_choice == '1':
-                        run_marco_validation(daily_table_names, 'daily', '日频宏观数据')
+                        run_macro_validation(daily_table_names, 'daily', '日频宏观数据')
                     elif sub_choice == '2':
-                        run_marco_validation(monthly_table_names, 'monthly', '月频宏观数据')
+                        run_macro_validation(monthly_table_names, 'monthly', '月频宏观数据')
                     else:  # '3' or default
-                        run_marco_validation(daily_table_names, 'daily', '日频宏观数据')
-                        run_marco_validation(monthly_table_names, 'monthly', '月频宏观数据')
+                        run_macro_validation(daily_table_names, 'daily', '日频宏观数据')
+                        run_macro_validation(monthly_table_names, 'monthly', '月频宏观数据')
                     
                     # Skip default display logic for marco
                     continue

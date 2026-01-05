@@ -4,15 +4,15 @@ import yaml
 import streamlit as st
 
 # Hardcoded path since YAML config is inaccessible in this environment
-MARCO_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_marco.db'
+MACRO_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_macro.db'
 
 def get_db_connection():
     """Establish connection to DuckDB."""
     try:
-        conn = duckdb.connect(MARCO_DB_PATH, read_only=True)
+        conn = duckdb.connect(MACRO_DB_PATH, read_only=True)
         return conn
     except Exception as e:
-        st.error(f"Error connecting to database at {MARCO_DB_PATH}: {e}")
+        st.error(f"Error connecting to database at {MACRO_DB_PATH}: {e}")
         return None
 
 @st.cache_data

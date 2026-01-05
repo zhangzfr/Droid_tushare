@@ -2029,8 +2029,8 @@ future:
       date_param: trade_date
       date_param_mode: range
       note: 多代码日线表，覆盖模式请逐个代码删除插入，禁用批量删除优化
-marco:
-  db_path: ${DB_ROOT}/tushare_duck_marco.db
+macro:
+  db_path: ${DB_ROOT}/tushare_duck_macro.db
   tables:
     shibor:
       unique_keys:

@@ -8,7 +8,7 @@ import os
 
 # Adjust path to allow importing from src based on project structure if needed
 # However, if running as module from root, it should be fine.
-from .config import OPT_DB_PATH, MARCO_DB_PATH, ETF_OPTIONS, INDEX_OPTIONS
+from .config import OPT_DB_PATH, MACRO_DB_PATH, ETF_OPTIONS, INDEX_OPTIONS
 
 # Constants
 YEARS = 365
@@ -141,10 +141,10 @@ def get_shibor_interpolated(start_date: str, end_date: str) -> pd.DataFrame:
         pd.DataFrame: Interpolated daily Shibor rates (index=date, columns=1..365).
                       Rates are in decimals (e.g. 0.03).
     """
-    if not MARCO_DB_PATH:
-        raise ValueError("MARCO_DB_PATH is not defined in configuration.")
+    if not MACRO_DB_PATH:
+        raise ValueError("MACRO_DB_PATH is not defined in configuration.")
         
-    conn = duckdb.connect(MARCO_DB_PATH, read_only=True)
+    conn = duckdb.connect(MACRO_DB_PATH, read_only=True)
     try:
         # Schema in schema.py: date, on, 1w, 2w, 1m, 3m, 6m, 9m, 1y
         # Note: columns might be named "on", "1w" etc which are reserved/need quoting in SQL?

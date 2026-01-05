@@ -41,7 +41,7 @@ _raw_config = load_config()
 API_CONFIG = interpolate_config(_raw_config, DB_ROOT)
 
 OPT_DB_PATH = API_CONFIG.get('option', {}).get('db_path')
-MARCO_DB_PATH = API_CONFIG.get('marco', {}).get('db_path')
+MACRO_DB_PATH = API_CONFIG.get('macro', {}).get('db_path')
 
 # ETF Options Configuration
 ETF_OPTIONS = {
