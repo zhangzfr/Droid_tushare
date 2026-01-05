@@ -179,6 +179,20 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
             logger.info(f"检测到强制逐日表: {', '.join(force_daily_tables)} → 自动切换为逐日模式")
             fetch_type = 'daily'
 
+        # === 特殊处理：index_weight 从数据库动态提取 index_codes ===
+        if category == 'index_weight' and table_exists(conn, 'index_weight'):
+            db_index_codes = conn.execute(
+                "SELECT DISTINCT index_code FROM index_weight ORDER BY index_code"
+            ).fetchall()
+            if db_index_codes:
+                dynamic_codes = [row[0] for row in db_index_codes]
+                logger.info(f"index_weight: 从数据库提取 {len(dynamic_codes)} 个 index_code")
+                # 覆盖配置中的 required_params（使用深拷贝避免污染全局配置）
+                import copy
+                config_group = copy.deepcopy(config_group)
+                for tbl in selected_tables_list:
+                    config_group['tables'][tbl]['required_params'] = {'index_codes': dynamic_codes}
+
         # 开始处理每个表
         for table in selected_tables_list:
             table_config = config_group['tables'][table]
