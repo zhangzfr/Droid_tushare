@@ -1,8 +1,19 @@
 # 🚀 Droid-Tushare: 工业级 Tushare 数据本地化同步引擎
 
-**让量化交易者告别网络延迟与频率限制，构建属于自己的高性能本地金融数据库。**
+> **让量化交易者告别网络延迟与频率限制，构建属于自己的高性能本地金融数据库。**
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-0.8+-yellow.svg)](https://duckdb.org/)
 
 `Droid-Tushare` 是一个为专业量化交易者设计的本地化数据同步方案。它不仅是将 Tushare 数据存入数据库，更是通过 **DuckDB** 的列式存储优势、**智能分页算法** 以及 **自动化异常校验**，解决金融数据获取中的所有痛点。
+
+**📚 文档导航**：
+- 📖 [用户指南](#-快速开始) - 快速上手和使用说明
+- 🏗️ [系统架构](ARCHITECTURE.md) - 深度技术解析
+- 📊 [VIX 计算指南](VIX_GUIDE.md) - 波动率指数详解
+- 🚀 [运维部署](DEPLOYMENT.md) - 生产环境部署
+- 🔧 [故障排除](TROUBLESHOOTING.md) - 问题诊断与解决
 
 ---
 
@@ -76,6 +87,112 @@
 - **增量更新**：智能检测新增数据，避免重复下载
 - **多表关联**：支持跨表数据一致性校验
 - **异常检测**：自动识别数据缺失和异常值
+
+---
+
+## 🚀 快速开始
+
+### 5 分钟快速上手
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/robert/droid_tushare.git
+cd droid_tushare
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 配置环境变量
+cat > .env << EOF
+TUSHARE_TOKEN=your_token_here
+DB_ROOT=./data
+LOG_LEVEL=INFO
+EOF
+
+# 4. 运行 Dashboard
+streamlit run dashboard/app.py
+```
+
+### 实战案例 1：首次同步股票日线数据
+
+```bash
+# 启动交互式终端
+python -m src.tushare_duckdb.main
+
+# 按照提示操作：
+# >>> 请选择数据类别 (输入数字):
+# 1. 股票 (Stock)
+# >>> 1
+
+# >>> 请输入开始日期 (YYYYMMDD, 回车使用默认):
+# >>> 20240101
+
+# >>> 请输入结束日期 (YYYYMMDD, 回车使用默认):
+# >>> 20241231
+
+# >>> 请输入要同步的表名 (all 或 表名列表):
+# >>> daily
+
+# >>> 请选择同步模式 (1=增量插入, 2=覆盖):
+# >>> 1
+```
+
+### 实战案例 2：计算 VIX 波动率指数
+
+```bash
+# 计算上证 50ETF 的 VIX
+python -m src.vix.run \
+  --start_date 20240101 \
+  --end_date 20240131 \
+  --underlying 510050.SH
+
+# 输出文件：
+# - data/vix_result_510050.SH_20240101_20240131.csv
+# - data/vix_details_near_510050.SH_20240101_20240131.csv
+# - data/vix_details_next_510050.SH_20240101_20240131.csv
+```
+
+### 实战案例 3：数据质量校验
+
+```python
+import duckdb
+from src.tushare_duckdb.data_validation import get_database_status
+
+# 检查股票日线数据质量
+conn = duckdb.connect('data/tushare_duck_stock.db')
+report = get_database_status(conn, 'stock', 'daily')
+
+print(f"覆盖率: {report['coverage']:.2%}")
+print(f"最早日期: {report['min_date']}")
+print(f"最晚日期: {report['max_date']}")
+print(f"总记录数: {report['total_records']:,}")
+print(f"缺失天数: {len(report['missing_dates'])}")
+```
+
+### 实战案例 4：程序化查询数据
+
+```python
+import duckdb
+import pandas as pd
+
+# 连接数据库
+conn = duckdb.connect('data/tushare_duck_stock.db')
+
+# 查询特定股票的日线数据
+df = conn.execute("""
+    SELECT trade_date, close, vol, amount
+    FROM daily
+    WHERE ts_code = '000001.SZ'
+        AND trade_date BETWEEN '20240101' AND '20241231'
+    ORDER BY trade_date
+""").fetchdf()
+
+# 计算收益率
+df['return'] = df['close'].pct_change()
+print(df.head())
+
+conn.close()
+```
 
 ---
 
@@ -362,6 +479,24 @@ python -m tushare_duckdb.main
 ### 日志文件位置
 
 所有日志保存在 `logs/` 目录下，按日期归档。最新日志文件包含详细的同步过程记录。
+
+### 快速参考
+
+| 命令 | 说明 |
+|------|------|
+| `python -m src.tushare_duckdb.main` | 启动数据同步终端 |
+| `streamlit run dashboard/app.py` | 启动可视化仪表盘 |
+| `python -m src.vix.run --start_date YYYYMMDD --end_date YYYYMMDD` | 计算 VIX |
+| `python -m src.tushare_duckdb.data_validation` | 数据质量校验 |
+
+### 文档索引
+
+| 文档 | 说明 | 适用场景 |
+|------|------|---------|
+| **ARCHITECTURE.md** | 系统架构、模块设计、数据流 | 理解系统设计 |
+| **VIX_GUIDE.md** | VIX 计算、方法论、结果解读 | 波动率分析 |
+| **DEPLOYMENT.md** | 部署、监控、备份、优化 | 生产环境运维 |
+| **TROUBLESHOOTING.md** | 故障诊断、错误代码、应急恢复 | 问题排查 |
 
 ## ⚙️ 配置详解
 
