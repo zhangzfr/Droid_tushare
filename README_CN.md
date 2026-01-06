@@ -1,115 +1,428 @@
-# Tushare to DuckDB 数据同步系统说明文档
+# 🚀 Droid-Tushare: 工业级 Tushare 数据本地化同步引擎
 
-## 1. 项目简介
-本项目是一个高性能的金融数据 ETL（提取、转换、加载）工具，旨在将 Tushare Pro 接口的金融数据（股票、指数、期货、基金、宏观等）同步到本地 DuckDB 数据库中。
+> **让量化交易者告别网络延迟与频率限制，构建属于自己的高性能本地金融数据库。**
 
-项目经过重构，采用了模块化架构，支持配置热更新、断点续传、增量更新和全链路日志记录。
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-0.8+-yellow.svg)](https://duckdb.org/)
 
-## 2. 核心功能
+`Droid-Tushare` 是一个为专业量化交易者设计的本地化数据同步方案。它不仅是将 Tushare 数据存入数据库，更是通过 **DuckDB** 的列式存储优势、**智能分页算法** 以及 **自动化异常校验**，解决金融数据获取中的所有痛点。
 
-### 2.1 多品类数据支持
-支持以下数据类别的获取与存储：
-- **股票 (Stock)**: 日线行情、每日指标、复权因子等。
-- **股票列表 (Stock List)**: 股票基础信息、上市公司信息（对应菜单 12，无需日期）。
-- **股票事件 (Stock Events)**: 历史更名、管理层、分红、沪深港通成分、交易日历（对应菜单 13，需日期范围）。
-- **指数 (Index)**: 申万/同花顺/中信行业指数、大盘指数日线。
-- **期货 (Future)**: 期货日线、南华期货指数、主力连续合约。
-- **基金 (Fund)**: 场内/场外基金日线、净值数据。
-- **期权 (Option)**: 交易所期权日微行情。
-- **可转债 (Bond)**: 可转债日线、基本信息。
-- **宏观 (Marco)**: Shibor、美债收益率等。
-- **资金流向 (Moneyflow)**: 个股、板块资金流向。
+---
 
-### 2.2 智能更新策略
-系统支持三种核心更新模式：
-- **增量插入 (Insert New)**: 仅插入数据库中不存在的记录（基于唯一键去重）。默认模式，适合日常跑批。
-- **覆盖模式 (Replace)**: 删除指定日期范围内的数据，重新拉取并插入。适合修正历史数据或重跑某段时间数据。
-- **智能分页 (Smart Paging)**: 对于不支持日期参数的宽表（如基础信息表），自动比对本地最新记录，实现增量同步。
+## 📚 文档导航
 
-### 2.3 稳健性与观测
-- **自动重试**: 对 Tushare API 的限频（每分钟访问限制）和网络错误进行自动退避重试。
-- **集中式日志**: 所有操作日志记录在 `logs/` 目录下（按日期归档），同时输出到控制台。
-- **空值处理**: 自动清洗日期为空的脏数据，防止数据库写入报错。
+- 📖 [本文档](#-快速开始) - 快速上手和使用说明
+- 🏗️ [系统架构](ARCHITECTURE.md) - 深度技术解析（开发必读）
+- 📊 [VIX计算指南](VIX_GUIDE.md) - 波动率指数详解（量化研究者必读）
+- 🚀 [运维部署](DEPLOYMENT.md) - 生产环境部署（运维工程师必读）
+- 🔧 [故障排除](TROUBLESHOOTING.md) - 问题诊断与解决（故障排查必读）
 
-### 2.4 数据校验
-提供强大的数据库状态校验功能（菜单选项 [11]），可检测：
-- 数据覆盖率（如某段时间内是否有缺失天数）。
-- 数据量异常（如某天数据量骤降）。
-- 最早/最晚日期范围。
+---
 
-## 3. 通过本地配置管理
-所有配置项已从代码中剥离，统一管理：
+## ✨ 核心优势
 
-- **`settings.yaml`**: 定义了所有 API 接口参数、数据库表结构、字段映射、唯一键等核心逻辑。修改此文件可直接调整采集策略，无需改代码。
-- **`.env`** (可选): 用于配置 `TUSHARE_TOKEN` 和数据库根目录 `DB_ROOT`，避免敏感信息硬编码。
+### 1. ⚡ 极致性能：由 DuckDB 驱动
 
-## 4. 目录结构
-```text
-Droid_tushare/
-├── src/
-│   └── tushare_duckdb/    # 核心代码包
-│       ├── config.py      # 配置加载器
-│       ├── fetcher.py     # Tushare API 交互层
-│       ├── storage.py     # DuckDB 存储层
-│       ├── processor.py   # 数据处理与调度核心
-│       ├── logger.py      # 日志模块
-│       └── main.py        # 程序入口
-├── settings.yaml          # 核心配置文件
-├── safe_run.sh            # 安全测试脚本
-├── requirements.txt       # 依赖列表
-└── logs/                  # 运行日志
-```
+- **毫秒级查询**：利用 DuckDB 向量化执行引擎，即使是亿级行情数据，复杂聚合查询也能在毫秒内完成
+- **轻量持久化**：无需安装庞大的数据库服务端，单文件存储，极致易读
+- **高效压缩**：列式存储天然优势，大幅节省磁盘空间
 
-## 5. 使用指南
+### 2. 🧠 智能同步逻辑
 
-### 5.1 环境准备
-确保已安装依赖（建议使用 conda 环境）：
+- **全自动分页**：自动处理 Tushare 接口 2000/5000 行限制，通过 `limit` 与 `offset` 智能递归拉取
+- **自适应频控**：内置限流监测，自动触发 65 秒冷却重试，确保 7x24 小时无人值守运行
+- **增量优先**：支持 `full_paging` 模式，通过对比本地最大日期实现"秒级补录"，确保架构的可维护性与数据一致性
+
+### 3. 🛡️ 工业级数据质量保障
+
+- **异常日期检测**：内置 `Mean-2*Std` 算法自动识别数据缺失与异常天
+- **多维校验报告**：交互式生成覆盖率报告、缺失范围定位以及非交易日异常记录提示
+- **元数据追踪**：自动记录每张表的最早/最晚日期、记录数、最后更新时间
+
+### 4. 🗂️ 全品种覆盖
+
+项目内置 **50+ 张金融数据表**，涵盖股票、基金、期货、期权、债券、指数、宏观等全品种数据。所有表结构均基于 Tushare Pro API 标准，开箱即用。
+
+---
+
+## 🚀 快速开始
+
+### 5 分钟快速上手
+
 ```bash
+# 1. 克隆仓库
+git clone https://github.com/robert/droid_tushare.git
+cd droid_tushare
+
+# 2. 安装依赖
 pip install -r requirements.txt
+
+# 3. 配置环境变量
+cat > .env << EOF
+TUSHARE_TOKEN=your_token_here
+DB_ROOT=./data
+LOG_LEVEL=INFO
+EOF
+
+# 4. 启动 Dashboard
+streamlit run dashboard/app.py
 ```
 
-### 5.2 安全测试模式（推荐）
-首次运行时，建议使用安全脚本，它会将数据下载到临时的 `test_db_data/` 目录，**绝对不会**影响您正式的数据库文件。
-```bash
-./safe_run.sh
-```
+### 实战案例 1：首次同步股票日线数据
 
-### 5.3 正式生产运行
-确认测试无误后，运行主程序更新正式数据库（默认路径为 `/Users/robert/Developer/DuckDB`）：
 ```bash
+# 启动交互式终端
 python -m src.tushare_duckdb.main
+
+# 按照提示操作：
+# >>> 请选择数据类别 (输入数字):
+# 1. 股票 (Stock)
+# >>> 1
+
+# >>> 请输入开始日期 (YYYYMMDD, 回车使用默认):
+# >>> 20240101
+
+# >>> 请输入结束日期 (YYYYMMDD, 回车使用默认):
+# >>> 20241231
+
+# >>> 请输入要同步的表名 (all 或 表名列表):
+# >>> daily
+
+# >>> 请选择同步模式 (1=增量插入, 2=覆盖):
+# >>> 1
 ```
 
-### 5.4 交互操作流程
-程序启动后会显示主菜单：
-1. 输入数字（如 `1` 选择股票）进入子菜单。
-2. **日期范围**: 输入开始/结束日期（YYYYMMDD），直接回车使用默认值（通常是上次更新后一天到今天）。
-3. **选择表**: 输入 `all` 更新该类别下所有表，或输入表名（如 `daily,adj_factor`）单独更新。
-4. **选择模式**:
-   - `1`: 增量（最常用，速度快）
-   - `2`: 覆盖（慎用，会删除指定时间段数据）
+### 实战案例 2：计算 VIX 波动率指数
 
-## 6. 注意事项
+```bash
+# 计算上证 50ETF 的 VIX
+python -m src.vix.run \
+  --start_date 20240101 \
+  --end_date 20240131 \
+  --underlying 510050.SH
 
-1. **Tushare 积分限制**:
-   - 部分高频接口（如分钟线、资金流向）需要较高的 Tushare 积分。如果日志提示权限不足，请检查账号积分。
-   - 免费用户受每分钟访问次数（RPM）限制，程序会自动触发 `sleep` 等待，这是正常现象。
+# 输出文件：
+# - data/vix_result_510050.SH_20240101_20240131.csv
+# - data/vix_details_near_510050.SH_20240101_20240131.csv
+# - data/vix_details_next_510050.SH_20240101_20240131.csv
+```
 
-2. **DuckDB 写锁**:
-   - DuckDB 是单进程写锁数据库。**程序运行期间，请勿使用 DBeaver 或 Python 其他脚本同时连接同一个 `.db` 文件**，否则会报错 `IO Error: Cannot open file ... because it is being used by another process`。
-   - 读取（Read-only）通常不受影响，但在写入大量数据时建议保持独占访问。
+### 实战案例 3：程序化查询数据
 
-3. **内存使用**:
-   - 大表（如 `daily` 全量历史）更新时，程序采用了分批处理（Batch Size），一般不会造成内存溢出。但如果修改 `settings.yaml` 将分页设置过大，可能会增加内存压力。
+```python
+import duckdb
+import pandas as pd
 
-4. **配置文件修改**:
-   - 修改 `settings.yaml` 中的 SQL 字段定义（`fields`）后，如果数据库中已存在旧表结构，可能会导致插入失败。此时建议删除旧表或手动调整数据库结构。
+# 连接数据库
+conn = duckdb.connect('data/tushare_duck_stock.db')
 
-5. **数据路径**:
-   - 默认数据库路径由环境配置 `DB_ROOT` 决定。如果我们在代码中通过 `export DB_ROOT=...` 覆盖了它，请确保该路径有写入权限。
+# 查询特定股票的日线数据
+df = conn.execute("""
+    SELECT trade_date, close, vol, amount
+    FROM daily
+    WHERE ts_code = '000001.SZ'
+        AND trade_date BETWEEN '20240101' AND '20241231'
+    ORDER BY trade_date
+""").fetchdf()
 
-## 7. 常见问题
-- **Q: 为什么日志显示“空数据，无需存储”？**
-  - A: 可能是当天休市（非交易日），或者该时间段的数据 Tushare 尚未更新。
-- **Q: 如何查看下载进度？**
-  - A: 查看 `logs/` 目录下的最新日志文件，里面有详细的 `INFO` 级别记录，包括每页获取的行数。
+# 计算收益率
+df['return'] = df['close'].pct_change()
+print(df.head())
+
+conn.close()
+```
+
+---
+
+## 📊 支持的数据表
+
+### 📈 股票数据 (Stock)
+- **基础信息**：`stock_basic` (股票列表), `stock_company` (公司信息)
+- **行情数据**：`daily` (日线行情), `adj_factor` (复权因子), `daily_basic` (每日指标)
+- **交易信息**：`stk_limit` (涨跌停), `suspend_d` (停复牌), `bak_basic` (备用行情)
+- **事件数据**：`namechange` (更名), `hs_const` (沪深港通), `stk_managers` (高管), `stk_rewards` (分红)
+
+### 📊 指数数据 (Index)
+- **基础信息**：`index_basic` (指数列表), `sw_index_classify_2014/2021` (申万分类)
+- **行情数据**：`index_daily` (日线), `index_dailybasic` (每日指标), `daily_info` (大盘统计)
+- **成分股权重**：`index_weight` (权重), `ths_member` (同花顺成分), `sw_index_member_all` (申万成分)
+
+### 💰 基金数据 (Fund)
+- **基础信息**：`fund_basic` (基金列表), `fund_company` (基金公司)
+- **净值数据**：`fund_nav` (净值), `fund_daily` (日线行情)
+- **持仓分析**：`fund_portfolio` (持仓明细)
+
+### 🛢️ 期货数据 (Future)
+- **基础信息**：`fut_basic` (合约), `trade_cal_future` (交易日历)
+- **行情数据**：`fut_daily` (日线), `fut_index_daily` (指数日线)
+- **持仓结算**：`fut_wsr` (仓单), `fut_settle` (结算参数), `fut_holding` (持仓排名)
+
+### 📋 期权数据 (Option)
+- **基础信息**：`opt_basic` (期权合约)
+- **行情数据**：`opt_daily` (日线行情)
+
+### 🏦 债券数据 (Bond)
+- **可转债**：`cb_basic` (基础), `cb_daily` (日线), `cb_issue` (发行), `cb_call` (赎回)
+- **现券交易**：`bond_blk` (大宗交易), `repo_daily` (质押式回购)
+- **收益率曲线**：`yc_cb` (可转债收益率)
+
+### 💹 资金流向 (Moneyflow)
+- **个股资金流**：`moneyflow` (资金流向)
+- **同花顺数据**：`moneyflow_ths` (同花顺), `moneyflow_dc` (东财)
+- **板块资金流**：`moneyflow_ind_ths` (行业), `moneyflow_mkt_dc` (市场)
+
+### 💼 融资融券 (Margin)
+- **融资融券**：`margin` (汇总), `margin_detail` (明细), `margin_secs` (标的券)
+- **转融通**：`slb_len` (转融通余额), `slb_sec` (转融通明细)
+
+### 🌐 宏观数据 (Macro)
+- **国内宏观**：`shibor` (Shibor利率), `cn_m` (货币供应量), `sf_month` (社融数据), `cn_pmi` (采购经理人指数)
+- **国际宏观**：`us_tycr` (美债收益率曲线) 等
+
+---
+
+## 🏗️ 系统架构概览
+
+### 分层架构
+
+```
+用户交互层 (User Interface)
+    ↓ CLI / Dashboard / Python API
+业务逻辑层 (Business Logic)
+    ├─ 数据同步引擎 (tushare_duckdb)
+    ├─ 量化分析引擎 (vix)
+    └─ 可视化引擎 (dashboard)
+数据访问层 (Data Access)
+    ├─ DuckDB 连接管理
+    └─ 外部 API 管理 (Tushare Pro)
+数据存储层 (Data Storage)
+    └─ 14 个 DuckDB 数据库文件
+```
+
+### 核心模块
+
+| 模块 | 职责 | 文件 |
+|------|------|------|
+| **API 客户端** | 与 Tushare API 通信、分页、重试 | `fetcher.py` |
+| **数据处理** | 协调数据获取、处理和存储流程 | `processor.py` |
+| **数据存储** | DuckDB 存储操作、字段映射 | `storage.py` |
+| **数据校验** | 数据质量检查、覆盖率分析 | `data_validation.py` |
+| **元数据管理** | 表结构信息、统计信息 | `metadata.py` |
+
+**📖 深入了解**：查看 [ARCHITECTURE.md](ARCHITECTURE.md) 获取详细的架构设计、模块职责和数据流转说明。
+
+---
+
+## 📈 VIX 计算模块
+
+本项目新增了 `src/vix` 子模块，用于计算中国市场的波动率指数（VIX）。该模块基于本地 DuckDB 中的期权数据和 Shibor 利率进行无模型（Model‑Free）计算。
+
+### 关键特性
+
+- **本地数据**：直接读取 `opt_basic`、`opt_daily` 与 `shibor` 表，无需网络请求
+- **完整可追溯**：计算结果保存在 CSV 文件中，包含所有中间变量
+- **多标的支持**：支持 9 个 ETF 期权和 3 个指数期权
+
+### 支持的标的
+
+| 标的代码 | 说明 | 对应指数 |
+|----------|------|---------|
+| `510050.SH` | 上证 50ETF | 000016.SH |
+| `510300.SH` | 沪深 300ETF | 000300.SH |
+| `510500.SH` | 中证 500ETF | 000905.SH |
+| `588000.SH` | 科创 50ETF | 000688.SH |
+| `159915.SZ` | 创业板ETF | 399102.SZ |
+| ... | 更多标的 | [查看完整列表](VIX_GUIDE.md#-支持的标的) |
+
+### 使用示例
+
+```bash
+# 计算上证50ETF波动率 (默认)
+python -m src.vix.run --start_date 20230101 --end_date 20230110
+
+# 计算沪深300ETF波动率
+python -m src.vix.run --start_date 20230101 --end_date 20230110 --underlying 510300.SH
+```
+
+**📖 深入了解**：查看 [VIX_GUIDE.md](VIX_GUIDE.md) 获取详细的计算方法、数据源说明、结果解读和高级应用。
+
+---
+
+## 🚀 生产部署
+
+### 部署方案
+
+| 方案 | 适用场景 | 优点 | 缺点 |
+|------|---------|------|------|
+| **单机部署** | 个人研究、小团队 | 简单、成本低 | 扩展性差 |
+| **Docker 部署** | 中大型团队 | 可移植、易扩展 | 需要 Docker 知识 |
+| **Kubernetes** | 大型团队 | 高可用、自动扩缩容 | 复杂度高 |
+
+### 推荐配置
+
+| 规模 | CPU | 内存 | 存储 | 网络 |
+|------|-----|------|------|------|
+| **最小** | 2 核 | 4 GB | 100 GB SSD | 10 Mbps |
+| **标准** | 4 核 | 8 GB | 500 GB SSD | 100 Mbps |
+| **生产** | 8 核 | 16 GB | 2 TB SSD + 5 TB HDD | 1 Gbps |
+
+### 备份策略
+
+| 类型 | 频率 | 保留期 | 存储位置 |
+|------|------|--------|---------|
+| **增量备份** | 每天凌晨 3 点 | 7 天 | 本地 |
+| **全量备份** | 每周日凌晨 4 点 | 30 天 | 本地 |
+| **云端备份** | 每天凌晨 5 点 | 90 天 | S3/OSS |
+
+**📖 深入了解**：查看 [DEPLOYMENT.md](DEPLOYMENT.md) 获取完整的部署流程、Docker配置、监控告警和性能优化指南。
+
+---
+
+## 🔧 配置与管理
+
+### 环境变量配置
+
+创建 `.env` 文件：
+
+```bash
+# 必需：Tushare API Token
+TUSHARE_TOKEN=your_tushare_token_here
+
+# 必需：数据库存储根目录
+DB_ROOT=/path/to/your/database/directory
+
+# 可选：日志级别
+LOG_LEVEL=INFO
+
+# 可选：调试模式
+DEBUG=false
+```
+
+### settings.yaml 核心配置
+
+项目核心配置位于 `settings.yaml` 文件，所有数据表定义、API 参数和同步逻辑均在此集中管理。
+
+**关键配置项**：
+- `db_path`：数据库文件路径
+- `requires_paging`：是否需要分页处理
+- `date_param_mode`：日期参数模式（`single`/`range`/`full_paging`）
+- `unique_keys`：唯一键约束
+- `fields`：API 返回的字段列表
+
+---
+
+## 🔧 故障排除
+
+### 快速参考
+
+| 命令 | 说明 |
+|------|------|
+| `python -m src.tushare_duckdb.main` | 启动数据同步终端 |
+| `streamlit run dashboard/app.py` | 启动可视化仪表盘 |
+| `python -m src.vix.run --start_date YYYYMMDD` | 计算 VIX |
+| `./scripts/diagnose.sh` | 运行系统诊断 |
+
+### 常见问题
+
+#### 1. API 频率限制
+**症状**：日志显示 "达到访问频率限制，等待重试"  
+**解决方案**：系统自动等待 65 秒后重试，无需手动干预
+
+#### 2. 数据库锁定错误
+**症状**：`IO Error: Cannot open file ... because it is being used by another process`  
+**解决方案**：确保没有其他程序（如 DBeaver）同时连接数据库
+
+#### 3. VIX 计算结果异常
+**症状**：VIX 为负数或 > 100  
+**解决方案**：检查期权数据完整性，参考 [VIX_GUIDE.md](VIX_GUIDE.md) 的数据质量建议
+
+**📖 深入了解**：查看 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) 获取完整的故障排除百科，包含错误代码速查、11大类问题诊断和应急恢复手册。
+
+---
+
+## 📊 性能基准
+
+### 数据同步性能
+
+| 操作 | 数据量 | 耗时 | 吞吐量 |
+|------|-------|------|--------|
+| 股票日线 (单日) | ~5,000 条 | 2-5 秒 | 1,000-2,500 条/秒 |
+| 指数日线 (单日) | ~15 条 | 1-2 秒 | 10-15 条/秒 |
+| 期权日线 (单日) | ~50,000 条 | 30-60 秒 | 800-1,600 条/秒 |
+
+### VIX 计算性能
+
+| 范围 | 日期数 | 耗时 |
+|------|-------|------|
+| 1 周 | 5 | 2-5 秒 |
+| 1 个月 | 20 | 8-15 秒 |
+| 1 年 | 250 | 60-120 秒 |
+
+---
+
+## 📖 详细文档索引
+
+### 根据用户角色
+
+| 用户角色 | 推荐阅读 | 文档 |
+|---------|---------|------|
+| **新用户** | 快速开始 → 实战案例 | README.md |
+| **开发者** | 系统架构 → 代码实现 | ARCHITECTURE.md |
+| **量化研究者** | VIX计算 → 策略应用 | VIX_GUIDE.md |
+| **运维工程师** | 部署流程 → 监控配置 | DEPLOYMENT.md |
+| **故障排查** | 错误速查 → 诊断流程 | TROUBLESHOOTING.md |
+
+### 根据使用场景
+
+| 场景 | 推荐文档 |
+|------|---------|
+| **首次安装** | README.md → 环境准备 |
+| **数据同步** | README.md → 使用指南 → TROUBLESHOOTING.md |
+| **VIX分析** | VIX_GUIDE.md → 使用指南 → 结果解读 |
+| **系统部署** | DEPLOYMENT.md → 部署架构 → Docker配置 |
+| **性能优化** | DEPLOYMENT.md → 性能优化 |
+| **问题排查** | TROUBLESHOOTING.md → 错误代码速查 |
+
+---
+
+## 🤝 贡献与反馈
+
+### 开发哲学："Slow is Fast"
+
+本项目秉承 **"慢即是快"** 的开发理念：
+- **推理优先**：在编写代码前进行充分的思考和设计
+- **质量至上**：注重代码的可读性、可维护性和长期稳定性
+- **稳健第一**：优先确保系统的可靠性和数据一致性
+
+### 贡献指南
+
+欢迎各种形式的贡献！
+- 报告 Bug：[创建 Issue](https://github.com/robert/droid_tushare/issues)
+- 功能建议：[讨论](https://github.com/robert/droid_tushare/discussions)
+- 代码贡献：[提交 Pull Request](https://github.com/robert/droid_tushare/pulls)
+
+---
+
+## 📄 许可证
+
+本项目采用 **MIT License** 开源协议。详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 🙏 致谢
+
+- **Tushare**：提供优质的金融数据 API 服务
+- **DuckDB**：卓越的列式数据库引擎
+- **Streamlit**：优雅的数据可视化框架
+- **开源社区**：pandas、numpy 等优秀工具库的支持
+
+---
+
+**Droid-Tushare** - 让数据驱动投资决策 🚀
+
+---
+
+**文档版本**: v2.0.0  
+**最后更新**: 2026-01-06  
+**维护者**: Robert
