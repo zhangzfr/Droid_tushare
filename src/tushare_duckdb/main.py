@@ -21,46 +21,14 @@ except ImportError:
 
 pro = PRO_API
 
-# ==================== 表初始化映射（务必与 API_CONFIG 保持一致）====================
+# ==================== 表初始化映射（自动从 API_CONFIG 获取所有类别和表）====================
 INIT_TABLES_MAP = {
-    'stock': lambda conn: init_tables_for_category(conn, [
-        'daily', 'adj_factor', 'daily_basic', 'stk_limit', 'suspend_d', 'bak_basic'
-    ]),
-    'reference': lambda conn: init_tables_for_category(conn, ['block_trade']),
-    'margin': lambda conn: init_tables_for_category(conn, [
-        'margin', 'margin_detail', 'margin_secs', 'slb_len', 'slb_len_mm',
-        'slb_sec', 'slb_sec_detail'
-    ]),
-    'moneyflow': lambda conn: init_tables_for_category(conn, [
-        'moneyflow', 'moneyflow_ths', 'moneyflow_dc', 'moneyflow_ind_ths',
-        'moneyflow_ind_dc', 'moneyflow_mkt_dc', 'moneyflow_cnt_ths'
-    ]),
-    'index_daily': lambda conn: init_tables_for_category(conn, [
-        'index_daily', 'index_dailybasic', 'sw_daily', 'ci_daily', 'ths_daily',
-        'dc_daily', 'tdx_daily', 'daily_info', 'sz_daily_info', 'index_global'
-    ]),
-    'fund': lambda conn: init_tables_for_category(conn, ['fund_daily', 'fund_nav', 'fund_portfolio']),
-    'option': lambda conn: init_tables_for_category(conn, ['opt_daily']),
-    'future': lambda conn: init_tables_for_category(conn, [
-        'fut_basic', 'trade_cal_future', 'fut_daily', 'fut_wsr', 'fut_settle',
-        'fut_holding', 'fut_index_daily'
-    ]),
-    'macro': lambda conn: init_tables_for_category(
+    cat: lambda conn, c=cat: init_tables_for_category(
         conn, 
-        list(API_CONFIG.get('macro', {}).get('tables', {}).keys()),
-        API_CONFIG.get('macro', {}).get('tables', {})
-    ),
-    'bond': lambda conn: init_tables_for_category(conn, [
-        'cb_daily', 'bond_blk', 'fut_daily', 'bond_blk_detail', 'repo_daily',
-        'yc_cb', 'cb_call', 'cb_issue', 'cb_share'
-    ]),
-    'stock_list': lambda conn: init_tables_for_category(conn, ['stock_basic', 'stock_company']),
-    'stock_events': lambda conn: init_tables_for_category(conn, ['namechange', 'hs_const', 'stk_managers', 'stk_rewards', 'trade_cal']),
-    'finance': lambda conn: init_tables_for_category(conn, [
-        'income', 'balance', 'cashflow', 'forecast', 'express', 
-        'dividend', 'fina_indicator', 'fina_audit', 'fina_mainbz', 'disclosure_date'
-    ]),
-    'index_weight': lambda conn: init_tables_for_category(conn, ['index_weight']),
+        list(API_CONFIG.get(c, {}).get('tables', {}).keys()),
+        API_CONFIG.get(c, {}).get('tables', {})
+    )
+    for cat in API_CONFIG.keys()
 }
 
 # ==================== 交互式输入工具函数 ====================
@@ -232,9 +200,9 @@ def main():
     print("=" * 80)
 
     category_map = {
-        '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_daily', '5': 'fund',
-        '6': 'option', '7': 'future', '8': 'bond', '9': 'finance', '10': 'index_weight',
-        '11': 'margin', '12': 'moneyflow', '13': 'reference', '14': 'macro'
+        '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market', '5': 'index_basic',
+        '6': 'index_member', '7': 'fund', '8': 'option', '9': 'future', '10': 'bond',
+        '11': 'finance', '12': 'margin', '13': 'moneyflow', '14': 'reference', '15': 'macro'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -246,44 +214,45 @@ def main():
         print("\n" + "-" * 60)
         print("主菜单：")
         print(" [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情")
-        print(" [ 4] 指数行情         [ 5] 基金行情         [ 6] 期权行情")
-        print(" [ 7] 期货行情         [ 8] 债卷行情         [ 9] 财务数据")
-        print(" [10] 指数权重         [11] 融资融券         [12] 资金流向")
-        print(" [13] 参考数据         [14] 宏观数据         [15] 查看数据")
-        print(" [16] 数据库管理       [ 0] 退出")
+        print(" [ 4] 指数行情(日频)   [ 5] 指数基本信息     [ 6] 指数成员/权重")
+        print(" [ 7] 基金行情         [ 8] 期权行情         [ 9] 期货行情")
+        print(" [10] 债卷行情         [11] 财务数据         [12] 融资融券")
+        print(" [13] 资金流向         [14] 参考数据         [15] 宏观数据")
+        print(" [16] 查看数据         [17] 数据库管理       [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
             print("再见！数据已安全存储至本地 DuckDB")
             break
 
-        elif choice == '15':
+        elif choice == '16':
             print("\n" + "=" * 70)
             print("          数据库状态校验（支持数字快速选择）")
             print("=" * 70)
 
             # === 第一步：显示可选择的类别（与主菜单完全一致）===
             status_menu = {
-                '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_daily',
-                '5': 'fund', '6': 'option', '7': 'future', '8': 'bond', '9': 'finance',
-                '10': 'index_weight', '11': 'margin', '12': 'moneyflow', '13': 'reference',
-                '14': 'macro', 'all': 'all'
+                '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market',
+                '5': 'index_basic', '6': 'index_member', '7': 'fund', '8': 'option', '9': 'future',
+                '10': 'bond', '11': 'finance', '12': 'margin', '13': 'moneyflow',
+                '14': 'reference', '15': 'macro', 'all': 'all'
             }
 
             print("可校验的类别（输入数字或 all）：")
             for num, cat in status_menu.items():
                 if num != 'all':
                     desc = {
-                        'stock': '股票行情', 'index_daily': '指数行情', 'fund': '基金行情', 'option': '期权行情',
-                        'future': '期货行情', 'bond': '券债行情', 'margin': '融资融券', 'moneyflow': '资金流向',
-                        'reference': '参考数据', 'macro': '宏观数据', 'stock_list': '股票列表', 'stock_events': '股票事件',
-                        'finance': '财务数据', 'index_weight': '指数权重'
+                        'stock': '股票行情', 'index_market': '指数行情(日频)', 'index_basic': '指数基本信息',
+                        'index_member': '指数成员/权重', 'fund': '基金行情', 'option': '期权行情',
+                        'future': '期货行情', 'bond': '券债行情', 'finance': '财务数据', 'margin': '融资融券',
+                        'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
+                        'stock_list': '股票列表', 'stock_events': '股票事件'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
             print("  [all] 所有类别")
             print()
 
-            # === 第二步：接收用户输入（支持 1~14、all）===
+            # === 第二步：接收用户输入（支持 1~15、all）===
             while True:
                 user_input = input("请选择要校验的类别（输入数字或 all，直接回车默认 all）: ").strip()
                 if not user_input:
@@ -291,11 +260,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in [str(i) for i in range(1, 15)]:
+                elif user_input in [str(i) for i in range(1, 16)]:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~14 或 all")
+                    print("输入无效，请输入 1~15 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
@@ -332,7 +301,7 @@ def main():
 
                 config = API_CONFIG[cat]
                 tables_list = [
-                    (t, config['tables'][t].get('date_column', 'trade_date'))
+                    (t, config['tables'][t].get('date_column'))
                     for t in config['tables']
                 ]
                 # 特殊逻辑：如果是财务校验且用户未输入日期，传递 None 给 validation 函数以触发默认8个季度逻辑

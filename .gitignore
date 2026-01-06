@@ -13,6 +13,7 @@ logs/
 # 3. Exclude test database files
 test_db_data/
 data/
+quant-ml-qlib
 *.db
 *.csv
 

@@ -114,10 +114,13 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                                 daily_data[i][table_name] = 0
                         continue
 
-                    # 验证 date_column 存在
-                    if date_column.lower() not in target_columns:
+                    # 验证 date_column 存在 (如果配置了 date_column)
+                    if date_column and date_column.lower() not in target_columns:
                         logger.warning(f"警告：表 {table_name} 不包含日期列 {date_column}")
                         irregular = True
+                    
+                    # 只有当 date_column 为 None 且不属于 irregular 时，我们认为它是快照表
+                    is_snapshot = (date_column is None) and not irregular
 
                     total_records = conn.execute(f"SELECT COUNT(*) FROM \"{table_name}\"").fetchone()[0]
                     earliest_date = 'N/A'
@@ -136,8 +139,14 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                             earliest_date = str(result[0]) if result and result[0] else 'N/A'
                             latest_date = str(result[1] if result and result[1] else 'N/A')
                             earliest_table_date = earliest_date if earliest_date != 'N/A' else '19900101'
+                    elif is_snapshot:
+                        # 快照表逻辑
+                        coverage = 'SnapShot'
+                        missing_ranges = '-'
+                        anomaly_dates = '-'
                     else:
-                        logger.warning(f"表 {table_name} 缺少日期列 {date_column}，标记为 N/A")
+                        if date_column: # 只有配置了 date_column 但没找到列才报警告，如果这类本身就是 None 则不报
+                             logger.warning(f"表 {table_name} 缺少日期列 {date_column}，标记为 N/A")
                         irregular = True
                     
                     # Finance specific logic
@@ -375,6 +384,11 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                                 daily_data[i][table_name] = count_dict.get(date,
                                                                            0) if date >= effective_start_date else 0
 
+                    elif is_snapshot and daily_data:
+                         # 快照数据逐日详情填充 '-'
+                         for i in range(len(valid_days)):
+                             daily_data[i][table_name] = '-'
+
                     status = {
                         '数据库名称': db_name,
                         '表名': table_name,
@@ -382,7 +396,7 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                         '最晚日期': latest_date,
                         '记录数': total_records
                     }
-                    if not irregular:
+                    if not irregular or is_snapshot:
                         status.update({
                             '覆盖率': coverage,
                             '缺失范围': missing_ranges,
@@ -428,5 +442,23 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
             return table_status, daily_data
 
     except Exception as e:
+        error_msg = str(e)
+        if "does not exist" in error_msg or "Cannot open database" in error_msg:
+             logger.warning(f"数据库 {db_name} 尚未创建 (需要执行数据获取操作)")
+             # 返回一个虚拟的空状态，让表格显示 "DB 未创建"
+             empty_status = []
+             for table_name, _ in tables:
+                 status = {
+                     '数据库名称': db_name,
+                     '表名': table_name,
+                     '记录数': 0,
+                     '最早日期': 'N/A',
+                     '最晚日期': 'N/A',
+                     '覆盖率': 'DB未创建',
+                     '缺失范围': '未创建',
+                     '异常日期': '未创建'
+                 }
+                 empty_status.append(status)
+             return empty_status, []
         logger.error(f"错误：获取数据库状态失败: {e}")
         return table_status, daily_data

@@ -40,7 +40,7 @@ class DataProcessor:
                 param_str = ', '.join(f"{k}={v}" for k, v in grid_params.items())
                 logger.debug(f"{table_name}: 参数组合 [{param_str or '无'}]")
 
-                extra = {**grid_params, 'config': api_config_entry}
+                extra = {**api_config_entry.get('fixed_params', {}), **grid_params, 'config': api_config_entry}
                 mode = api_config_entry.get('date_param_mode', 'single')
 
                 if mode == 'full_paging':

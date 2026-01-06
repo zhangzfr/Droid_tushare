@@ -712,142 +712,8 @@ moneyflow:
       requires_paging: true
       date_column: trade_date
       date_type: trade
-index_info:
-  db_path: ${DB_ROOT}/tushare_duck_index.db
-  tables:
-    index_basic:
-      fields:
-      - ts_code
-      - name
-      - fullname
-      - market
-      - publisher
-      - index_type
-      - category
-      - base_date
-      - base_point
-      - list_date
-      - weight_rule
-      - desc
-      - exp_date
-      limit: 8000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      date_column: list_date
-    sw_index_classify_2014:
-      fields:
-      - index_code
-      - industry_name
-      - level
-      - industry_code
-      - is_pub
-      - parent_code
-      - src
-      limit: 4000
-      earliest_date: '20140101'
-      latest_date: null
-      src: SW2014
-      unique_keys:
-      - index_code
-    sw_index_classify_2021:
-      fields:
-      - index_code
-      - industry_name
-      - level
-      - industry_code
-      - is_pub
-      - parent_code
-      - src
-      limit: 4000
-      earliest_date: '20210101'
-      latest_date: null
-      src: SW2021
-      unique_keys:
-      - index_code
-    sw_index_member_all:
-      fields:
-      - l1_code
-      - l1_name
-      - l2_code
-      - l2_name
-      - l3_code
-      - l3_name
-      - ts_code
-      - name
-      - in_date
-      - out_date
-      - is_new
-      limit: 3000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - l3_code
-      - in_date
-      requires_paging: true
-    ths_member:
-      fields:
-      - ts_code
-      - con_code
-      - con_name
-      - weight
-      - in_date
-      - out_date
-      - is_new
-      limit: 6000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - con_code
-      requires_paging: true
-    dc_member:
-      fields:
-      - trade_date
-      - ts_code
-      - con_code
-      - name
-      limit: 5000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - con_code
-      - trade_date
-      requires_paging: true
-      date_column: trade_date
-    tdx_member:
-      fields:
-      - ts_code
-      - trade_date
-      - con_code
-      - con_name
-      limit: 3000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - con_code
-      - trade_date
-      requires_paging: true
-    ths_index:
-      fields:
-      - ts_code
-      - name
-      - count
-      - exchange
-      - list_date
-      - type
-      limit: null
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      requires_paging: false
-      date_column: list_date
-index_weight:
+
+index_member:
   db_path: ${DB_ROOT}/tushare_duck_index_weight.db
   tables:
     index_weight:
@@ -866,58 +732,59 @@ index_weight:
       date_column: trade_date
       date_param_mode: range
       requires_paging: true
-      required_params:
-        index_codes:
-        - 000300.SH
-        - 399300.SZ
-        - 000016.SH
-        - 000905.SH
-        - 399905.SZ
-        - 000852.SH
-        - h11030.CSI
-        - h11031.CSI
-        - h11041.CSI
-        - h11042.CSI
-        - h11043.CSI
-        - h11044.CSI
-        - h11045.CSI
-        - h11046.CSI
-        - h11047.CSI
-        - h11049.CSI
-        - h11050.CSI
-        - h30036.CSI
-        - h30037.CSI
-        - h30038.CSI
-        - h30039.CSI
-        - h30040.CSI
-        - h30041.CSI
-        - h30042.CSI
-        - h30043.CSI
-        - h30044.CSI
-        - h30045.CSI
-        - h30046.CSI
-        - h30047.CSI
-        - h30048.CSI
-        - h30049.CSI
-        - h30050.CSI
-        - h30051.CSI
-        - h30052.CSI
-        - h30053.CSI
-        - h30054.CSI
-        - h30055.CSI
-        - h30056.CSI
-        - h30057.CSI
-        - h30058.CSI
-        - h30059.CSI
-        - h30060.CSI
-        - h30061.CSI
-        - h30062.CSI
-        - h30063.CSI
-        - h30064.CSI
-        - h30065.CSI
-        - h30066.CSI
-        - h30067.CSI
-index_daily:
+      # required_params:
+      #   index_codes:
+      #   - 000300.SH
+      #   - 399300.SZ
+      #   - 000016.SH
+      #   - 000905.SH
+      #   - 399905.SZ
+      #   - 000852.SH
+      #   - h11030.CSI
+      #   - h11031.CSI
+      #   - h11041.CSI
+      #   - h11042.CSI
+      #   - h11043.CSI
+      #   - h11044.CSI
+      #   - h11045.CSI
+      #   - h11046.CSI
+      #   - h11047.CSI
+      #   - h11049.CSI
+      #   - h11050.CSI
+      #   - h30036.CSI
+      #   - h30037.CSI
+      #   - h30038.CSI
+      #   - h30039.CSI
+      #   - h30040.CSI
+      #   - h30041.CSI
+      #   - h30042.CSI
+      #   - h30043.CSI
+      #   - h30044.CSI
+      #   - h30045.CSI
+      #   - h30046.CSI
+      #   - h30047.CSI
+      #   - h30048.CSI
+      #   - h30049.CSI
+      #   - h30050.CSI
+      #   - h30051.CSI
+      #   - h30052.CSI
+      #   - h30053.CSI
+      #   - h30054.CSI
+      #   - h30055.CSI
+      #   - h30056.CSI
+      #   - h30057.CSI
+      #   - h30058.CSI
+      #   - h30059.CSI
+      #   - h30060.CSI
+      #   - h30061.CSI
+      #   - h30062.CSI
+      #   - h30063.CSI
+      #   - h30064.CSI
+      #   - h30065.CSI
+      #   - h30066.CSI
+      #   - h30067.CSI
+
+index_market:
   db_path: ${DB_ROOT}/tushare_duck_index.db
   tables:
     index_daily:
@@ -1137,71 +1004,6 @@ index_daily:
       requires_date: true
       date_column: trade_date
       date_type: trade
-    index_global:
-      unique_keys:
-      - ts_code
-      - trade_date
-      fields:
-      - ts_code
-      - trade_date
-      - open
-      - close
-      - high
-      - low
-      - pre_close
-      - change
-      - pct_chg
-      - swing
-      - vol
-      - amount
-      earliest_date: '20000101'
-      limit: 4000
-      requires_date: true
-      date_column: trade_date
-      date_type: natural
-      date_param_mode: range
-    dc_index:
-      fields:
-      - ts_code
-      - trade_date
-      - name
-      - leading
-      - leading_code
-      - pct_change
-      - leading_pct
-      - total_mv
-      - turnover_rate
-      - up_num
-      - down_num
-      limit: 5000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - trade_date
-      requires_paging: true
-      field_mappings:
-        leading: leading_stock
-      date_column: trade_date
-    tdx_index:
-      fields:
-      - ts_code
-      - trade_date
-      - name
-      - idx_type
-      - idx_count
-      - total_share
-      - float_share
-      - total_mv
-      - float_mv
-      limit: 1000
-      earliest_date: '19900101'
-      latest_date: null
-      unique_keys:
-      - ts_code
-      - trade_date
-      requires_paging: true
-      date_column: trade_date
     tdx_daily:
       fields:
       - ts_code
@@ -1254,6 +1056,30 @@ index_daily:
       date_column: trade_date
       filter_null_dates_metadata: false
       date_type: trade
+    index_global:
+      unique_keys:
+      - ts_code
+      - trade_date
+      fields:
+      - ts_code
+      - trade_date
+      - open
+      - close
+      - high
+      - low
+      - pre_close
+      - change
+      - pct_chg
+      - swing
+      - vol
+      - amount
+      earliest_date: '20000101'
+      limit: 4000
+      requires_date: true
+      date_column: trade_date
+      date_type: natural
+      date_param_mode: range
+
 fund_info:
   db_path: ${DB_ROOT}/tushare_duck_fund.db
   tables:
@@ -1322,6 +1148,7 @@ fund_info:
       unique_keys:
       - name
       date_column: setup_date
+
 fund:
   db_path: ${DB_ROOT}/tushare_duck_fund.db
   tables:
@@ -1396,6 +1223,7 @@ fund:
       date_type: trade
       date_param_mode: single
       date_param: trade_date
+
 bond:
   db_path: ${DB_ROOT}/tushare_duck_bond.db
   tables:
@@ -3012,3 +2840,185 @@ finance:
       - ts_code
       - end_date
       date_param: end_date
+
+index_basic:
+  db_path: ${DB_ROOT}/tushare_duck_index.db
+  tables:
+    index_basic:
+      api_table: index_basic
+      unique_keys:
+      - ts_code
+      fields:
+      - ts_code
+      - name
+      - fullname
+      - market
+      - publisher
+      - index_type
+      - category
+      - base_date
+      - base_point
+      - list_date
+      - weight_rule
+      - desc
+      - exp_date
+      requires_date: false
+      requires_paging: true
+      limit: 5000
+      date_column: list_date
+    ths_index:
+      api_table: ths_index
+      unique_keys:
+      - ts_code
+      fields:
+      - ts_code
+      - name
+      - count
+      - exchange
+      - list_date
+      - type
+      requires_date: false
+      requires_paging: true
+      limit: 5000
+      date_column: list_date
+    dc_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - leading
+      - leading_code
+      - pct_change
+      - leading_pct
+      - total_mv
+      - turnover_rate
+      - up_num
+      - down_num
+      limit: 5000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      field_mappings:
+        leading: leading_stock
+      date_column: trade_date
+    tdx_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - idx_type
+      - idx_count
+      - total_share
+      - float_share
+      - total_mv
+      - float_mv
+      limit: 1000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      date_column: trade_date
+    dc_member:
+      api_table: dc_member
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      fields:
+      - trade_date
+      - ts_code
+      - con_code
+      - name
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 8000
+      requires_paging: true
+    tdx_member:
+      api_table: tdx_member
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      fields:
+      - trade_date
+      - ts_code
+      - con_code
+      - con_name
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 3000
+      requires_paging: true
+    ths_member:
+      api_table: ths_member
+      unique_keys:
+      - ts_code
+      - con_code
+      fields:
+      - ts_code
+      - con_code
+      - con_name
+      - weight
+      - in_date
+      - out_date
+      - is_new
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 6000
+      requires_paging: true
+    sw_index_classify_2014:
+      api_table: index_classify
+      unique_keys:
+      - index_code
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      fixed_params:
+        src: SW2014
+      requires_date: false
+    sw_index_classify_2021:
+      api_table: index_classify
+      unique_keys:
+      - index_code
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      fixed_params:
+        src: SW2021
+      requires_date: false
+    sw_index_member_all:
+      api_table: index_member_all
+      unique_keys:
+      - ts_code
+      - in_date
+      fields:
+      - l1_code
+      - l1_name
+      - l2_code
+      - l2_name
+      - l3_code
+      - l3_name
+      - ts_code
+      - name
+      - in_date
+      - out_date
+      - is_new
+      requires_date: false
+
