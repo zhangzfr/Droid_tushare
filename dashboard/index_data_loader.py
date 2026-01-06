@@ -6,6 +6,13 @@ import streamlit as st
 INDEX_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_index.db'
 INDEX_WEIGHT_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_index_weight.db'
 
+# Major indices for heatmap visualization
+MAJOR_INDICES = [
+    '000001.SH', '000016.SH', '000300.SH', '000905.SH', '000852.SH', '000688.SH',
+    '399001.SZ', '399005.SZ', '399006.SZ', '399300.SZ', '399905.SZ', '399016.SZ',
+    '399102.SZ', '399852.SZ', '399107.SZ', '000005.SH', '000006.SH'
+]
+
 
 def get_index_db_connection():
     """Establish connection to index info DuckDB."""
@@ -153,6 +160,39 @@ def get_constituent_count_per_date(index_code: str):
         """, [index_code]).fetchdf()
     except Exception as e:
         st.error(f"Error fetching constituent counts: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
+    return df
+
+@st.cache_data
+def load_major_indices_daily(start_date: str, end_date: str):
+    """Fetch daily returns (pct_chg) for major indices."""
+    conn = get_index_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    indices_placeholder = ",".join(["?"] * len(MAJOR_INDICES))
+    
+    try:
+        # Join with index_basic to get name
+        query = f"""
+            SELECT d.ts_code, b.name, d.trade_date, d.pct_chg
+            FROM index_daily d
+            JOIN index_basic b ON d.ts_code = b.ts_code
+            WHERE d.ts_code IN ({indices_placeholder})
+              AND d.trade_date BETWEEN ? AND ?
+            ORDER BY d.trade_date ASC
+        """
+        params = MAJOR_INDICES + [start_date, end_date]
+        df = conn.execute(query, params).fetchdf()
+        
+        # Ensure numeric and handle pct strings if they are strings
+        df['pct_chg'] = pd.to_numeric(df['pct_chg'], errors='coerce')
+        
+    except Exception as e:
+        st.error(f"Error fetching major indices daily: {e}")
         return pd.DataFrame()
     finally:
         conn.close()

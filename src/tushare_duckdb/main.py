@@ -232,9 +232,9 @@ def main():
     print("=" * 80)
 
     category_map = {
-        '1': 'stock', '2': 'index_daily', '3': 'fund', '4': 'option', '5': 'future',
-        '6': 'bond', '7': 'margin', '8': 'moneyflow', '9': 'reference', '10': 'macro',
-        '12': 'stock_list', '13': 'stock_events', '14': 'finance', '15': 'index_weight'
+        '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_daily', '5': 'fund',
+        '6': 'option', '7': 'future', '8': 'bond', '9': 'finance', '10': 'index_weight',
+        '11': 'margin', '12': 'moneyflow', '13': 'reference', '14': 'macro'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -245,11 +245,11 @@ def main():
     while True:
         print("\n" + "-" * 60)
         print("主菜单：")
-        print(" [ 1] 股票行情         [ 2] 指数行情         [ 3] 基金行情")
-        print(" [ 4] 期权行情         [ 5] 期货行情         [ 6] 债卷行情")
-        print(" [ 7] 融资融券         [ 8] 资金流向         [ 9] 参考数据")
-        print(" [10] 宏观数据         [12] 股票列表         [13] 股票事件")
-        print(" [14] 财务数据         [15] 指数权重         [11] 查看数据")
+        print(" [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情")
+        print(" [ 4] 指数行情         [ 5] 基金行情         [ 6] 期权行情")
+        print(" [ 7] 期货行情         [ 8] 债卷行情         [ 9] 财务数据")
+        print(" [10] 指数权重         [11] 融资融券         [12] 资金流向")
+        print(" [13] 参考数据         [14] 宏观数据         [15] 查看数据")
         print(" [16] 数据库管理       [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
@@ -257,28 +257,17 @@ def main():
             print("再见！数据已安全存储至本地 DuckDB")
             break
 
-        elif choice == '11':
+        elif choice == '15':
             print("\n" + "=" * 70)
             print("          数据库状态校验（支持数字快速选择）")
             print("=" * 70)
 
             # === 第一步：显示可选择的类别（与主菜单完全一致）===
             status_menu = {
-                '1': 'stock',  # 股票日线
-                '2': 'index_daily',  # 指数日线
-                '3': 'fund',  # 基金
-                '4': 'option',  # 期权
-                '5': 'future',  # 期货
-                '6': 'bond',  # 可转债
-                '7': 'margin',  # 融资融券
-                '8': 'moneyflow',  # 资金流向
-                '9': 'reference',  # 参考数据
-                '10': 'macro',  # 宏观数据
-                '12': 'stock_list', # 股票列表
-                '13': 'stock_events', # 股票事件
-                '14': 'finance',    # 财务数据
-                '15': 'index_weight',  # 指数权重
-                'all': 'all'  # 全部
+                '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_daily',
+                '5': 'fund', '6': 'option', '7': 'future', '8': 'bond', '9': 'finance',
+                '10': 'index_weight', '11': 'margin', '12': 'moneyflow', '13': 'reference',
+                '14': 'macro', 'all': 'all'
             }
 
             print("可校验的类别（输入数字或 all）：")
@@ -294,7 +283,7 @@ def main():
             print("  [all] 所有类别")
             print()
 
-            # === 第二步：接收用户输入（支持 1~10、all）===
+            # === 第二步：接收用户输入（支持 1~14、all）===
             while True:
                 user_input = input("请选择要校验的类别（输入数字或 all，直接回车默认 all）: ").strip()
                 if not user_input:
@@ -302,11 +291,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '13', '14', '15']:
+                elif user_input in [str(i) for i in range(1, 15)]:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~10, 12, 13, 14, 15 或 all")
+                    print("输入无效，请输入 1~14 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")

@@ -191,7 +191,10 @@ ICONS = {
     "list": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>''',
     "detail": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>''',
     "calendar": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>''',
-    "filter": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>'''
+    "filter": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>''',
+    "stock": '''<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/><line x1="7" x2="7" y1="10" y2="17"/><line x1="17" x2="17" y1="10" y2="17"/></svg>''',
+    "listing": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>''',
+    "heatmap": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="7" width="3" height="3"/><rect x="11" y="7" width="3" height="3"/><rect x="15" y="7" width="3" height="3"/><rect x="7" y="11" width="3" height="3"/><rect x="11" y="11" width="3" height="3"/><rect x="15" y="11" width="3" height="3"/><rect x="7" y="15" width="3" height="3"/><rect x="11" y="15" width="3" height="3"/><rect x="15" y="15" width="3" height="3"/></svg>'''
 }
 
 NAVIGATION = {
@@ -210,7 +213,15 @@ NAVIGATION = {
         "icon": "index", 
         "subcategories": {
             "Index List": {"key": "index_list", "icon": "list"},
+            "Index Heatmap": {"key": "index_heatmap", "icon": "heatmap"},
             "Constituents": {"key": "index_details", "icon": "detail"}
+        }
+    },
+    "Market Data": {
+        "key": "stock",
+        "icon": "stock",
+        "subcategories": {
+            "Listing Statistics": {"key": "listing_stats", "icon": "listing"}
         }
     }
 }
@@ -460,12 +471,12 @@ if category_config["key"] == "home":
     
     st.markdown("#### Features")
     
-    col1, col2 = st.columns(2, gap="large")
+    col1, col2, col3 = st.columns(3, gap="medium")
     
-    # Get Macro Icon for card
+    # Get Icons for cards
     macro_icon = ICONS['macro'].replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')
-    # Get Index Icon for card
     index_icon = ICONS['index'].replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')
+    stock_icon = ICONS['stock'].replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')
     
     with col1:
         st.markdown(f"""
@@ -478,7 +489,7 @@ if category_config["key"] == "home":
         ">
             <div style="margin-bottom: 1rem; color: #D97757; opacity: 0.9;">{macro_icon}</div>
             <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; color: #1A1A1A;">Macro Data</h4>
-            <ul style="margin: 0; padding-left: 1.25rem; color: #5C5653; font-size: 0.9rem; line-height: 1.8;">
+            <ul style="margin: 0; padding-left: 1.25rem; color: #5C5653; font-size: 0.85rem; line-height: 1.8;">
                 <li>PMI Manufacturing Index</li>
                 <li>Money Supply (M0/M1/M2)</li>
                 <li>Social Financing</li>
@@ -497,10 +508,29 @@ if category_config["key"] == "home":
         ">
             <div style="margin-bottom: 1rem; color: #D97757; opacity: 0.9;">{index_icon}</div>
             <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; color: #1A1A1A;">Index Data</h4>
-            <ul style="margin: 0; padding-left: 1.25rem; color: #5C5653; font-size: 0.9rem; line-height: 1.8;">
+            <ul style="margin: 0; padding-left: 1.25rem; color: #5C5653; font-size: 0.85rem; line-height: 1.8;">
                 <li>Index List & Filtering</li>
                 <li>Constituent Weights</li>
                 <li>Historical Changes</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col3:
+        st.markdown(f"""
+        <div style="
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #E8E0D8;
+            height: 100%;
+        ">
+            <div style="margin-bottom: 1rem; color: #D97757; opacity: 0.9;">{stock_icon}</div>
+            <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem; font-weight: 600; color: #1A1A1A;">Market Data</h4>
+            <ul style="margin: 0; padding-left: 1.25rem; color: #5C5653; font-size: 0.85rem; line-height: 1.8;">
+                <li>Listing Statistics</li>
+                <li>Stock Basic Info</li>
+                <li>Market Overview</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -640,9 +670,9 @@ elif category_config["key"] == "index":
     from index_data_loader import (
         load_index_basic, get_indices_with_weight_data,
         get_constituent_count_per_date, get_available_trade_dates,
-        get_constituents_for_date
+        get_constituents_for_date, load_major_indices_daily
     )
-    from index_charts import plot_constituent_count_over_time
+    from index_charts import plot_constituent_count_over_time, plot_index_heatmap
     
     # Load index data
     with st.spinner('Loading index data...'):
@@ -695,6 +725,39 @@ elif category_config["key"] == "index":
                 "has_weight": st.column_config.CheckboxColumn("Has Weight")
             }
         )
+    
+    # --- Index Heatmap Sub-category ---
+    elif subcategory_key == "index_heatmap":
+        render_header("Major Indices Performance", "heatmap")
+        
+        # Sidebar filters for date range
+        render_sidebar_header("Date Range", "calendar")
+        
+        # Default to last 60 days
+        from datetime import datetime, timedelta
+        default_end = datetime.now()
+        default_start = default_end - timedelta(days=60)
+        
+        start_date = st.sidebar.date_input("Start Date", default_start)
+        end_date = st.sidebar.date_input("End Date", default_end)
+            
+        start_str = start_date.strftime('%Y%m%d')
+        end_str = end_date.strftime('%Y%m%d')
+        
+        with st.spinner('Fetching performance data...'):
+            df_heatmap = load_major_indices_daily(start_str, end_str)
+            
+        if df_heatmap.empty:
+            st.warning(f"No performance data found between {start_str} and {end_str}")
+        else:
+            fig_heatmap = plot_index_heatmap(df_heatmap)
+            if fig_heatmap:
+                st.plotly_chart(fig_heatmap, use_container_width=True)
+                
+            with st.expander("View Daily Change Data"):
+                # Pivot for tabular display
+                pivot_display = df_heatmap.pivot(index='trade_date', columns='ts_code', values='pct_chg').sort_index(ascending=False)
+                st.dataframe(pivot_display, use_container_width=True)
     
     # --- Index Details Sub-category ---
     elif subcategory_key == "index_details":
@@ -829,6 +892,71 @@ elif category_config["key"] == "index":
                                 st.bar_chart(top10.set_index('con_code')['weight'])
                 else:
                     st.info("No trade date data available for this index")
+
+# --- MARKET DATA ---
+elif category_config["key"] == "stock":
+    # Import stock data modules
+    from stock_data_loader import get_listing_delisting_stats, load_stock_basic_sample
+    from stock_charts import plot_listing_delisting_trend, plot_listing_summary
+    
+    # --- Listing Statistics Sub-category ---
+    if subcategory_key == "listing_stats":
+        render_header("Listing Statistics", "listing")
+        
+        with st.spinner('Calculating statistics...'):
+            df_stats = get_listing_delisting_stats()
+            
+        if df_stats.empty:
+            st.warning("No stock basic data available to calculate statistics.")
+        else:
+            # Filters
+            render_sidebar_header("Stats Filter", "filter")
+            df_stats['year'] = df_stats['month'].dt.year
+            years = sorted(df_stats['year'].unique().tolist(), reverse=True)
+            sel_year = st.sidebar.multiselect("Select Year(s)", years, default=years[:10])
+            
+            df_f = df_stats[df_stats['year'].isin(sel_year)]
+            
+            # Key Metrics
+            total_listings = df_f['listings'].sum()
+            total_delistings = df_f['delistings'].sum()
+            net_growth = total_listings - total_delistings
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Listings", int(total_listings))
+            with col2:
+                st.metric("Total Delistings", int(total_delistings))
+            with col3:
+                st.metric("Net Growth", int(net_growth))
+                
+            st.divider()
+            
+            tab1, tab2, tab3 = st.tabs(["📊 Trends", "📈 Growth", "📋 Monthly Data"])
+            
+            with tab1:
+                fig_trend = plot_listing_delisting_trend(df_f)
+                if fig_trend:
+                    st.plotly_chart(fig_trend, use_container_width=True)
+                    
+            with tab2:
+                fig_growth = plot_listing_summary(df_f)
+                if fig_growth:
+                    st.plotly_chart(fig_growth, use_container_width=True)
+                    
+            with tab3:
+                st.markdown("**Monthly Statistics (Sorted by Date)**")
+                st.dataframe(
+                    df_f.sort_values('month', ascending=False),
+                    use_container_width=True,
+                    column_config={
+                        "month": st.column_config.DatetimeColumn("Month", format="YYYY-MM"),
+                        "listings": "New Listings",
+                        "delistings": "Delistings",
+                        "net_growth": "Net Growth",
+                        "year": None # Hide year helper column
+                    }
+                )
 
 # Sidebar footer
 st.sidebar.divider()

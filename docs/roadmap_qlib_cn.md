@@ -68,11 +68,11 @@ Qlib 的默认导入工具 (`dump_bin`) 通常读取 CSV 文件，其中：
 1.  安装 Qlib：`pip install pyqlib`。
 2.  运行转换：
     ```bash
-python -m qlib.run.dump_bin dump_all \
-        --csv_path temp/qlib_source \
-        --qlib_dir /Users/robert/.qlib/qlib_data/cn_data \
-        --include_fields open,close,high,low,volume,factor
-```
+    python -m qlib.run.dump_bin dump_all \
+            --csv_path temp/qlib_source \
+            --qlib_dir /Users/robert/.qlib/qlib_data/cn_data \
+            --include_fields open,close,high,low,volume,factor
+    ```
 3.  **验证**：使用 `Qlib` 数据提供器加载数据框，并与 DuckDB 原始数据进行比较。
 
 ### 阶段 4：因子扩展与研究
