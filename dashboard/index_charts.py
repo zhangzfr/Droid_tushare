@@ -97,3 +97,51 @@ def plot_index_heatmap(df):
     )
     
     return fig
+
+
+def plot_cumulative_returns(df):
+    """
+    Plot line chart of cumulative returns for selected indices.
+    """
+    import plotly.express as px
+    
+    if df.empty:
+        return None
+    
+    # Pre-processing
+    df = df.copy()
+    df['trade_date_dt'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
+    df = df.sort_values(['ts_code', 'trade_date'])
+    
+    # Calculate cumulative returns
+    # Formula: (1 + r1)(1 + r2)...
+    df['ret_val'] = 1 + (df['pct_chg'] / 100.0)
+    
+    # Group by ts_code and calculate cumulative product
+    df['cum_ret'] = df.groupby('ts_code')['ret_val'].cumprod()
+    # Normalize to start at 100 (Index base)
+    df['cum_ret_indexed'] = df.groupby('ts_code')['cum_ret'].transform(lambda x: (x / x.iloc[0]) * 100)
+    
+    df['display_name'] = df['name'] + " (" + df['ts_code'] + ")"
+    
+    fig = px.line(df, x='trade_date_dt', y='cum_ret_indexed', color='display_name',
+                  title="Cumulative Performance (Base = 100)",
+                  labels={'trade_date_dt': 'Date', 'cum_ret_indexed': 'Index Value', 'display_name': 'Index'})
+    
+    fig.update_layout(
+        xaxis_tickformat='%Y-%m-%d',
+        hovermode='x unified',
+        height=500,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        margin=dict(l=50, r=20, t=100, b=50)
+    )
+    
+    fig.update_traces(hovertemplate='%{y:.2f}')
+    
+    return fig

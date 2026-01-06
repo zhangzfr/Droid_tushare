@@ -672,7 +672,7 @@ elif category_config["key"] == "index":
         get_constituent_count_per_date, get_available_trade_dates,
         get_constituents_for_date, load_major_indices_daily
     )
-    from index_charts import plot_constituent_count_over_time, plot_index_heatmap
+    from index_charts import plot_constituent_count_over_time, plot_index_heatmap, plot_cumulative_returns
     
     # Load index data
     with st.spinner('Loading index data...'):
@@ -750,11 +750,34 @@ elif category_config["key"] == "index":
         if df_heatmap.empty:
             st.warning(f"No performance data found between {start_str} and {end_str}")
         else:
-            fig_heatmap = plot_index_heatmap(df_heatmap)
-            if fig_heatmap:
-                st.plotly_chart(fig_heatmap, use_container_width=True)
+            tab1, tab2, tab3 = st.tabs(["🔥 Heatmap Analysis", "📈 Cumulative Returns", "📋 Raw Data"])
+            
+            with tab1:
+                fig_heatmap = plot_index_heatmap(df_heatmap)
+                if fig_heatmap:
+                    st.plotly_chart(fig_heatmap, use_container_width=True)
+            
+            with tab2:
+                # Comparison filters
+                all_indices = sorted(df_heatmap['ts_code'].unique().tolist())
+                # Default selection: first 5 or a few major ones if available
+                default_selection = [x for x in ['000001.SH', '000300.SH', '000905.SH', '399006.SZ', '000688.SH'] if x in all_indices]
+                if not default_selection:
+                    default_selection = all_indices[:5]
                 
-            with st.expander("View Daily Change Data"):
+                selected_codes = st.multiselect("Select indices to compare:", all_indices, default=default_selection)
+                
+                if selected_codes:
+                    df_line = df_heatmap[df_heatmap['ts_code'].isin(selected_codes)]
+                    fig_line = plot_cumulative_returns(df_line)
+                    if fig_line:
+                        st.plotly_chart(fig_line, use_container_width=True)
+                    
+                    st.caption("Note: Cumulative returns are calculated from the first available date in the selected range, indexed to 100.")
+                else:
+                    st.info("Please select at least one index to compare performance.")
+            
+            with tab3:
                 # Pivot for tabular display
                 pivot_display = df_heatmap.pivot(index='trade_date', columns='ts_code', values='pct_chg').sort_index(ascending=False)
                 st.dataframe(pivot_display, use_container_width=True)
