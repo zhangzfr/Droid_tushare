@@ -38,7 +38,11 @@ def plot_pmi_trend(df):
     # Update trace names
     fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
     
-    fig.update_layout(legend_title_text='PMI Indices')
+    fig.update_layout(
+        legend_title_text='PMI Indices',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 def plot_sub_indicators_bar(df_latest):
@@ -75,8 +79,8 @@ def plot_sub_indicators_bar(df_latest):
                  labels={'indicator_name': 'Indicator', 'value': 'Value'},
                  color='value',
                  color_continuous_scale='RdYlGn',
-                 color_continuous_midpoint=50) # 50 is the boom/bust line
-    
+                 color_continuous_midpoint=50)
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def plot_heatmap(df):
@@ -116,9 +120,11 @@ def plot_heatmap(df):
     
     fig.update_xaxes(tickformat='%Y-%m')
     
-    # Adjust height based on number of indicators
-    fig.update_layout(height=400 + 20 * len(heatmap_data.index))
-    
+    fig.update_layout(
+        height=400 + 20 * len(heatmap_data.index),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 def plot_sf_charts(df):
@@ -141,6 +147,10 @@ def plot_sf_charts(df):
                       title='Social Financing: Stock End Value (stk_endval)',
                       labels={'month': 'Date', 'stk_endval': 'Trillion RMB'})
     
+    for fig in [fig_inc, fig_cum, fig_stk]:
+        if fig:
+            fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    
     return fig_inc, fig_cum, fig_stk
 
 def plot_m_levels(df):
@@ -156,6 +166,7 @@ def plot_m_levels(df):
                  title='Money Supply: M0, M1, M2 Levels',
                  labels={'month': 'Date', 'value': 'Level', 'variable': 'Category'},
                  barmode='group')
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def plot_m_yoy(df):
@@ -173,6 +184,7 @@ def plot_m_yoy(df):
     
     names = {'m0_yoy': 'M0 YoY', 'm1_yoy': 'M1 YoY', 'm2_yoy': 'M2 YoY'}
     fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def plot_m_mom(df):
@@ -190,6 +202,7 @@ def plot_m_mom(df):
     
     names = {'m0_mom': 'M0 MoM', 'm1_mom': 'M1 MoM', 'm2_mom': 'M2 MoM'}
     fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 

@@ -89,12 +89,12 @@ st.markdown("""
         max-width: 1200px;
     }
     
-    /* Cards / Containers */
+    /* Cards / Containers - remove tab panel border */
     .stTabs [data-baseweb="tab-panel"] {
         padding: 1.5rem;
         background: white;
         border-radius: 0.75rem;
-        border: 1px solid #E8E0D8;
+        border: none;
     }
     
     /* Metric cards */
@@ -174,6 +174,22 @@ st.markdown("""
         color: #8C8580;
         font-size: 0.85rem;
     }
+    
+    /* Remove borders from Plotly chart containers */
+    [data-testid="stPlotlyChart"] {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Remove borders from all chart containers */
+    .stPlotlyChart, .element-container {
+        border: none !important;
+    }
+    
+    /* Remove default iframe borders inside Plotly */
+    .stPlotlyChart iframe {
+        border: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -194,7 +210,9 @@ ICONS = {
     "filter": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>''',
     "stock": '''<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/><line x1="7" x2="7" y1="10" y2="17"/><line x1="17" x2="17" y1="10" y2="17"/></svg>''',
     "listing": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>''',
-    "heatmap": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="7" width="3" height="3"/><rect x="11" y="7" width="3" height="3"/><rect x="15" y="7" width="3" height="3"/><rect x="7" y="11" width="3" height="3"/><rect x="11" y="11" width="3" height="3"/><rect x="15" y="11" width="3" height="3"/><rect x="7" y="15" width="3" height="3"/><rect x="11" y="15" width="3" height="3"/><rect x="15" y="15" width="3" height="3"/></svg>'''
+    "heatmap": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="7" width="3" height="3"/><rect x="11" y="7" width="3" height="3"/><rect x="15" y="7" width="3" height="3"/><rect x="7" y="11" width="3" height="3"/><rect x="11" y="11" width="3" height="3"/><rect x="15" y="11" width="3" height="3"/><rect x="7" y="15" width="3" height="3"/><rect x="11" y="15" width="3" height="3"/><rect x="15" y="15" width="3" height="3"/></svg>''',
+    "treemap": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/><path d="M15 9v12"/></svg>''',
+    "chart": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>'''
 }
 
 NAVIGATION = {
@@ -214,6 +232,8 @@ NAVIGATION = {
         "subcategories": {
             "Index List": {"key": "index_list", "icon": "list"},
             "Index Heatmap": {"key": "index_heatmap", "icon": "heatmap"},
+            "SW Industries": {"key": "sw_index", "icon": "treemap"},
+            "Market Width": {"key": "market_width", "icon": "chart"},
             "Constituents": {"key": "index_details", "icon": "detail"}
         }
     },
@@ -447,7 +467,7 @@ def render_header(title, icon_name=None):
     st.markdown(f"""
     <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
         {icon_html}
-        <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600; color: #1A1A1A;">{title}</h2>
+        <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600; color: #4A4A4A;">{title}</h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -552,117 +572,143 @@ elif category_config["key"] == "macro":
         df_sf = load_sf_data()
         df_m = load_m_data()
     
-    # Date filtering in sidebar
+    # Calculate date range
     all_dates = pd.concat([df_pmi['month'], df_sf['month'], df_m['month']]).dropna()
     if not all_dates.empty:
         min_date = all_dates.min().date()
         max_date = all_dates.max().date()
-        
-        render_sidebar_header("Date Filter", "calendar")
-        start_date = st.sidebar.date_input("Start Date", min_date, min_value=min_date, max_value=max_date)
-        end_date = st.sidebar.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
-        
-        # Filter helper
-        def filter_df(df, start, end):
-            if df.empty: return df
-            mask = (df['month'].dt.date >= start) & (df['month'].dt.date <= end)
-            return df.loc[mask]
-        
-        df_pmi_f = filter_df(df_pmi, start_date, end_date)
-        df_sf_f = filter_df(df_sf, start_date, end_date)
-        df_m_f = filter_df(df_m, start_date, end_date)
     else:
-        df_pmi_f, df_sf_f, df_m_f = df_pmi, df_sf, df_m
+        from datetime import date
+        min_date, max_date = date(2010, 1, 1), date.today()
+    
+    # Filter helper
+    def filter_df(df, start, end):
+        if df.empty: return df
+        mask = (df['month'].dt.date >= start) & (df['month'].dt.date <= end)
+        return df.loc[mask]
     
     # --- PMI Sub-category ---
     if subcategory_key == "pmi":
         render_header("PMI Manufacturing Index", "pmi")
         
-        if df_pmi_f.empty:
-            st.warning("No PMI data available")
-        else:
-            tab1, tab2, tab3 = st.tabs(["Trend", "Heatmap Analysis", "Raw Data"])
-            
-            with tab1:
-                fig_trend = plot_pmi_trend(df_pmi_f)
-                if fig_trend:
-                    st.plotly_chart(fig_trend, use_container_width=True)
-            
-            with tab2:
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    st.subheader("Sub-indicators Heatmap")
-                    fig_heatmap = plot_heatmap(df_pmi_f)
-                    if fig_heatmap:
-                        st.plotly_chart(fig_heatmap, use_container_width=True)
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📅 日期筛选**")
+            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="pmi_start")
+            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="pmi_end")
+        
+        df_pmi_f = filter_df(df_pmi, start_date, end_date)
+        
+        with right_col:
+            if df_pmi_f.empty:
+                st.warning("No PMI data available")
+            else:
+                tab1, tab2, tab3 = st.tabs(["Trend", "Heatmap Analysis", "Raw Data"])
                 
-                with col2:
-                    st.subheader("Latest Month Breakdown")
-                    if not df_pmi_f.empty:
-                        latest = df_pmi_f['month'].max()
-                        st.markdown(f"**Report Period:** {latest.strftime('%Y-%m')}")
-                        df_latest = df_pmi_f[df_pmi_f['month'] == latest]
-                        fig_bar = plot_sub_indicators_bar(df_latest)
-                        if fig_bar:
-                            st.plotly_chart(fig_bar, use_container_width=True)
-            
-            with tab3:
-                st.dataframe(df_pmi_f.sort_values('month', ascending=False), use_container_width=True)
+                with tab1:
+                    fig_trend = plot_pmi_trend(df_pmi_f)
+                    if fig_trend:
+                        st.plotly_chart(fig_trend, use_container_width=True, key="pmi_trend")
+                
+                with tab2:
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.subheader("Sub-indicators Heatmap")
+                        fig_heatmap = plot_heatmap(df_pmi_f)
+                        if fig_heatmap:
+                            st.plotly_chart(fig_heatmap, use_container_width=True, key="pmi_heatmap")
+                    
+                    with col2:
+                        st.subheader("Latest Month Breakdown")
+                        if not df_pmi_f.empty:
+                            latest = df_pmi_f['month'].max()
+                            st.markdown(f"**Report Period:** {latest.strftime('%Y-%m')}")
+                            df_latest = df_pmi_f[df_pmi_f['month'] == latest]
+                            fig_bar = plot_sub_indicators_bar(df_latest)
+                            if fig_bar:
+                                st.plotly_chart(fig_bar, use_container_width=True, key="pmi_bar")
+                
+                with tab3:
+                    st.dataframe(df_pmi_f.sort_values('month', ascending=False), use_container_width=True)
     
     # --- Money Supply Sub-category ---
     elif subcategory_key == "money_supply":
         render_header("Money Supply (M0/M1/M2)", "money")
         
-        if df_m_f.empty:
-            st.warning("No money supply data available")
-        else:
-            tab1, tab2, tab3 = st.tabs(["Levels", "Growth Rates", "Raw Data"])
-            
-            with tab1:
-                fig_levels = plot_m_levels(df_m_f)
-                if fig_levels:
-                    st.plotly_chart(fig_levels, use_container_width=True)
-            
-            with tab2:
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.subheader("Year-over-Year (YoY)")
-                    fig_yoy = plot_m_yoy(df_m_f)
-                    if fig_yoy:
-                        st.plotly_chart(fig_yoy, use_container_width=True)
-                with col2:
-                    st.subheader("Month-over-Month (MoM)")
-                    fig_mom = plot_m_mom(df_m_f)
-                    if fig_mom:
-                        st.plotly_chart(fig_mom, use_container_width=True)
-            
-            with tab3:
-                st.dataframe(df_m_f.sort_values('month', ascending=False), use_container_width=True)
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📅 日期筛选**")
+            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="m_start")
+            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="m_end")
+        
+        df_m_f = filter_df(df_m, start_date, end_date)
+        
+        with right_col:
+            if df_m_f.empty:
+                st.warning("No money supply data available")
+            else:
+                tab1, tab2, tab3 = st.tabs(["Levels", "Growth Rates", "Raw Data"])
+                
+                with tab1:
+                    fig_levels = plot_m_levels(df_m_f)
+                    if fig_levels:
+                        st.plotly_chart(fig_levels, use_container_width=True, key="m_levels")
+                
+                with tab2:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("Year-over-Year (YoY)")
+                        fig_yoy = plot_m_yoy(df_m_f)
+                        if fig_yoy:
+                            st.plotly_chart(fig_yoy, use_container_width=True, key="m_yoy")
+                    with col2:
+                        st.subheader("Month-over-Month (MoM)")
+                        fig_mom = plot_m_mom(df_m_f)
+                        if fig_mom:
+                            st.plotly_chart(fig_mom, use_container_width=True, key="m_mom")
+                
+                with tab3:
+                    st.dataframe(df_m_f.sort_values('month', ascending=False), use_container_width=True)
     
     # --- Social Financing Sub-category ---
     elif subcategory_key == "social_financing":
         render_header("Social Financing", "social")
         
-        if df_sf_f.empty:
-            st.warning("No social financing data available")
-        else:
-            tab1, tab2 = st.tabs(["Charts", "Raw Data"])
-            
-            with tab1:
-                fig_inc, fig_cum, fig_stk = plot_sf_charts(df_sf_f)
-                if fig_inc:
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.subheader("Monthly Increment")
-                        st.plotly_chart(fig_inc, use_container_width=True)
-                        st.subheader("Cumulative Value")
-                        st.plotly_chart(fig_cum, use_container_width=True)
-                    with col2:
-                        st.subheader("Stock End Value")
-                        st.plotly_chart(fig_stk, use_container_width=True)
-            
-            with tab2:
-                st.dataframe(df_sf_f.sort_values('month', ascending=False), use_container_width=True)
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📅 日期筛选**")
+            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="sf_start")
+            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="sf_end")
+        
+        df_sf_f = filter_df(df_sf, start_date, end_date)
+        
+        with right_col:
+            if df_sf_f.empty:
+                st.warning("No social financing data available")
+            else:
+                tab1, tab2 = st.tabs(["Charts", "Raw Data"])
+                
+                with tab1:
+                    fig_inc, fig_cum, fig_stk = plot_sf_charts(df_sf_f)
+                    if fig_inc:
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.subheader("Monthly Increment")
+                            st.plotly_chart(fig_inc, use_container_width=True, key="sf_inc")
+                            st.subheader("Cumulative Value")
+                            st.plotly_chart(fig_cum, use_container_width=True, key="sf_cum")
+                        with col2:
+                            st.subheader("Stock End Value")
+                            st.plotly_chart(fig_stk, use_container_width=True, key="sf_stk")
+                
+                with tab2:
+                    st.dataframe(df_sf_f.sort_values('month', ascending=False), use_container_width=True)
 
 # --- INDEX DATA ---
 elif category_config["key"] == "index":
@@ -687,13 +733,16 @@ elif category_config["key"] == "index":
     if subcategory_key == "index_list":
         render_header("Index List", "list")
         
-        # Filters in sidebar
-        render_sidebar_header("Filters", "filter")
-        markets = ['All'] + sorted(df_indices['market'].dropna().unique().tolist())
-        publishers = ['All'] + sorted(df_indices['publisher'].dropna().unique().tolist())
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
         
-        sel_market = st.sidebar.selectbox("Market", markets)
-        sel_publisher = st.sidebar.selectbox("Publisher", publishers)
+        with left_col:
+            st.markdown("**🔍 筛选条件**")
+            markets = ['All'] + sorted(df_indices['market'].dropna().unique().tolist())
+            publishers = ['All'] + sorted(df_indices['publisher'].dropna().unique().tolist())
+            
+            sel_market = st.selectbox("市场", markets, key="idx_market")
+            sel_publisher = st.selectbox("发布者", publishers, key="idx_publisher")
         
         df_filtered = df_indices.copy()
         if sel_market != 'All':
@@ -703,86 +752,293 @@ elif category_config["key"] == "index":
         
         df_filtered['has_weight'] = df_filtered['ts_code'].isin(indices_with_weight)
         
-        st.markdown(f"**Total {len(df_filtered)} indices, {df_filtered['has_weight'].sum()} with weight data**")
-        
-        display_cols = ['ts_code', 'name', 'market', 'publisher', 'index_type', 'category',
-                        'base_date', 'base_point', 'list_date', 'has_weight']
-        
-        st.dataframe(
-            df_filtered[display_cols],
-            use_container_width=True,
-            height=600,
-            column_config={
-                "ts_code": "Code",
-                "name": "Name",
-                "market": "Market",
-                "publisher": "Publisher",
-                "index_type": "Type",
-                "category": "Category",
-                "base_date": "Base Date",
-                "base_point": st.column_config.NumberColumn("Base Point", format="%.2f"),
-                "list_date": "List Date",
-                "has_weight": st.column_config.CheckboxColumn("Has Weight")
-            }
-        )
+        with right_col:
+            st.markdown(f"**共 {len(df_filtered)} 个指数，{df_filtered['has_weight'].sum()} 个有权重数据**")
+            
+            display_cols = ['ts_code', 'name', 'market', 'publisher', 'index_type', 'category',
+                            'base_date', 'base_point', 'list_date', 'has_weight']
+            
+            st.dataframe(
+                df_filtered[display_cols],
+                use_container_width=True,
+                height=600,
+                column_config={
+                    "ts_code": "Code",
+                    "name": "Name",
+                    "market": "Market",
+                    "publisher": "Publisher",
+                    "index_type": "Type",
+                    "category": "Category",
+                    "base_date": "Base Date",
+                    "base_point": st.column_config.NumberColumn("Base Point", format="%.2f"),
+                    "list_date": "List Date",
+                    "has_weight": st.column_config.CheckboxColumn("Has Weight")
+                }
+            )
     
     # --- Index Heatmap Sub-category ---
     elif subcategory_key == "index_heatmap":
         render_header("Major Indices Performance", "heatmap")
         
-        # Sidebar filters for date range
-        render_sidebar_header("Date Range", "calendar")
-        
-        # Default to last 60 days
         from datetime import datetime, timedelta
         default_end = datetime.now()
         default_start = default_end - timedelta(days=60)
         
-        start_date = st.sidebar.date_input("Start Date", default_start)
-        end_date = st.sidebar.date_input("End Date", default_end)
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📅 日期范围**")
+            start_date = st.date_input("起始日期", default_start, key="idx_start")
+            end_date = st.date_input("结束日期", default_end, key="idx_end")
             
         start_str = start_date.strftime('%Y%m%d')
         end_str = end_date.strftime('%Y%m%d')
         
         with st.spinner('Fetching performance data...'):
             df_heatmap = load_major_indices_daily(start_str, end_str)
-            
-        if df_heatmap.empty:
-            st.warning(f"No performance data found between {start_str} and {end_str}")
-        else:
-            tab1, tab2, tab3 = st.tabs(["🔥 Heatmap Analysis", "📈 Cumulative Returns", "📋 Raw Data"])
-            
-            with tab1:
-                fig_heatmap = plot_index_heatmap(df_heatmap)
-                if fig_heatmap:
-                    st.plotly_chart(fig_heatmap, use_container_width=True)
-            
-            with tab2:
-                # Comparison filters
-                all_indices = sorted(df_heatmap['ts_code'].unique().tolist())
-                # Default selection: first 5 or a few major ones if available
-                default_selection = [x for x in ['000001.SH', '000300.SH', '000905.SH', '399006.SZ', '000688.SH'] if x in all_indices]
-                if not default_selection:
-                    default_selection = all_indices[:5]
+        
+        with right_col:
+            if df_heatmap.empty:
+                st.warning(f"No performance data found between {start_str} and {end_str}")
+            else:
+                tab1, tab2, tab3 = st.tabs(["🔥 Heatmap Analysis", "📈 Cumulative Returns", "📋 Raw Data"])
                 
-                selected_codes = st.multiselect("Select indices to compare:", all_indices, default=default_selection)
+                with tab1:
+                    fig_heatmap = plot_index_heatmap(df_heatmap)
+                    if fig_heatmap:
+                        st.plotly_chart(fig_heatmap, use_container_width=True, key="idx_heatmap")
                 
-                if selected_codes:
-                    df_line = df_heatmap[df_heatmap['ts_code'].isin(selected_codes)]
-                    fig_line = plot_cumulative_returns(df_line)
-                    if fig_line:
-                        st.plotly_chart(fig_line, use_container_width=True)
+                with tab2:
+                    all_indices = sorted(df_heatmap['ts_code'].unique().tolist())
+                    default_selection = [x for x in ['000001.SH', '000300.SH', '000905.SH', '399006.SZ', '000688.SH'] if x in all_indices]
+                    if not default_selection:
+                        default_selection = all_indices[:5]
                     
-                    st.caption("Note: Cumulative returns are calculated from the first available date in the selected range, indexed to 100.")
-                else:
-                    st.info("Please select at least one index to compare performance.")
+                    selected_codes = st.multiselect("选择比较指数:", all_indices, default=default_selection, key="idx_compare")
+                    
+                    if selected_codes:
+                        df_line = df_heatmap[df_heatmap['ts_code'].isin(selected_codes)]
+                        fig_line = plot_cumulative_returns(df_line)
+                        if fig_line:
+                            st.plotly_chart(fig_line, use_container_width=True, key="idx_returns")
+                        
+                        st.caption("Note: Cumulative returns are calculated from the first available date in the selected range, indexed to 100.")
+                    else:
+                        st.info("Please select at least one index to compare performance.")
+                
+                with tab3:
+                    pivot_display = df_heatmap.pivot(index='trade_date', columns='ts_code', values='pct_chg').sort_index(ascending=False)
+                    st.dataframe(pivot_display, use_container_width=True)
+
+    # --- Shenwan Index Heatmap Sub-category ---
+    elif subcategory_key == "sw_index":
+        render_header("Shenwan Industry Heatmap", "treemap")
+        
+        from sw_index_data_loader import (
+            get_sw_hierarchy, load_sw_daily_data, load_stocks_by_l3,
+            load_top_stocks, load_stocks_by_l2, get_sw_members, load_stock_daily_data,
+            load_stocks_by_l1
+        )
+        from sw_index_charts import plot_sw_treemap, plot_sw_stock_treemap, plot_l2_stock_treemap, plot_l1_stock_treemap
+        from datetime import datetime, timedelta
+        
+        # Load Hierarchy
+        df_hier = get_sw_hierarchy()
+        if df_hier.empty:
+            st.error("Failed to load Shenwan hierarchy data.")
+            st.stop()
+        
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📅 交易日期**")
+            today = datetime.now()
+            if today.weekday() >= 5:
+                today = today - timedelta(days=today.weekday() - 4)
+            selected_date = st.date_input("选择日期", today, key="sw_trade_date")
+            date_str = selected_date.strftime('%Y%m%d')
             
-            with tab3:
-                # Pivot for tabular display
-                pivot_display = df_heatmap.pivot(index='trade_date', columns='ts_code', values='pct_chg').sort_index(ascending=False)
-                st.dataframe(pivot_display, use_container_width=True)
+            st.markdown("---")
+            st.markdown("**🎯 视图模式**")
+            view_mode = st.radio(
+                "选择视图",
+                ["L1行业钻取", "完整视图", "Top100热门股"],
+                index=0,
+                key="sw_view_mode"
+            )
+        
+        with right_col:
+            # ==================== L1 Drill-down ====================
+            if view_mode == "L1行业钻取":
+                st.caption("默认显示 L1→L2→L3 指数，选择行业后钻取至成分股")
+                
+                l1_options = df_hier[['l1_code', 'l1_name']].drop_duplicates().sort_values('l1_code')
+                l1_dict = dict(zip(l1_options['l1_code'], l1_options['l1_name']))
+                l1_choices = ['全部 (L1→L2→L3 指数视图)'] + l1_options['l1_code'].tolist()
+                
+                selected_l1_drill = st.selectbox(
+                    "选择一级行业（L1）查看成分股",
+                    l1_choices,
+                    format_func=lambda x: x if x.startswith('全部') else f"{x} - {l1_dict.get(x, x)}",
+                    key="l1_drill"
+                )
+                
+                if selected_l1_drill.startswith('全部'):
+                    with st.spinner("Loading L3 index data..."):
+                        target_codes = df_hier['l3_code'].unique().tolist()
+                        df_sw_daily = load_sw_daily_data(date_str, target_codes)
+                    
+                    if df_sw_daily.empty:
+                        st.warning(f"No trading data for {date_str}.")
+                    else:
+                        up_count = len(df_sw_daily[df_sw_daily['pct_change'] > 0])
+                        down_count = len(df_sw_daily[df_sw_daily['pct_change'] < 0])
+                        
+                        c1, c2 = st.columns(2)
+                        c1.metric("上涨行业", up_count)
+                        c2.metric("下跌行业", down_count)
+                        
+                        fig = plot_sw_treemap(df_hier, df_sw_daily, level='L3')
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True, key="l1_tab_index_chart")
+                else:
+                    l1_name = l1_dict.get(selected_l1_drill, selected_l1_drill)
+                    
+                    with st.spinner(f"Loading stocks for {l1_name}..."):
+                        df_l1_stocks = load_stocks_by_l1(date_str, selected_l1_drill)
+                    
+                    if df_l1_stocks.empty:
+                        st.warning(f"No stock data for {l1_name} on {date_str}.")
+                    else:
+                        up_count = len(df_l1_stocks[df_l1_stocks['pct_change'] > 0])
+                        down_count = len(df_l1_stocks[df_l1_stocks['pct_change'] < 0])
+                        total_amt = df_l1_stocks['amount'].sum()
+                        
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("上涨", up_count)
+                        c2.metric("下跌", down_count)
+                        c3.metric("成交额", f"{total_amt/100000000:.2f} 亿")
+                        c4.metric("股票数", len(df_l1_stocks))
+                        
+                        fig = plot_l1_stock_treemap(df_l1_stocks, l1_name)
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True, key="l1_tab_stock_chart")
+            
+            # ==================== Original View ====================
+            elif view_mode == "完整视图":
+                st.caption("选择层级查看完整数据（Stock级别可能较慢）")
+                
+                level = st.radio("选择层级", ["L1", "L2", "L3", "Stock"], index=0, horizontal=True, key="opt_a_level")
+                
+                with st.spinner(f"Loading {level} data for {date_str}..."):
+                    if level == 'Stock':
+                        df_hier_full = get_sw_members()
+                        target_codes = df_hier_full['ts_code'].unique().tolist()
+                        df_sw_daily = load_stock_daily_data(date_str, target_codes)
+                    else:
+                        if level == 'L1':
+                            target_codes = df_hier['l1_code'].unique().tolist()
+                        elif level == 'L2':
+                            target_codes = df_hier['l2_code'].unique().tolist()
+                        elif level == 'L3':
+                            target_codes = df_hier['l3_code'].unique().tolist()
+                        df_sw_daily = load_sw_daily_data(date_str, target_codes)
+                
+                if df_sw_daily.empty:
+                    st.warning(f"No trading data for {date_str}.")
+                else:
+                    up_count = len(df_sw_daily[df_sw_daily['pct_change'] > 0])
+                    down_count = len(df_sw_daily[df_sw_daily['pct_change'] < 0])
+                    total_amt = df_sw_daily['amount'].sum()
+                    
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric(f"上涨 {level}", up_count)
+                    c2.metric(f"下跌 {level}", down_count)
+                    c3.metric("成交额", f"{total_amt/100000000:.2f} 亿")
+                    
+                    if level == 'Stock':
+                        df_hier_full = get_sw_members()
+                        fig = plot_sw_treemap(df_hier_full, df_sw_daily, level='Stock')
+                    else:
+                        fig = plot_sw_treemap(df_hier, df_sw_daily, level=level)
+                    if fig:
+                        st.plotly_chart(fig, use_container_width=True, key="opt_a_chart")
+            
+            # ==================== Top N Stocks ====================
+            elif view_mode == "Top100热门股":
+                st.caption("仅显示成交额最高的股票，快速加载")
+                
+                top_n = st.slider("显示数量", 50, 300, 100, step=50, key="top_n_slider")
+                
+                with st.spinner(f"Loading Top {top_n} stocks..."):
+                    df_top = load_top_stocks(date_str, top_n)
+                
+                if df_top.empty:
+                    st.warning(f"No stock data for {date_str}.")
+                else:
+                    up_count = len(df_top[df_top['pct_change'] > 0])
+                    down_count = len(df_top[df_top['pct_change'] < 0])
+                    
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("上涨", up_count)
+                    c2.metric("下跌", down_count)
+                    c3.metric("显示股票数", len(df_top))
+                    
+                    fig_top = plot_sw_stock_treemap(df_top, f"Top {top_n} Stocks by Amount")
+                    if fig_top:
+                        st.plotly_chart(fig_top, use_container_width=True, key="top_n_chart")
     
-    # --- Index Details Sub-category ---
+
+    # --- Market Width Sub-category ---
+    elif subcategory_key == "market_width":
+        render_header("SW Industry Market Width", "chart")
+        
+        from sw_index_data_loader import calculate_market_width
+        from sw_market_width_chart import plot_market_width_heatmap
+        from datetime import datetime, timedelta
+        
+        # Left-right layout
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**📊 参数设置**")
+            level = st.selectbox("行业层级", ["L1", "L2", "L3"], index=0, key="mw_level")
+            ma_period = st.selectbox("MA 周期", [5, 10, 20, 50, 90, 120], index=2, key="mw_ma")
+            days = st.slider("显示天数", 10, 60, 30, step=5, key="mw_days")
+            
+            today = datetime.now()
+            if today.weekday() >= 5:
+                today = today - timedelta(days=today.weekday() - 4)
+            end_date = st.date_input("截止日期", today, key="mw_end_date")
+            end_date_str = end_date.strftime('%Y%m%d')
+        
+        with st.spinner(f"Calculating MA{ma_period} market width for {level}..."):
+            df_width = calculate_market_width(end_date_str, days, ma_period, level)
+        
+        with right_col:
+            st.caption("市场宽度 = 收盘价 > MA 的股票占比。热力图显示各行业的市场宽度变化。")
+            
+            if df_width.empty:
+                st.warning("No market width data available.")
+            else:
+                latest_date = df_width['trade_date'].max()
+                df_latest = df_width[df_width['trade_date'] == latest_date]
+                avg_width = df_latest['width_ratio'].mean()
+                max_width_row = df_latest.loc[df_latest['width_ratio'].idxmax()]
+                min_width_row = df_latest.loc[df_latest['width_ratio'].idxmin()]
+                
+                c1, c2, c3 = st.columns(3)
+                c1.metric("平均市场宽度", f"{avg_width:.1f}%")
+                c2.metric("最强行业", f"{max_width_row['index_name']} ({max_width_row['width_ratio']:.1f}%)")
+                c3.metric("最弱行业", f"{min_width_row['index_name']} ({min_width_row['width_ratio']:.1f}%)")
+                
+                fig = plot_market_width_heatmap(df_width, level, ma_period)
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True, key="market_width_heatmap")
+    
+
     elif subcategory_key == "index_details":
         render_header("Index Constituents", "detail")
         
@@ -932,52 +1188,57 @@ elif category_config["key"] == "stock":
         if df_stats.empty:
             st.warning("No stock basic data available to calculate statistics.")
         else:
-            # Filters
-            render_sidebar_header("Stats Filter", "filter")
             df_stats['year'] = df_stats['month'].dt.year
             years = sorted(df_stats['year'].unique().tolist(), reverse=True)
-            sel_year = st.sidebar.multiselect("Select Year(s)", years, default=years[:10])
+            
+            # Left-right layout
+            left_col, right_col = st.columns([1, 5])
+            
+            with left_col:
+                st.markdown("**📅 年份筛选**")
+                sel_year = st.multiselect("选择年份", years, default=years[:10], key="listing_years")
             
             df_f = df_stats[df_stats['year'].isin(sel_year)]
             
-            # Key Metrics
-            total_listings = df_f['listings'].sum()
-            total_delistings = df_f['delistings'].sum()
-            net_growth = total_listings - total_delistings
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Listings", int(total_listings))
-            with col2:
-                st.metric("Total Delistings", int(total_delistings))
-            with col3:
-                st.metric("Net Growth", int(net_growth))
+            with right_col:
+                # Key Metrics
+                total_listings = df_f['listings'].sum()
+                total_delistings = df_f['delistings'].sum()
+                net_growth = total_listings - total_delistings
                 
-            st.divider()
-            
-            tab1, tab2, tab3 = st.tabs(["📊 Trends", "📈 Growth", "📋 Monthly Data"])
-            
-            with tab1:
-                fig_trend = plot_listing_delisting_trend(df_f)
-                if fig_trend:
-                    st.plotly_chart(fig_trend, use_container_width=True)
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Listings", int(total_listings))
+                with col2:
+                    st.metric("Total Delistings", int(total_delistings))
+                with col3:
+                    st.metric("Net Growth", int(net_growth))
                     
-            with tab2:
-                fig_growth = plot_listing_summary(df_f)
-                if fig_growth:
-                    st.plotly_chart(fig_growth, use_container_width=True)
-                    
-            with tab3:
-                st.markdown("**Monthly Statistics (Sorted by Date)**")
-                st.dataframe(
-                    df_f.sort_values('month', ascending=False),
-                    use_container_width=True,
-                    column_config={
-                        "month": st.column_config.DatetimeColumn("Month", format="YYYY-MM"),
-                        "listings": "New Listings",
-                        "delistings": "Delistings",
-                        "net_growth": "Net Growth",
-                        "year": None # Hide year helper column
+                st.divider()
+                
+                tab1, tab2, tab3 = st.tabs(["📊 Trends", "📈 Growth", "📋 Monthly Data"])
+                
+                with tab1:
+                    fig_trend = plot_listing_delisting_trend(df_f)
+                    if fig_trend:
+                        st.plotly_chart(fig_trend, use_container_width=True, key="listing_trend")
+                        
+                with tab2:
+                    fig_growth = plot_listing_summary(df_f)
+                    if fig_growth:
+                        st.plotly_chart(fig_growth, use_container_width=True, key="listing_growth")
+                        
+                with tab3:
+                    st.markdown("**Monthly Statistics (Sorted by Date)**")
+                    st.dataframe(
+                        df_f.sort_values('month', ascending=False),
+                        use_container_width=True,
+                        column_config={
+                            "month": st.column_config.DatetimeColumn("Month", format="YYYY-MM"),
+                            "listings": "New Listings",
+                            "delistings": "Delistings",
+                            "net_growth": "Net Growth",
+                            "year": None
                     }
                 )
 

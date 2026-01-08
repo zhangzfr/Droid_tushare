@@ -32,7 +32,9 @@ def plot_listing_delisting_trend(df):
         template='plotly_white',
         hovermode='x unified',
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(l=20, r=20, t=50, b=20)
+        margin=dict(l=20, r=20, t=50, b=20),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
@@ -55,6 +57,10 @@ def plot_listing_summary(df):
     )
     
     fig.update_traces(line_color='#D97757')
-    fig.update_layout(template='plotly_white')
+    fig.update_layout(
+        template='plotly_white',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     
     return fig

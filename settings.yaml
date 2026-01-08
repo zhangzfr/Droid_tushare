@@ -826,6 +826,7 @@ index_market:
         - 399852.SZ
       date_column: trade_date
       date_type: trade
+      date_param_mode: range
     index_dailybasic:
       unique_keys:
       - ts_code

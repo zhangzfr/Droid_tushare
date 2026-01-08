@@ -505,7 +505,7 @@ def main():
             except Exception as e:
                 logger.error(f"更新失败: {e}")
 
-        elif choice == '16':
+        elif choice == '17':
             run_explorer()
 
         else:

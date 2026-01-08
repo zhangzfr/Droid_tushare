@@ -22,7 +22,9 @@ def plot_constituent_count_over_time(df):
     fig.update_layout(
         xaxis_tickformat='%Y-%m-%d',
         bargap=0.1,
-        height=400
+        height=400,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
@@ -37,15 +39,15 @@ def plot_index_heatmap(df):
     if df.empty:
         return None
     
-    # Pre-processing
+    # Pre-processing - use "code - name" format
     df = df.copy()
-    df['display_name'] = df['name'] + " (" + df['ts_code'] + ")"
+    df['display_name'] = df['ts_code'] + " - " + df['name']
     
     # Pivot for heatmap: rows = indices, cols = dates
     pivot_df = df.pivot(index='display_name', columns='trade_date', values='pct_chg')
+    pivot_df = pivot_df.sort_index(ascending=True)  # Sort by code ascending
     
     # Define custom colorscale: Green (Negative) -> White (Zero) -> Red (Positive)
-    # Following China market convention
     colorscale = [
         [0.0, 'rgb(0, 128, 0)'],      # Sharp Green
         [0.45, 'rgb(240, 255, 240)'], # Fade Green
@@ -54,46 +56,51 @@ def plot_index_heatmap(df):
         [1.0, 'rgb(220, 0, 0)']       # Sharp Red
     ]
     
-    # We want 0 to be exactly in the middle of the colorscale
-    # But pct_chg might not be symmetric. We'll set zmid=0.
-    
     fig = go.Figure(data=go.Heatmap(
         z=pivot_df.values,
         x=pivot_df.columns,
         y=pivot_df.index,
         colorscale=colorscale,
         zmid=0,
-        zmin=-5, # Cap color range for better contrast
+        zmin=-5,
         zmax=5,
         text=pivot_df.values,
         texttemplate="%{text:.1f}",
-        textfont={"size": 10},
-        hovertemplate='<b>%{y}</b><br>Date: %{x}<br>Change: %{z:.2f}%<extra></extra>',
+        textfont={"size": 10, "color": "#4A4A4A"},
+        hovertemplate='<b>%{y}</b><br>%{x}<br>涨跌: %{z:.2f}%<extra></extra>',
         showscale=True,
-        colorbar=dict(title="Change %", thickness=15, len=0.8)
+        colorbar=dict(
+            title=dict(
+                text="涨跌%",
+                font=dict(color='#4A4A4A', size=10)
+            ),
+            thickness=15,
+            len=0.8,
+            x=-0.08,
+            tickfont=dict(color='#4A4A4A'),
+            outlinewidth=0,
+            borderwidth=0
+        )
     ))
     
     fig.update_layout(
-        title={
-            'text': "Major Indices Performance Heatmap (%)",
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'
-        },
-        xaxis_title='Trade Date',
+        title=None,
+        xaxis_title=None,
         yaxis_title=None,
         height=600,
-        margin=dict(l=150, r=20, t=100, b=50),
+        margin=dict(l=50, r=220, t=20, b=50),
         xaxis=dict(
             type='category', 
             tickangle=-45,
-            tickfont=dict(size=10)
+            tickfont=dict(size=10, color='#4A4A4A')
         ),
         yaxis=dict(
-            tickfont=dict(size=11),
-            autorange='reversed' # Usually indices are listed top-down
-        )
+            tickfont=dict(size=11, color='#4A4A4A'),
+            autorange='reversed',
+            side='right'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     return fig
@@ -139,7 +146,9 @@ def plot_cumulative_returns(df):
             xanchor="right",
             x=1
         ),
-        margin=dict(l=50, r=20, t=100, b=50)
+        margin=dict(l=50, r=20, t=100, b=50),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     fig.update_traces(hovertemplate='%{y:.2f}')
