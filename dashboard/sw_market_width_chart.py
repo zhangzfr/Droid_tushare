@@ -46,11 +46,11 @@ def plot_market_width_heatmap(df: pd.DataFrame, level: str, ma_period: int):
         text=pivot.values,
         texttemplate="%{text:.0f}",
         textfont={"size": 9, "color": "#4A4A4A"},
-        hovertemplate='<b>%{y}</b><br>%{x}<br>宽度: %{z:.1f}%<extra></extra>',
+        hovertemplate='<b>%{y}</b><br>%{x}<br>Width: %{z:.1f}%<extra></extra>',
         showscale=True,
         colorbar=dict(
             title=dict(
-                text=f"宽度%<br>(>MA{ma_period})",
+                text=f"Width%<br>(>MA{ma_period})",
                 font=dict(color='#4A4A4A', size=10)
             ),
             thickness=15,

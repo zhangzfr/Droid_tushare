@@ -67,11 +67,11 @@ def plot_index_heatmap(df):
         text=pivot_df.values,
         texttemplate="%{text:.1f}",
         textfont={"size": 10, "color": "#4A4A4A"},
-        hovertemplate='<b>%{y}</b><br>%{x}<br>涨跌: %{z:.2f}%<extra></extra>',
+        hovertemplate='<b>%{y}</b><br>%{x}<br>Change: %{z:.2f}%<extra></extra>',
         showscale=True,
         colorbar=dict(
             title=dict(
-                text="涨跌%",
+                text="Change%",
                 font=dict(color='#4A4A4A', size=10)
             ),
             thickness=15,

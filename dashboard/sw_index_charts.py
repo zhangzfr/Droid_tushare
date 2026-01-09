@@ -185,7 +185,7 @@ def plot_sw_treemap(df_hier, df_daily, level='L1'):
             line=dict(width=0.5 if level!='L1' else 0, color='grey')
         ),
         texttemplate="<b>%{label}</b><br>%{customdata[2]:.2f}%",
-        hovertemplate='<b>%{label}</b><br>Amt: %{value:,.0f}<br>Chg: %{customdata[2]:.2f}%<extra></extra>',
+        hovertemplate='<b>%{label}</b><br>Amount: %{value:,.0f}<br>Change: %{customdata[2]:.2f}%<extra></extra>',
         branchvalues="total" if level == 'L1' else None 
         # "total" requires parents to sum up exactly. 
     ))
@@ -248,7 +248,7 @@ def plot_sw_stock_treemap(df_stocks, l3_name: str):
             line=dict(width=0.5, color='grey')
         ),
         texttemplate="<b>%{customdata[0]}</b><br>%{label}<br>%{customdata[2]:.2f}%",
-        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amt: %{value:,.0f}<br>Chg: %{customdata[2]:.2f}%<extra></extra>',
+        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amount: %{value:,.0f}<br>Change: %{customdata[2]:.2f}%<extra></extra>',
     ))
     
     fig.update_layout(
@@ -279,7 +279,7 @@ def plot_l2_stock_treemap(df_stocks, l2_name: str):
     # Handle NaN
     df['pct_change'] = df['pct_change'].fillna(0)
     df['amount'] = df['amount'].fillna(0)
-    df['l3_name'] = df['l3_name'].fillna('其他')
+    df['l3_name'] = df['l3_name'].fillna('Others')
     
     # Filter out zero-amount stocks
     df = df[df['amount'] > 0]
@@ -336,7 +336,7 @@ def plot_l2_stock_treemap(df_stocks, l2_name: str):
             line=dict(width=0.5, color='grey')
         ),
         texttemplate="<b>%{customdata[0]}</b><br>%{label}<br>%{customdata[2]:.2f}%",
-        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amt: %{value:,.0f}<br>Chg: %{customdata[2]:.2f}%<extra></extra>',
+        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amount: %{value:,.0f}<br>Change: %{customdata[2]:.2f}%<extra></extra>',
     ))
     
     fig.update_layout(
@@ -367,8 +367,8 @@ def plot_l1_stock_treemap(df_stocks, l1_name: str):
     # Handle NaN
     df['pct_change'] = df['pct_change'].fillna(0)
     df['amount'] = df['amount'].fillna(0)
-    df['l2_name'] = df['l2_name'].fillna('其他')
-    df['l3_name'] = df['l3_name'].fillna('其他')
+    df['l2_name'] = df['l2_name'].fillna('Others')
+    df['l3_name'] = df['l3_name'].fillna('Others')
     
     # Filter out zero-amount stocks
     df = df[df['amount'] > 0]
@@ -437,7 +437,7 @@ def plot_l1_stock_treemap(df_stocks, l1_name: str):
             line=dict(width=0.5, color='grey')
         ),
         texttemplate="<b>%{customdata[0]}</b><br>%{label}<br>%{customdata[2]:.2f}%",
-        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amt: %{value:,.0f}<br>Chg: %{customdata[2]:.2f}%<extra></extra>',
+        hovertemplate='<b>%{customdata[0]}</b> - %{label}<br>Amount: %{value:,.0f}<br>Change: %{customdata[2]:.2f}%<extra></extra>',
     ))
     
     fig.update_layout(

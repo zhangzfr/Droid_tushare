@@ -595,9 +595,9 @@ elif category_config["key"] == "macro":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📅 日期筛选**")
-            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="pmi_start")
-            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="pmi_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date, key="pmi_start")
+            end_date = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date, key="pmi_end")
         
         df_pmi_f = filter_df(df_pmi, start_date, end_date)
         
@@ -641,9 +641,9 @@ elif category_config["key"] == "macro":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📅 日期筛选**")
-            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="m_start")
-            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="m_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date, key="m_start")
+            end_date = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date, key="m_end")
         
         df_m_f = filter_df(df_m, start_date, end_date)
         
@@ -682,9 +682,9 @@ elif category_config["key"] == "macro":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📅 日期筛选**")
-            start_date = st.date_input("起始日期", min_date, min_value=min_date, max_value=max_date, key="sf_start")
-            end_date = st.date_input("结束日期", max_date, min_value=min_date, max_value=max_date, key="sf_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date, key="sf_start")
+            end_date = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date, key="sf_end")
         
         df_sf_f = filter_df(df_sf, start_date, end_date)
         
@@ -737,12 +737,12 @@ elif category_config["key"] == "index":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**🔍 筛选条件**")
+            st.markdown("**Filters**")
             markets = ['All'] + sorted(df_indices['market'].dropna().unique().tolist())
             publishers = ['All'] + sorted(df_indices['publisher'].dropna().unique().tolist())
             
-            sel_market = st.selectbox("市场", markets, key="idx_market")
-            sel_publisher = st.selectbox("发布者", publishers, key="idx_publisher")
+            sel_market = st.selectbox("Market", markets, key="idx_market")
+            sel_publisher = st.selectbox("Publisher", publishers, key="idx_publisher")
         
         df_filtered = df_indices.copy()
         if sel_market != 'All':
@@ -753,7 +753,7 @@ elif category_config["key"] == "index":
         df_filtered['has_weight'] = df_filtered['ts_code'].isin(indices_with_weight)
         
         with right_col:
-            st.markdown(f"**共 {len(df_filtered)} 个指数，{df_filtered['has_weight'].sum()} 个有权重数据**")
+            st.markdown(f"**Total {len(df_filtered)} indices, {df_filtered['has_weight'].sum()} with weight data**")
             
             display_cols = ['ts_code', 'name', 'market', 'publisher', 'index_type', 'category',
                             'base_date', 'base_point', 'list_date', 'has_weight']
@@ -788,9 +788,9 @@ elif category_config["key"] == "index":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📅 日期范围**")
-            start_date = st.date_input("起始日期", default_start, key="idx_start")
-            end_date = st.date_input("结束日期", default_end, key="idx_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start Date", default_start, key="idx_start")
+            end_date = st.date_input("End Date", default_end, key="idx_end")
             
         start_str = start_date.strftime('%Y%m%d')
         end_str = end_date.strftime('%Y%m%d')
@@ -802,7 +802,7 @@ elif category_config["key"] == "index":
             if df_heatmap.empty:
                 st.warning(f"No performance data found between {start_str} and {end_str}")
             else:
-                tab1, tab2, tab3 = st.tabs(["🔥 Heatmap Analysis", "📈 Cumulative Returns", "📋 Raw Data"])
+                tab1, tab2, tab3 = st.tabs(["Heatmap Analysis", "Cumulative Returns", "Raw Data"])
                 
                 with tab1:
                     fig_heatmap = plot_index_heatmap(df_heatmap)
@@ -815,7 +815,7 @@ elif category_config["key"] == "index":
                     if not default_selection:
                         default_selection = all_indices[:5]
                     
-                    selected_codes = st.multiselect("选择比较指数:", all_indices, default=default_selection, key="idx_compare")
+                    selected_codes = st.multiselect("Select Indices to Compare:", all_indices, default=default_selection, key="idx_compare")
                     
                     if selected_codes:
                         df_line = df_heatmap[df_heatmap['ts_code'].isin(selected_codes)]
@@ -853,39 +853,39 @@ elif category_config["key"] == "index":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📅 交易日期**")
+            st.markdown("**Trading Date**")
             today = datetime.now()
             if today.weekday() >= 5:
                 today = today - timedelta(days=today.weekday() - 4)
-            selected_date = st.date_input("选择日期", today, key="sw_trade_date")
+            selected_date = st.date_input("Select Date", today, key="sw_trade_date")
             date_str = selected_date.strftime('%Y%m%d')
             
             st.markdown("---")
-            st.markdown("**🎯 视图模式**")
+            st.markdown("**View Mode**")
             view_mode = st.radio(
-                "选择视图",
-                ["L1行业钻取", "完整视图", "Top100热门股"],
+                "Select View",
+                ["L1 Drill-down", "Full View", "Top 100 Hot Stocks"],
                 index=0,
                 key="sw_view_mode"
             )
         
         with right_col:
             # ==================== L1 Drill-down ====================
-            if view_mode == "L1行业钻取":
-                st.caption("默认显示 L1→L2→L3 指数，选择行业后钻取至成分股")
+            if view_mode == "L1 Drill-down":
+                st.caption("Default shows L1→L2→L3 indices. Select industry to drill down to stocks.")
                 
                 l1_options = df_hier[['l1_code', 'l1_name']].drop_duplicates().sort_values('l1_code')
                 l1_dict = dict(zip(l1_options['l1_code'], l1_options['l1_name']))
-                l1_choices = ['全部 (L1→L2→L3 指数视图)'] + l1_options['l1_code'].tolist()
+                l1_choices = ['All (L1→L2→L3 Index View)'] + l1_options['l1_code'].tolist()
                 
                 selected_l1_drill = st.selectbox(
-                    "选择一级行业（L1）查看成分股",
+                    "Select L1 Industry to view stocks",
                     l1_choices,
-                    format_func=lambda x: x if x.startswith('全部') else f"{x} - {l1_dict.get(x, x)}",
+                    format_func=lambda x: x if x.startswith('All') else f"{x} - {l1_dict.get(x, x)}",
                     key="l1_drill"
                 )
                 
-                if selected_l1_drill.startswith('全部'):
+                if selected_l1_drill.startswith('All'):
                     with st.spinner("Loading L3 index data..."):
                         target_codes = df_hier['l3_code'].unique().tolist()
                         df_sw_daily = load_sw_daily_data(date_str, target_codes)
@@ -897,8 +897,8 @@ elif category_config["key"] == "index":
                         down_count = len(df_sw_daily[df_sw_daily['pct_change'] < 0])
                         
                         c1, c2 = st.columns(2)
-                        c1.metric("上涨行业", up_count)
-                        c2.metric("下跌行业", down_count)
+                        c1.metric("Rising Indices", up_count)
+                        c2.metric("Falling Indices", down_count)
                         
                         fig = plot_sw_treemap(df_hier, df_sw_daily, level='L3')
                         if fig:
@@ -917,20 +917,20 @@ elif category_config["key"] == "index":
                         total_amt = df_l1_stocks['amount'].sum()
                         
                         c1, c2, c3, c4 = st.columns(4)
-                        c1.metric("上涨", up_count)
-                        c2.metric("下跌", down_count)
-                        c3.metric("成交额", f"{total_amt/100000000:.2f} 亿")
-                        c4.metric("股票数", len(df_l1_stocks))
+                        c1.metric("Rising", up_count)
+                        c2.metric("Falling", down_count)
+                        c3.metric("Amount", f"{total_amt/100000000:.2f} B")
+                        c4.metric("Stocks", len(df_l1_stocks))
                         
                         fig = plot_l1_stock_treemap(df_l1_stocks, l1_name)
                         if fig:
                             st.plotly_chart(fig, use_container_width=True, key="l1_tab_stock_chart")
             
             # ==================== Original View ====================
-            elif view_mode == "完整视图":
-                st.caption("选择层级查看完整数据（Stock级别可能较慢）")
+            elif view_mode == "Full View":
+                st.caption("Select level to view full data (Stock level might be slow)")
                 
-                level = st.radio("选择层级", ["L1", "L2", "L3", "Stock"], index=0, horizontal=True, key="opt_a_level")
+                level = st.radio("Select Level", ["L1", "L2", "L3", "Stock"], index=0, horizontal=True, key="opt_a_level")
                 
                 with st.spinner(f"Loading {level} data for {date_str}..."):
                     if level == 'Stock':
@@ -954,9 +954,9 @@ elif category_config["key"] == "index":
                     total_amt = df_sw_daily['amount'].sum()
                     
                     c1, c2, c3 = st.columns(3)
-                    c1.metric(f"上涨 {level}", up_count)
-                    c2.metric(f"下跌 {level}", down_count)
-                    c3.metric("成交额", f"{total_amt/100000000:.2f} 亿")
+                    c1.metric(f"Rising {level}", up_count)
+                    c2.metric(f"Falling {level}", down_count)
+                    c3.metric("Amount", f"{total_amt/100000000:.2f} B")
                     
                     if level == 'Stock':
                         df_hier_full = get_sw_members()
@@ -967,10 +967,10 @@ elif category_config["key"] == "index":
                         st.plotly_chart(fig, use_container_width=True, key="opt_a_chart")
             
             # ==================== Top N Stocks ====================
-            elif view_mode == "Top100热门股":
-                st.caption("仅显示成交额最高的股票，快速加载")
+            elif view_mode == "Top 100 Hot Stocks":
+                st.caption("Show top stocks by amount (fast loading)")
                 
-                top_n = st.slider("显示数量", 50, 300, 100, step=50, key="top_n_slider")
+                top_n = st.slider("Display Count", 50, 300, 100, step=50, key="top_n_slider")
                 
                 with st.spinner(f"Loading Top {top_n} stocks..."):
                     df_top = load_top_stocks(date_str, top_n)
@@ -982,9 +982,9 @@ elif category_config["key"] == "index":
                     down_count = len(df_top[df_top['pct_change'] < 0])
                     
                     c1, c2, c3 = st.columns(3)
-                    c1.metric("上涨", up_count)
-                    c2.metric("下跌", down_count)
-                    c3.metric("显示股票数", len(df_top))
+                    c1.metric("Rising", up_count)
+                    c2.metric("Falling", down_count)
+                    c3.metric("Display Count", len(df_top))
                     
                     fig_top = plot_sw_stock_treemap(df_top, f"Top {top_n} Stocks by Amount")
                     if fig_top:
@@ -1003,22 +1003,22 @@ elif category_config["key"] == "index":
         left_col, right_col = st.columns([1, 7])
         
         with left_col:
-            st.markdown("**📊 参数设置**")
-            level = st.selectbox("行业层级", ["L1", "L2", "L3"], index=0, key="mw_level")
-            ma_period = st.selectbox("MA 周期", [5, 10, 20, 50, 90, 120], index=2, key="mw_ma")
-            days = st.slider("显示天数", 10, 60, 30, step=5, key="mw_days")
+            st.markdown("**Parameters**")
+            level = st.selectbox("Industry Level", ["L1", "L2", "L3"], index=0, key="mw_level")
+            ma_period = st.selectbox("MA Period", [5, 10, 20, 50, 90, 120], index=2, key="mw_ma")
+            days = st.slider("Display Days", 10, 60, 30, step=5, key="mw_days")
             
             today = datetime.now()
             if today.weekday() >= 5:
                 today = today - timedelta(days=today.weekday() - 4)
-            end_date = st.date_input("截止日期", today, key="mw_end_date")
+            end_date = st.date_input("End Date", today, key="mw_end_date")
             end_date_str = end_date.strftime('%Y%m%d')
         
         with st.spinner(f"Calculating MA{ma_period} market width for {level}..."):
             df_width = calculate_market_width(end_date_str, days, ma_period, level)
         
         with right_col:
-            st.caption("市场宽度 = 收盘价 > MA 的股票占比。热力图显示各行业的市场宽度变化。")
+            st.caption("Market Width = % of stocks with Close > MA. Heatmap shows changes across industries.")
             
             if df_width.empty:
                 st.warning("No market width data available.")
@@ -1030,9 +1030,9 @@ elif category_config["key"] == "index":
                 min_width_row = df_latest.loc[df_latest['width_ratio'].idxmin()]
                 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("平均市场宽度", f"{avg_width:.1f}%")
-                c2.metric("最强行业", f"{max_width_row['index_name']} ({max_width_row['width_ratio']:.1f}%)")
-                c3.metric("最弱行业", f"{min_width_row['index_name']} ({min_width_row['width_ratio']:.1f}%)")
+                c1.metric("Avg Market Width", f"{avg_width:.1f}%")
+                c2.metric("Strongest Industry", f"{max_width_row['index_name']} ({max_width_row['width_ratio']:.1f}%)")
+                c3.metric("Weakest Industry", f"{min_width_row['index_name']} ({min_width_row['width_ratio']:.1f}%)")
                 
                 fig = plot_market_width_heatmap(df_width, level, ma_period)
                 if fig:
@@ -1124,7 +1124,7 @@ elif category_config["key"] == "index":
             
             st.divider()
             
-            tab1, tab2 = st.tabs(["📈 Constituent Count Trend", "📋 Constituent Details"])
+            tab1, tab2 = st.tabs(["Constituent Count Trend", "Constituent Details"])
             
             with tab1:
                 st.subheader("Constituent Count Over Time")
@@ -1195,8 +1195,8 @@ elif category_config["key"] == "stock":
             left_col, right_col = st.columns([1, 5])
             
             with left_col:
-                st.markdown("**📅 年份筛选**")
-                sel_year = st.multiselect("选择年份", years, default=years[:10], key="listing_years")
+                st.markdown("**Year Filter**")
+                sel_year = st.multiselect("Select Year(s)", years, default=years[:10], key="listing_years")
             
             df_f = df_stats[df_stats['year'].isin(sel_year)]
             
@@ -1216,7 +1216,7 @@ elif category_config["key"] == "stock":
                     
                 st.divider()
                 
-                tab1, tab2, tab3 = st.tabs(["📊 Trends", "📈 Growth", "📋 Monthly Data"])
+                tab1, tab2, tab3 = st.tabs(["Trends", "Growth", "Monthly Data"])
                 
                 with tab1:
                     fig_trend = plot_listing_delisting_trend(df_f)
