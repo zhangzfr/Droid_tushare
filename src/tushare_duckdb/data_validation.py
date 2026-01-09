@@ -90,7 +90,23 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
             if not irregular:
                 expected_keys += ['覆盖率', '缺失范围', '异常日期']
 
+            # 预先获取交易日列表（如果需要）
+            if is_range_check and not trade_days:
+                basic_db_path = basic_db_path or db_path
+                try:
+                    trade_days = set(get_trade_dates(basic_db_path, start_date, end_date, exchange))
+                except ValueError as e:
+                    logger.warning(f"警告：无法获取交易日 (exchange: {exchange}): {e}")
+                    trade_days = set()
+
             for table_name, date_column in tables:
+                # 获取表的 date_type 配置
+                table_date_type = 'natural'  # 默认自然日
+                for cat_key, cat_val in API_CONFIG.items():
+                    tables_conf = cat_val.get('tables', {})
+                    if table_name in tables_conf:
+                        table_date_type = tables_conf[table_name].get('date_type', 'natural')
+                        break
                 try:
                     if not table_exists(conn, table_name):
                         logger.warning(f"警告：表 {table_name} 不存在")
@@ -365,9 +381,21 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                             count_dict = {}
 
                         existing_dates = set(count_dict.keys())
-                        missing_dates = sorted([d for d in effective_valid_days if d not in existing_dates])
-                        coverage = f"{(len(effective_valid_days) - len(missing_dates)) / len(effective_valid_days) * 100:.1f}%" if effective_valid_days else 'N/A'
-                        missing_ranges = f"{missing_dates[0]}{'...' + missing_dates[-1] if len(missing_dates) > 1 else ''} ({len(missing_dates)}天)" if missing_dates else '无缺失'
+                        
+                        # 根据 date_type 选择正确的日期列表来计算缺失
+                        if table_date_type == 'trade':
+                            # 交易日类型：使用交易日列表
+                            expected_dates = [d for d in effective_valid_days if d in trade_days]
+                            missing_dates = sorted([d for d in expected_dates if d not in existing_dates])
+                            date_unit = '个交易日'
+                        else:
+                            # 自然日类型：使用全部自然日
+                            missing_dates = sorted([d for d in effective_valid_days if d not in existing_dates])
+                            expected_dates = effective_valid_days
+                            date_unit = '天'
+                        
+                        coverage = f"{(len(expected_dates) - len(missing_dates)) / len(expected_dates) * 100:.1f}%" if expected_dates else 'N/A'
+                        missing_ranges = f"{missing_dates[0]}{'...' + missing_dates[-1] if len(missing_dates) > 1 else ''} ({len(missing_dates)}{date_unit})" if missing_dates else '无缺失'
 
                         counts = [c[1] for c in daily_counts] if daily_counts else []
                         if counts:

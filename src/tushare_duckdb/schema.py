@@ -874,6 +874,53 @@ TABLE_SCHEMAS = {
             amount DOUBLE,
             PRIMARY KEY (ts_code, trade_date)
         )""",
+    'etf_basic': """
+        CREATE TABLE etf_basic (
+            ts_code VARCHAR PRIMARY KEY,       -- ETF代码
+            csname VARCHAR,                    -- ETF简称（中文）
+            extname VARCHAR,                   -- ETF扩展名称
+            cname VARCHAR,                     -- ETF名称
+            index_code VARCHAR,                -- 跟踪指数代码
+            index_name VARCHAR,                -- 跟踪指数名称
+            setup_date VARCHAR,                -- 成立日期
+            list_date VARCHAR,                 -- 上市日期
+            list_status VARCHAR,               -- 上市状态
+            exchange VARCHAR,                  -- 交易所
+            mgr_name VARCHAR,                  -- 管理人名称
+            custod_name VARCHAR,               -- 托管人名称
+            mgt_fee DOUBLE,                    -- 管理费率
+            etf_type VARCHAR                   -- ETF类型
+        )""",
+    'etf_index': """
+        CREATE TABLE etf_index (
+            ts_code VARCHAR PRIMARY KEY,       -- ETF代码
+            indx_name VARCHAR,                 -- 指数名称
+            indx_csname VARCHAR,               -- 指数简称
+            pub_party_name VARCHAR,            -- 发布机构
+            pub_date VARCHAR,                  -- 发布日期
+            base_date VARCHAR,                 -- 基期日期
+            bp DOUBLE,                         -- 基点
+            adj_circle VARCHAR                 -- 调整周期
+        )""",
+    'fund_adj': """
+        CREATE TABLE fund_adj (
+            ts_code VARCHAR NOT NULL,          -- 基金代码
+            trade_date VARCHAR NOT NULL,       -- 交易日期
+            adj_factor DOUBLE,                 -- 复权因子
+            PRIMARY KEY (ts_code, trade_date)
+        )""",
+    'etf_share_size': """
+        CREATE TABLE etf_share_size (
+            trade_date VARCHAR NOT NULL,       -- 交易日期
+            ts_code VARCHAR NOT NULL,          -- ETF代码
+            etf_name VARCHAR,                  -- ETF名称
+            total_share DOUBLE,                -- 总份额（万份）
+            total_size DOUBLE,                 -- 总规模（亿元）
+            nav DOUBLE,                        -- 单位净值
+            close DOUBLE,                      -- 收盘价
+            exchange VARCHAR,                  -- 交易所
+            PRIMARY KEY (ts_code, trade_date)
+        )""",
 
     # === marco 相关 ===
     'shibor': """

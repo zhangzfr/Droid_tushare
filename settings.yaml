@@ -1149,6 +1149,48 @@ fund_info:
       unique_keys:
       - name
       date_column: setup_date
+    etf_basic:
+      fields:
+      - ts_code
+      - csname
+      - extname
+      - cname
+      - index_code
+      - index_name
+      - setup_date
+      - list_date
+      - list_status
+      - exchange
+      - mgr_name
+      - custod_name
+      - mgt_fee
+      - etf_type
+      limit: 5000
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: false
+      requires_paging: false
+      unique_keys:
+      - ts_code
+      date_column: list_date
+    etf_index:
+      fields:
+      - ts_code
+      - indx_name
+      - indx_csname
+      - pub_party_name
+      - pub_date
+      - base_date
+      - bp
+      - adj_circle
+      limit: 5000
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: false
+      requires_paging: false
+      unique_keys:
+      - ts_code
+      date_column: pub_date
 
 fund:
   db_path: ${DB_ROOT}/tushare_duck_fund.db
@@ -1224,6 +1266,43 @@ fund:
       date_type: trade
       date_param_mode: single
       date_param: trade_date
+    fund_adj:
+      fields:
+      - ts_code
+      - trade_date
+      - adj_factor
+      limit: 2000
+      earliest_date: '19980101'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      date_param_mode: range
+    etf_share_size:
+      fields:
+      - trade_date
+      - ts_code
+      - etf_name
+      - total_share
+      - total_size
+      - nav
+      - close
+      - exchange
+      limit: 5000
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      date_param_mode: range
 
 bond:
   db_path: ${DB_ROOT}/tushare_duck_bond.db

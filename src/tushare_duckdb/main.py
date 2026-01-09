@@ -201,8 +201,8 @@ def main():
 
     category_map = {
         '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market', '5': 'index_basic',
-        '6': 'index_member', '7': 'fund', '8': 'option', '9': 'future', '10': 'bond',
-        '11': 'finance', '12': 'margin', '13': 'moneyflow', '14': 'reference', '15': 'macro'
+        '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option', '10': 'future', '11': 'bond',
+        '12': 'finance', '13': 'margin', '14': 'moneyflow', '15': 'reference', '16': 'macro'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -215,17 +215,18 @@ def main():
         print("主菜单：")
         print(" [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情")
         print(" [ 4] 指数行情(日频)   [ 5] 指数基本信息     [ 6] 指数成员/权重")
-        print(" [ 7] 基金行情         [ 8] 期权行情         [ 9] 期货行情")
-        print(" [10] 债卷行情         [11] 财务数据         [12] 融资融券")
-        print(" [13] 资金流向         [14] 参考数据         [15] 宏观数据")
-        print(" [16] 查看数据         [17] 数据库管理       [ 0] 退出")
+        print(" [ 7] 基金行情         [ 8] 基金信息         [ 9] 期权行情")
+        print(" [10] 期货行情         [11] 债卷行情         [12] 财务数据")
+        print(" [13] 融资融券         [14] 资金流向         [15] 参考数据")
+        print(" [16] 宏观数据         [17] 查看数据         [18] 数据库管理")
+        print(" [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
             print("再见！数据已安全存储至本地 DuckDB")
             break
 
-        elif choice == '16':
+        elif choice == '17':
             print("\n" + "=" * 70)
             print("          数据库状态校验（支持数字快速选择）")
             print("=" * 70)
@@ -233,9 +234,9 @@ def main():
             # === 第一步：显示可选择的类别（与主菜单完全一致）===
             status_menu = {
                 '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market',
-                '5': 'index_basic', '6': 'index_member', '7': 'fund', '8': 'option', '9': 'future',
-                '10': 'bond', '11': 'finance', '12': 'margin', '13': 'moneyflow',
-                '14': 'reference', '15': 'macro', 'all': 'all'
+                '5': 'index_basic', '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option',
+                '10': 'future', '11': 'bond', '12': 'finance', '13': 'margin', '14': 'moneyflow',
+                '15': 'reference', '16': 'macro', 'all': 'all'
             }
 
             print("可校验的类别（输入数字或 all）：")
@@ -243,9 +244,9 @@ def main():
                 if num != 'all':
                     desc = {
                         'stock': '股票行情', 'index_market': '指数行情(日频)', 'index_basic': '指数基本信息',
-                        'index_member': '指数成员/权重', 'fund': '基金行情', 'option': '期权行情',
-                        'future': '期货行情', 'bond': '券债行情', 'finance': '财务数据', 'margin': '融资融券',
-                        'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
+                        'index_member': '指数成员/权重', 'fund': '基金行情', 'fund_info': '基金信息(ETF等)',
+                        'option': '期权行情', 'future': '期货行情', 'bond': '券债行情', 'finance': '财务数据',
+                        'margin': '融资融券', 'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
                         'stock_list': '股票列表', 'stock_events': '股票事件'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
@@ -260,11 +261,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in [str(i) for i in range(1, 16)]:
+                elif user_input in [str(i) for i in range(1, 17)]:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~15 或 all")
+                    print("输入无效，请输入 1~16 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
@@ -505,7 +506,7 @@ def main():
             except Exception as e:
                 logger.error(f"更新失败: {e}")
 
-        elif choice == '17':
+        elif choice == '18':
             run_explorer()
 
         else:
