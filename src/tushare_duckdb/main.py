@@ -202,7 +202,8 @@ def main():
     category_map = {
         '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market', '5': 'index_basic',
         '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option', '10': 'future', '11': 'bond',
-        '12': 'finance', '13': 'margin', '14': 'moneyflow', '15': 'reference', '16': 'macro'
+        '12': 'finance', '13': 'margin', '14': 'moneyflow', '15': 'reference', '16': 'macro', '17': 'fx',
+        '18': 'commodity'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -218,15 +219,15 @@ def main():
         print(" [ 7] 基金行情         [ 8] 基金信息         [ 9] 期权行情")
         print(" [10] 期货行情         [11] 债卷行情         [12] 财务数据")
         print(" [13] 融资融券         [14] 资金流向         [15] 参考数据")
-        print(" [16] 宏观数据         [17] 查看数据         [18] 数据库管理")
-        print(" [ 0] 退出")
+        print(" [16] 宏观数据         [17] 外汇数据         [18] 商品数据")
+        print(" [19] 查看数据         [20] 数据库管理       [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
             print("再见！数据已安全存储至本地 DuckDB")
             break
 
-        elif choice == '17':
+        elif choice == '19':
             print("\n" + "=" * 70)
             print("          数据库状态校验（支持数字快速选择）")
             print("=" * 70)
@@ -236,7 +237,7 @@ def main():
                 '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market',
                 '5': 'index_basic', '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option',
                 '10': 'future', '11': 'bond', '12': 'finance', '13': 'margin', '14': 'moneyflow',
-                '15': 'reference', '16': 'macro', 'all': 'all'
+                '15': 'reference', '16': 'macro', '17': 'fx', '18': 'commodity', 'all': 'all'
             }
 
             print("可校验的类别（输入数字或 all）：")
@@ -247,6 +248,7 @@ def main():
                         'index_member': '指数成员/权重', 'fund': '基金行情', 'fund_info': '基金信息(ETF等)',
                         'option': '期权行情', 'future': '期货行情', 'bond': '券债行情', 'finance': '财务数据',
                         'margin': '融资融券', 'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
+                        'fx': '外汇数据', 'commodity': '商品数据(上金所)',
                         'stock_list': '股票列表', 'stock_events': '股票事件'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
@@ -261,11 +263,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in [str(i) for i in range(1, 17)]:
+                elif user_input in [str(i) for i in range(1, 19)]:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~16 或 all")
+                    print("输入无效，请输入 1~18 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
@@ -506,7 +508,7 @@ def main():
             except Exception as e:
                 logger.error(f"更新失败: {e}")
 
-        elif choice == '18':
+        elif choice == '20':
             run_explorer()
 
         else:

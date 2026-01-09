@@ -922,6 +922,76 @@ TABLE_SCHEMAS = {
             PRIMARY KEY (ts_code, trade_date)
         )""",
 
+    # === fx 外汇相关 ===
+    'fx_obasic': """
+        CREATE TABLE fx_obasic (
+            ts_code VARCHAR PRIMARY KEY,       -- 外汇代码
+            name VARCHAR,                      -- 名称
+            classify VARCHAR,                  -- 分类
+            exchange VARCHAR,                  -- 交易所
+            min_unit DOUBLE,                   -- 最小交易单位
+            max_unit DOUBLE,                   -- 最大交易单位
+            pip DOUBLE,                        -- 点值
+            pip_cost DOUBLE,                   -- 点差成本
+            traget_spread DOUBLE,              -- 目标点差
+            min_stop_distance DOUBLE,          -- 最小止损距离
+            trading_hours VARCHAR,             -- 交易时间
+            break_time VARCHAR                 -- 休市时间
+        )""",
+    'fx_daily': """
+        CREATE TABLE fx_daily (
+            ts_code VARCHAR NOT NULL,          -- 外汇代码
+            trade_date VARCHAR NOT NULL,       -- 交易日期
+            bid_open DOUBLE,                   -- 买入开盘价
+            bid_close DOUBLE,                  -- 买入收盘价
+            bid_high DOUBLE,                   -- 买入最高价
+            bid_low DOUBLE,                    -- 买入最低价
+            ask_open DOUBLE,                   -- 卖出开盘价
+            ask_close DOUBLE,                  -- 卖出收盘价
+            ask_high DOUBLE,                   -- 卖出最高价
+            ask_low DOUBLE,                    -- 卖出最低价
+            tick_qty BIGINT,                   -- 成交笔数
+            exchange VARCHAR,                  -- 交易所
+            PRIMARY KEY (ts_code, trade_date)
+        )""",
+
+    # === commodity 商品相关 (上金所) ===
+    'sge_basic': """
+        CREATE TABLE sge_basic (
+            ts_code VARCHAR PRIMARY KEY,       -- 合约代码
+            ts_name VARCHAR,                   -- 合约名称
+            trade_type VARCHAR,                -- 交易类型
+            t_unit DOUBLE,                     -- 交易单位
+            p_unit DOUBLE,                     -- 报价单位
+            min_change DOUBLE,                 -- 最小变动价位
+            price_limit DOUBLE,                -- 涨跌停限制
+            min_vol BIGINT,                    -- 最小交易量
+            max_vol BIGINT,                    -- 最大交易量
+            trade_mode VARCHAR,                -- 交易模式
+            margin_rate DOUBLE,                -- 保证金比例
+            liq_rate DOUBLE,                   -- 平仓比例
+            trade_time VARCHAR,                -- 交易时间
+            list_date VARCHAR                  -- 上市日期
+        )""",
+    'sge_daily': """
+        CREATE TABLE sge_daily (
+            ts_code VARCHAR NOT NULL,          -- 合约代码
+            trade_date VARCHAR NOT NULL,       -- 交易日期
+            close DOUBLE,                      -- 收盘价
+            open DOUBLE,                       -- 开盘价
+            high DOUBLE,                       -- 最高价
+            low DOUBLE,                        -- 最低价
+            price_avg DOUBLE,                  -- 均价
+            change DOUBLE,                     -- 涨跌
+            pct_change DOUBLE,                 -- 涨跌幅
+            vol DOUBLE,                        -- 成交量
+            amount DOUBLE,                     -- 成交额
+            oi DOUBLE,                         -- 持仓量
+            settle_vol DOUBLE,                 -- 交割量
+            settle_dire VARCHAR,               -- 交割方向
+            PRIMARY KEY (ts_code, trade_date)
+        )""",
+
     # === marco 相关 ===
     'shibor': """
         CREATE TABLE shibor (

@@ -1304,6 +1304,112 @@ fund:
       date_type: trade
       date_param_mode: range
 
+fx:
+  db_path: ${DB_ROOT}/tushare_duck_fx.db
+  tables:
+    fx_obasic:
+      fields:
+      - ts_code
+      - name
+      - classify
+      - exchange
+      - min_unit
+      - max_unit
+      - pip
+      - pip_cost
+      - traget_spread
+      - min_stop_distance
+      - trading_hours
+      - break_time
+      limit: 1000
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: false
+      requires_paging: false
+      unique_keys:
+      - ts_code
+      date_column: null
+    fx_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - bid_open
+      - bid_close
+      - bid_high
+      - bid_low
+      - ask_open
+      - ask_close
+      - ask_high
+      - ask_low
+      - tick_qty
+      - exchange
+      limit: 4000
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: natural
+      date_param_mode: range
+
+commodity:
+  db_path: ${DB_ROOT}/tushare_duck_commodity.db
+  tables:
+    sge_basic:
+      fields:
+      - ts_code
+      - ts_name
+      - trade_type
+      - t_unit
+      - p_unit
+      - min_change
+      - price_limit
+      - min_vol
+      - max_vol
+      - trade_mode
+      - margin_rate
+      - liq_rate
+      - trade_time
+      - list_date
+      limit: 100
+      earliest_date: '20000101'
+      latest_date: null
+      requires_date: false
+      requires_paging: false
+      unique_keys:
+      - ts_code
+      date_column: null
+    sge_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - close
+      - open
+      - high
+      - low
+      - price_avg
+      - change
+      - pct_change
+      - vol
+      - amount
+      - oi
+      - settle_vol
+      - settle_dire
+      limit: 2000
+      earliest_date: '20021031'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: natural
+      date_param_mode: range
+
 bond:
   db_path: ${DB_ROOT}/tushare_duck_bond.db
   tables:
