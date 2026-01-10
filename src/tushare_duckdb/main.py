@@ -84,6 +84,7 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
         sample_config = config_group['tables'][sample_table]
         requires_date = sample_config.get('requires_date', True)
         date_type = sample_config.get('date_type', 'trade')
+        api_date_format = sample_config.get('api_date_format', 'YYYYMMDD')
 
         # 逻辑：只有交易日类型数据强制限定到今日。自然日类型（如交易日历）允许拉取未来日期。
         if date_type == 'trade':
@@ -96,12 +97,24 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
             config_group['tables'][t].get('earliest_date', '19900101')
             for t in selected_tables_list
         )
-        start_date = max(start_date or earliest_date, earliest_date)
+        # 只对YYYYMMDD格式的earliest_date进行比较
+        if len(str(earliest_date)) == 8 and len(start_date or '') == 8:
+            start_date = max(start_date or earliest_date, earliest_date)
 
+        # 根据api_date_format选择日期生成函数
         if category == 'finance':
             get_dates_func = get_quarterly_dates
-            # 财务数据通常无需查交易日历库，直接算日期
             db_for_dates = None 
+        elif api_date_format == 'YYYYQN':
+            # 季频数据（如 cn_gdp）：直接使用传入的日期，不做转换
+            # 日期列表只需要包含传入的 start/end 以供 processor 使用
+            get_dates_func = lambda s, e: [s, e] if s != e else [s]
+            db_for_dates = None
+        elif api_date_format == 'YYYYMM':
+            # 月频数据（如 cn_cpi, cn_ppi）：使用月度日期生成
+            from .utils import get_monthly_dates
+            get_dates_func = get_monthly_dates
+            db_for_dates = None
         else:
             get_dates_func = get_all_dates if (date_type == 'natural' or not requires_date) else get_trade_dates
             db_for_dates = BASIC_DB_PATH if (date_type == 'trade' and requires_date) else db_path
@@ -115,8 +128,10 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
                 if category == 'finance':
                      # 财务数据按年生成4个季度末
                      dates = get_dates_func(y_start, y_end)
+                elif api_date_format in ['YYYYQN', 'YYYYMM']:
+                     # 特殊格式跳过年份逻辑，直接用原始日期
+                     dates = get_dates_func(start_date, end_date)
                 elif date_type == 'trade' and requires_date:
-                     # Use 'exchange' parameter from function args, and 'conn' for db_for_dates if it's the current db
                      dates = get_dates_func(db_for_dates, y_start, y_end, exchange, conn=(conn if db_for_dates == db_path else None))
                 else:
                      dates = get_dates_func(y_start, y_end)
@@ -126,18 +141,19 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
         else:
             if category == 'finance':
                 date_sets[None] = get_dates_func(start_date, end_date)
+            elif api_date_format in ['YYYYQN', 'YYYYMM']:
+                date_sets[None] = get_dates_func(start_date, end_date)
             elif date_type == 'trade' and requires_date:
-                # Use 'exchange' parameter from function args, and 'conn' for db_for_dates if it's the current db
                 date_sets[None] = get_dates_func(db_for_dates, start_date, end_date, exchange, conn=(conn if db_for_dates == db_path else None))
             else:
                 date_sets[None] = get_dates_func(start_date, end_date)
             
             dates = date_sets[None]
-            if not dates: # Check the generated dates for the 'None' key
-                logger.warning(f"警告：{start_date} ~ {end_date} 无{'交易日' if date_type == 'trade' else '自然日'}，已跳过")
+            if not dates:
+                logger.warning(f"警告：{start_date} ~ {end_date} 无有效日期，已跳过")
                 return 0
 
-        logger.info(f"日期范围: {start_date} ~ {end_date}，共 {len(dates)} 个{'交易日' if date_type == 'trade' else '自然日'}")
+        logger.info(f"日期范围: {start_date} ~ {end_date}，共 {len(dates)} 个{'交易日' if date_type == 'trade' else '日期'}")
 
         # === 特殊处理：index_weight 从数据库动态提取 index_codes ===
         if category == 'index_weight' and table_exists(conn, 'index_weight'):
@@ -326,19 +342,24 @@ def main():
                 
                 # Special validation logic for 'macro' to support mixed frequencies
                 if cat == 'macro':
-                    # Auto-detect monthly vs daily tables from config
+                    # Auto-detect tables by frequency from config
                     monthly_table_names = [
                         t for t, cfg in config['tables'].items()
                         if cfg.get('date_column') == 'month' or cfg.get('api_date_format') == 'YYYYMM'
                     ]
-                    daily_table_names = [t for t in config['tables'] if t not in monthly_table_names]
+                    quarterly_table_names = [
+                        t for t, cfg in config['tables'].items()
+                        if cfg.get('date_column') == 'quarter' or cfg.get('api_date_format') == 'YYYYQN'
+                    ]
+                    daily_table_names = [t for t in config['tables'] if t not in monthly_table_names and t not in quarterly_table_names]
                     
                     # Prompt for sub-category
                     print("\n宏观数据包含不同频率的表：")
-                    print("  1. 日频数据 (shibor, shibor_quote, us_*)")
-                    print("  2. 月频数据 (cn_pmi)")
-                    print("  3. 全部（分开显示）")
-                    sub_choice = get_input("请选择 [默认 3]: ", default='3')
+                    print(f"  1. 日频数据 ({len(daily_table_names)}个): {', '.join(daily_table_names[:3])}...")
+                    print(f"  2. 月频数据 ({len(monthly_table_names)}个): {', '.join(monthly_table_names)}")
+                    print(f"  3. 季频数据 ({len(quarterly_table_names)}个): {', '.join(quarterly_table_names)}")
+                    print("  4. 全部（分开显示）")
+                    sub_choice = get_input("请选择 [默认 4]: ", default='4')
                     
                     def run_macro_validation(table_names, freq, section_title):
                         """Helper to run validation and display results for a subset of tables."""
@@ -360,19 +381,27 @@ def main():
                         if s:
                             print(tabulate(s, headers='keys', tablefmt='psql', stralign='right'))
                         if detailed and d:
-                            date_key = '日期' if freq == 'monthly' else '日期'
-                            print(f"\n逐{'月' if freq == 'monthly' else '日'}数据量详情（共 {len(d)} {'月' if freq == 'monthly' else '天'}，完整展示）：")
+                            if freq == 'monthly':
+                                date_label = '月'
+                            elif freq == 'quarterly':
+                                date_label = '季度'
+                            else:
+                                date_label = '日'
+                            print(f"\n逐{date_label}数据量详情（共 {len(d)} {date_label}，完整展示）：")
                             print(tabulate(d, headers='keys', tablefmt='psql', stralign='right'))
                     
                     if sub_choice == '1':
                         run_macro_validation(daily_table_names, 'daily', '日频宏观数据')
                     elif sub_choice == '2':
                         run_macro_validation(monthly_table_names, 'monthly', '月频宏观数据')
-                    else:  # '3' or default
+                    elif sub_choice == '3':
+                        run_macro_validation(quarterly_table_names, 'quarterly', '季频宏观数据')
+                    else:  # '4' or default
                         run_macro_validation(daily_table_names, 'daily', '日频宏观数据')
                         run_macro_validation(monthly_table_names, 'monthly', '月频宏观数据')
+                        run_macro_validation(quarterly_table_names, 'quarterly', '季频宏观数据')
                     
-                    # Skip default display logic for marco
+                    # Skip default display logic for macro
                     continue
                 
                 else:
@@ -426,6 +455,110 @@ def main():
             config_group = API_CONFIG[category]
             logger.info(f"您选择了: {choice}. {category.upper()} 数据更新")
 
+            # === 宏观数据特殊处理：频率子菜单 ===
+            if category == 'macro':
+                macro_tables = API_CONFIG['macro']['tables']
+                
+                # 按频率分类表
+                daily_tables = [t for t, cfg in macro_tables.items() 
+                               if cfg.get('date_column') in ['date'] and cfg.get('api_date_format') != 'YYYYMM']
+                monthly_tables = [t for t, cfg in macro_tables.items() 
+                                 if cfg.get('api_date_format') == 'YYYYMM']
+                quarterly_tables = [t for t, cfg in macro_tables.items() 
+                                   if cfg.get('api_date_format') == 'YYYYQN']
+                
+                print("\n宏观数据分类（按数据频率）:")
+                print(f"  1. 日频数据 ({len(daily_tables)}个): {', '.join(daily_tables[:5])}{'...' if len(daily_tables) > 5 else ''}")
+                print(f"  2. 月频数据 ({len(monthly_tables)}个): {', '.join(monthly_tables)}")
+                print(f"  3. 季频数据 ({len(quarterly_tables)}个): {', '.join(quarterly_tables)}")
+                print("  4. 全部")
+                
+                freq_choice = get_input("请选择频率 [默认 4]: ", allow_zero=True, default='4')
+                if freq_choice is None: continue
+                
+                if freq_choice == '1':
+                    available_tables = daily_tables
+                    date_format_hint = "YYYYMMDD"
+                    freq_label = "日频"
+                elif freq_choice == '2':
+                    available_tables = monthly_tables
+                    date_format_hint = "YYYYMM"
+                    freq_label = "月频"
+                elif freq_choice == '3':
+                    available_tables = quarterly_tables
+                    date_format_hint = "YYYYQN (如 2019Q1)"
+                    freq_label = "季频"
+                else:
+                    available_tables = list(macro_tables.keys())
+                    date_format_hint = "YYYYMMDD/YYYYMM/YYYYQN"
+                    freq_label = "全部"
+                
+                print(f"\n{freq_label}宏观数据可用表（{len(available_tables)}个）: {', '.join(available_tables)}")
+                selected_tables = get_input("选择表（逗号分隔，all 为全部，默认 all）: ", allow_zero=True, default='all')
+                if selected_tables is None: continue
+                
+                # 处理表选择
+                if selected_tables == 'all':
+                    target_tables = available_tables
+                else:
+                    target_tables = [t.strip() for t in selected_tables.split(',') if t.strip() in available_tables]
+                
+                # 日期输入（根据选择的频率提供不同提示）
+                raw_start = get_input(f"开始日期（{date_format_hint}，默认 {start_date_default}）: ", allow_zero=True, default=start_date_default)
+                if raw_start is None: continue
+                raw_end = get_input(f"结束日期（{date_format_hint}，默认 {end_date_default}）: ", allow_zero=True, default=end_date_default)
+                if raw_end is None: continue
+                
+                # 对于季度格式，不做转换，直接传递；其他格式做模糊处理
+                if 'Q' in raw_start.upper():
+                    start_date = raw_start.upper()
+                    end_date = raw_end.upper()
+                else:
+                    # === 日期模糊处理 (YYYYMM -> YYYYMMDD) ===
+                    def parse_fuzzy_date(d_str, is_end=False):
+                        if len(d_str) == 6:
+                            try:
+                                dt = datetime.strptime(d_str, '%Y%m')
+                                if is_end:
+                                    _, last_day = calendar.monthrange(dt.year, dt.month)
+                                    return f"{d_str}{last_day}"
+                                else:
+                                    return f"{d_str}01"
+                            except:
+                                return d_str
+                        return d_str
+                    
+                    start_date = parse_fuzzy_date(raw_start, is_end=False)
+                    end_date = parse_fuzzy_date(raw_end, is_end=True)
+                
+                batch_size = get_input("批次大小（默认 50）: ", allow_zero=True, default='50')
+                if batch_size is None: continue
+                
+                mode = get_input("模式: 1.增量插入 2.强制覆盖 3.强制去重插入 [默认1]: ", allow_zero=True, default='1')
+                if mode not in ['1','2','3']:
+                    print("无效模式")
+                    continue
+                force_fetch = mode in ['2', '3']
+                overwrite = mode == '2'
+                
+                try:
+                    # Always pass explicit table list for macro data (not 'all')
+                    fetch_and_store_data(
+                        category='macro',
+                        start_date=start_date,
+                        end_date=end_date,
+                        selected_tables=','.join(target_tables),
+                        ts_code=None,
+                        exchange='SSE',
+                        batch_size=batch_size,
+                        force_fetch=force_fetch,
+                        overwrite=overwrite
+                    )
+                except Exception as e:
+                    logger.error(f"更新失败: {e}")
+                continue
+            
+            # === 非宏观数据的标准处理流程 ===
             print(f"可用表（{len(all_tables_dict[category])}个）: {', '.join(all_tables_dict[category])}")
             selected_tables = get_input("选择表（逗号分隔，all 为全部，默认 all）: ", allow_zero=True, default='all')
             if selected_tables is None: continue

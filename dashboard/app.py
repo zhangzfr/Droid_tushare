@@ -222,7 +222,12 @@ ICONS = {
     "stock_edu": '''<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>''',
     "market": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>''',
     "valuation": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>''',
-    "industry": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>'''
+    "industry": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>''',
+    "insights": '''<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>''',
+    "gauge": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>''',
+    "globe": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>''',
+    "pulse": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>''',
+    "price": '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'''
 }
 
 NAVIGATION = {
@@ -233,7 +238,8 @@ NAVIGATION = {
         "subcategories": {
             "PMI Index": {"key": "pmi", "icon": "pmi"},
             "Money Supply": {"key": "money_supply", "icon": "money"},
-            "Social Financing": {"key": "social_financing", "icon": "social"}
+            "Social Financing": {"key": "social_financing", "icon": "social"},
+            "Price Index": {"key": "price_index", "icon": "price"}
         }
     },
     "Index Data": {
@@ -279,6 +285,15 @@ NAVIGATION = {
             "理解价格": {"key": "stock_price", "icon": "chart"},
             "分析估值": {"key": "stock_valuation", "icon": "valuation"},
             "行业选股": {"key": "stock_industry", "icon": "industry"}
+        }
+    },
+    "市场洞察": {
+        "key": "market_insights",
+        "icon": "insights",
+        "subcategories": {
+            "市场估值": {"key": "mkt_valuation", "icon": "gauge"},
+            "市场情绪": {"key": "mkt_sentiment", "icon": "pulse"},
+            "全球比较": {"key": "mkt_global", "icon": "globe"}
         }
     }
 }
@@ -746,6 +761,194 @@ elif category_config["key"] == "macro":
                 
                 with tab2:
                     st.dataframe(df_sf_f.sort_values('month', ascending=False), use_container_width=True)
+    
+    # --- Price Index Sub-category ---
+    elif subcategory_key == "price_index":
+        from price_index_data_loader import (
+            load_cpi_data, load_ppi_data,
+            prepare_ppi_chain_data, prepare_scissors_data
+        )
+        from price_index_charts import (
+            plot_cpi_ppi_trend, plot_cpi_components, plot_ppi_sectors,
+            plot_cpi_heatmap, plot_ppi_heatmap, plot_seasonality_chart,
+            plot_mom_trend, get_latest_metrics,
+            plot_ppi_chain_trend, plot_scissors_difference
+        )
+        
+        render_header("Price Index (CPI / PPI)", "price")
+        
+        # Load data
+        with st.spinner('Loading price index data...'):
+            df_cpi = load_cpi_data()
+            df_ppi = load_ppi_data()
+        
+        if df_cpi.empty and df_ppi.empty:
+            st.warning("No price index data available. Please ensure cn_cpi and cn_ppi tables are populated.")
+        else:
+            # Calculate date range
+            all_months = pd.concat([
+                df_cpi['month'] if not df_cpi.empty else pd.Series(dtype='datetime64[ns]'),
+                df_ppi['month'] if not df_ppi.empty else pd.Series(dtype='datetime64[ns]')
+            ]).dropna()
+            
+            if not all_months.empty:
+                min_date = all_months.min().date()
+                max_date = all_months.max().date()
+            else:
+                from datetime import date
+                min_date, max_date = date(2010, 1, 1), date.today()
+            
+            # Get latest metrics
+            metrics = get_latest_metrics(df_cpi, df_ppi)
+            
+            # Left-right layout
+            left_col, right_col = st.columns([1, 7])
+            
+            with left_col:
+                st.markdown("**Date Range**")
+                start_date = st.date_input("Start", min_date, min_value=min_date, max_value=max_date, key="pi_start")
+                end_date = st.date_input("End", max_date, min_value=min_date, max_value=max_date, key="pi_end")
+                
+                st.markdown("---")
+                st.markdown("**Latest Data**")
+                
+                if metrics['cpi_yoy'] is not None:
+                    delta = f"{metrics['cpi_yoy_change']:+.1f}" if metrics['cpi_yoy_change'] else None
+                    st.metric("CPI 同比", f"{metrics['cpi_yoy']:.1f}%", delta=delta)
+                
+                if metrics['ppi_yoy'] is not None:
+                    delta = f"{metrics['ppi_yoy_change']:+.1f}" if metrics['ppi_yoy_change'] else None
+                    st.metric("PPI 同比", f"{metrics['ppi_yoy']:.1f}%", delta=delta)
+                
+                if metrics['cpi_date']:
+                    st.caption(f"更新至: {metrics['cpi_date']}")
+            
+            # Filter data
+            def filter_df(df, start, end):
+                if df.empty: return df
+                mask = (df['month'].dt.date >= start) & (df['month'].dt.date <= end)
+                return df.loc[mask]
+            
+            df_cpi_f = filter_df(df_cpi, start_date, end_date)
+            df_ppi_f = filter_df(df_ppi, start_date, end_date)
+            
+            with right_col:
+                tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+                    "📈 Overview", "🌡️ CPI Analysis", "🏭 PPI Analysis", 
+                    "📊 Heatmaps", "🔄 Seasonality", "🔍 Deep Dive"
+                ])
+                
+                with tab1:
+                    st.subheader("CPI vs PPI Long-term Trend")
+                    fig_trend = plot_cpi_ppi_trend(df_cpi_f, df_ppi_f)
+                    if fig_trend:
+                        st.plotly_chart(fig_trend, use_container_width=True, key="cpi_ppi_trend")
+                    else:
+                        st.info("No data available for trend chart")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("CPI 环比走势")
+                        fig_cpi_mom = plot_mom_trend(df_cpi_f, 'nt_mom', "CPI 全国环比")
+                        if fig_cpi_mom:
+                            st.plotly_chart(fig_cpi_mom, use_container_width=True, key="cpi_mom")
+                    
+                    with col2:
+                        st.subheader("PPI 环比走势")
+                        fig_ppi_mom = plot_mom_trend(df_ppi_f, 'ppi_mom', "PPI 总指数环比")
+                        if fig_ppi_mom:
+                            st.plotly_chart(fig_ppi_mom, use_container_width=True, key="ppi_mom")
+                
+                with tab2:
+                    st.subheader("CPI Regional Comparison")
+                    fig_cpi_comp = plot_cpi_components(df_cpi_f)
+                    if fig_cpi_comp:
+                        st.plotly_chart(fig_cpi_comp, use_container_width=True, key="cpi_components")
+                    
+                    st.markdown("---")
+                    st.subheader("Raw CPI Data")
+                    if not df_cpi_f.empty:
+                        display_cols = ['month', 'nt_yoy', 'nt_mom', 'town_yoy', 'town_mom', 'cnt_yoy', 'cnt_mom']
+                        display_df = df_cpi_f[[c for c in display_cols if c in df_cpi_f.columns]].sort_values('month', ascending=False)
+                        st.dataframe(display_df, use_container_width=True)
+                
+                with tab3:
+                    st.subheader("PPI Sector Comparison")
+                    fig_ppi_sectors = plot_ppi_sectors(df_ppi_f)
+                    if fig_ppi_sectors:
+                        st.plotly_chart(fig_ppi_sectors, use_container_width=True, key="ppi_sectors")
+                    
+                    st.markdown("---")
+                    st.subheader("Raw PPI Data")
+                    if not df_ppi_f.empty:
+                        display_cols = ['month', 'ppi_yoy', 'ppi_mom', 'ppi_mp_yoy', 'ppi_cg_yoy']
+                        display_df = df_ppi_f[[c for c in display_cols if c in df_ppi_f.columns]].sort_values('month', ascending=False)
+                        st.dataframe(display_df, use_container_width=True)
+                
+                with tab4:
+                    st.markdown("""
+                    > **Color Legend**: 🔴 Red = Inflation (positive) | 🟢 Green = Deflation (negative)
+                    """)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("CPI Heatmap")
+                        fig_cpi_heat = plot_cpi_heatmap(df_cpi_f, n_months=12)
+                        if fig_cpi_heat:
+                            st.plotly_chart(fig_cpi_heat, use_container_width=True, key="cpi_heatmap")
+                    
+                    with col2:
+                        st.subheader("PPI Heatmap")
+                        fig_ppi_heat = plot_ppi_heatmap(df_ppi_f, n_months=12)
+                        if fig_ppi_heat:
+                            st.plotly_chart(fig_ppi_heat, use_container_width=True, key="ppi_heatmap")
+                
+                with tab5:
+                    st.markdown("""
+                    Seasonality analysis shows month-over-month patterns across different years.
+                    This helps identify predictable seasonal effects in inflation data.
+                    """)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("CPI 环比季节性")
+                        fig_cpi_season = plot_seasonality_chart(df_cpi_f, 'nt_mom', "CPI 环比季节性", n_years=3)
+                        if fig_cpi_season:
+                            st.plotly_chart(fig_cpi_season, use_container_width=True, key="cpi_seasonality")
+                    
+                    with col2:
+                        st.subheader("PPI 环比季节性")
+                        fig_ppi_season = plot_seasonality_chart(df_ppi_f, 'ppi_mom', "PPI 环比季节性", n_years=3)
+                        if fig_ppi_season:
+                            st.plotly_chart(fig_ppi_season, use_container_width=True, key="ppi_seasonality")
+
+                with tab6:
+                    st.markdown("""
+                    ### 🏭 PPI Industry Chain & Scissors Analysis
+                    
+                    **Deep dive analysis** into the transmission of price changes through the industrial chain and the relationship between upstream/downstream prices.
+                    """)
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.metric("Scissors (PPI-CPI)", 
+                                 f"{metrics['ppi_yoy'] - metrics['cpi_yoy']:.1f}%" if metrics['ppi_yoy'] is not None and metrics['cpi_yoy'] is not None else "N/A",
+                                 delta=None, help="Positive = Upstream Inflation > Downstream Cost")
+                    
+                    st.subheader("PPI 产业链传导 (Mining → Raw → Processing)")
+                    df_chain = prepare_ppi_chain_data(df_ppi_f)
+                    fig_chain = plot_ppi_chain_trend(df_chain)
+                    if fig_chain:
+                        st.plotly_chart(fig_chain, use_container_width=True, key="ppi_chain")
+                    
+                    st.markdown("---")
+                    
+                    st.subheader("剪刀差分析 (PPI - CPI)")
+                    df_scissors = prepare_scissors_data(df_cpi_f, df_ppi_f)
+                    fig_scissors = plot_scissors_difference(df_scissors)
+                    if fig_scissors:
+                        st.plotly_chart(fig_scissors, use_container_width=True, key="ppi_scissors")
 
 # --- INDEX DATA ---
 elif category_config["key"] == "index":
@@ -2376,6 +2579,381 @@ elif category_config["key"] == "stock_edu":
                 3. 高夏普比率的股票一定是好的投资标的吗？有什么局限性？
                 4. 宏观经济周期如何影响不同行业的轮动？
                 """)
+
+# --- 市场洞察 DATA ---
+elif category_config["key"] == "market_insights":
+    # 导入市场洞察模块
+    from market_insights_loader import (
+        load_daily_info, get_available_market_codes, calculate_pe_percentile,
+        load_index_global, get_available_global_indices, calculate_global_correlation,
+        calculate_index_returns, create_normalized_pivot, calculate_market_sentiment,
+        GLOBAL_INDICES, MARKET_CODES
+    )
+    from market_insights_charts import (
+        plot_pe_trend, plot_pe_percentile_gauge, plot_pe_comparison_bar,
+        plot_amount_trend, plot_turnover_heatmap, plot_volume_price_scatter,
+        plot_global_indices_comparison, plot_global_indices_raw, plot_global_volume, plot_global_volume_trend,
+        plot_global_correlation_heatmap,
+        plot_index_returns_bar, plot_risk_return_global, plot_market_mv_trend
+    )
+    from datetime import datetime, timedelta
+    
+    # 日期默认值
+    default_end = datetime.now()
+    default_start = default_end - timedelta(days=365)
+    
+    # --- 市场估值 ---
+    if subcategory_key == "mkt_valuation":
+        render_header("市场估值分析", "gauge")
+        
+        st.markdown("""
+        ### 📊 什么是市场估值？
+        
+        **市盈率 (PE)** 是衡量整个市场估值水平的核心指标：
+        - PE = 总市值 / 总净利润
+        - PE偏高可能意味着市场估值过热
+        - PE偏低可能意味着市场被低估
+        
+        **PE历史分位数**：当前PE在历史中处于什么位置
+        - 低于30%分位：历史低估区域
+        - 高于70%分位：历史高估区域
+        """)
+        
+        st.divider()
+        
+        # 筛选器
+        left_col, right_col = st.columns([1, 5])
+        
+        with left_col:
+            st.markdown("**日期范围**")
+            hist_years = st.selectbox("历史数据", [1, 3, 5, 10], index=2, format_func=lambda x: f"{x}年", key="mkt_pe_years")
+            hist_start = default_end - timedelta(days=365*hist_years)
+            
+            st.markdown("**板块选择**")
+            # 主要板块
+            main_codes = ['SH_A', 'SZ_GEM', 'SH_STAR', 'SZ_MAIN']
+            available_codes = [c for c, n in get_available_market_codes() if c in main_codes]
+            if not available_codes:
+                available_codes = ['SH_A', 'SZ_A']
+            sel_codes = st.multiselect("板块", available_codes, default=available_codes[:3], format_func=lambda x: MARKET_CODES.get(x, x), key="mkt_pe_codes")
+        
+        if not sel_codes:
+            st.info("请选择至少一个板块进行分析。")
+        else:
+            with st.spinner('正在加载市场统计数据...'):
+                start_str = hist_start.strftime('%Y%m%d')
+                end_str = default_end.strftime('%Y%m%d')
+                df_info = load_daily_info(start_str, end_str, sel_codes)
+            
+            if df_info.empty:
+                st.warning("无法获取市场统计数据，请检查数据库是否已加载 daily_info 表。")
+            else:
+                with right_col:
+                    tab1, tab2, tab3 = st.tabs(["📈 PE走势", "📊 PE分位", "📋 板块对比"])
+                    
+                    with tab1:
+                        fig_pe = plot_pe_trend(df_info, sel_codes)
+                        if fig_pe:
+                            st.plotly_chart(fig_pe, use_container_width=True, key="mkt_pe_trend")
+                        
+                        st.caption("PE走势反映市场整体估值变化，可用于判断市场周期位置。")
+                    
+                    with tab2:
+                        # 每个板块的PE分位数
+                        cols = st.columns(min(len(sel_codes), 4))
+                        for i, code in enumerate(sel_codes):
+                            pe_stats = calculate_pe_percentile(df_info, code)
+                            if pe_stats:
+                                with cols[i % len(cols)]:
+                                    fig_gauge = plot_pe_percentile_gauge(
+                                        pe_stats['percentile'],
+                                        pe_stats['current_pe'],
+                                        title=MARKET_CODES.get(code, code)
+                                    )
+                                    if fig_gauge:
+                                        st.plotly_chart(fig_gauge, use_container_width=True, key=f"mkt_pe_gauge_{i}_{code}")
+                        
+                        st.markdown("""
+                        **如何解读PE分位数：**
+                        - 🟢 **< 30%**：历史低估区域，可能是较好的买入时机
+                        - 🟡 **30%-70%**：估值适中
+                        - 🔴 **> 70%**：历史高估区域，需谨慎
+                        """)
+                    
+                    with tab3:
+                        fig_bar = plot_pe_comparison_bar(df_info)
+                        if fig_bar:
+                            st.plotly_chart(fig_bar, use_container_width=True, key="mkt_pe_bar")
+                        
+                        # 市值走势
+                        fig_mv = plot_market_mv_trend(df_info, sel_codes)
+                        if fig_mv:
+                            st.plotly_chart(fig_mv, use_container_width=True, key="mkt_mv_trend")
+    
+    # --- 市场情绪 ---
+    elif subcategory_key == "mkt_sentiment":
+        render_header("市场情绪分析", "pulse")
+        
+        st.markdown("""
+        ### 📈 市场情绪指标
+        
+        **成交额**反映市场活跃程度：
+        - 放量上涨：多方力量强劲
+        - 缩量下跌：空方力量衰竭，可能见底
+        - 天量见天价：警惕风险
+        
+        **换手率**反映市场交易频率：
+        - 高换手率：市场情绪高涨或有大资金进出
+        - 低换手率：市场冷淡
+        """)
+        
+        st.divider()
+        
+        # 筛选器
+        left_col, right_col = st.columns([1, 5])
+        
+        with left_col:
+            st.markdown("**日期范围**")
+            sent_years = st.selectbox("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_sent_years")
+            sent_start = default_end - timedelta(days=365*sent_years)
+            
+            st.markdown("**板块选择**")
+            sel_code = st.selectbox("选择板块", ['SH_A', 'SZ_A', 'SZ_GEM', 'SH_STAR'], format_func=lambda x: MARKET_CODES.get(x, x), key="mkt_sent_code")
+        
+        with st.spinner('正在加载数据...'):
+            start_str = sent_start.strftime('%Y%m%d')
+            end_str = default_end.strftime('%Y%m%d')
+            df_info = load_daily_info(start_str, end_str, [sel_code])
+        
+        if df_info.empty:
+            st.warning("无法获取市场统计数据。")
+        else:
+            with right_col:
+                tab1, tab2, tab3 = st.tabs(["📊 成交额走势", "🔥 换手率热力图", "📈 量价关系"])
+                
+                with tab1:
+                    fig_amount = plot_amount_trend(df_info, sel_code)
+                    if fig_amount:
+                        st.plotly_chart(fig_amount, use_container_width=True, key="mkt_amount")
+                    
+                    st.caption("成交额突破均线往往预示着趋势变化。")
+                
+                with tab2:
+                    fig_tr = plot_turnover_heatmap(df_info, sel_code)
+                    if fig_tr:
+                        st.plotly_chart(fig_tr, use_container_width=True, key="mkt_tr_heatmap")
+                    
+                    st.caption("通过月度换手率热力图观察市场情绪的季节性规律。")
+                
+                with tab3:
+                    fig_vp = plot_volume_price_scatter(df_info, sel_code)
+                    if fig_vp:
+                        st.plotly_chart(fig_vp, use_container_width=True, key="mkt_vp_scatter")
+                    
+                    st.markdown("""
+                    **量价关系洞察：**
+                    - 成交额与PE变化的关系反映资金推动效果
+                    - 放量时PE上涨幅度可观察市场效率
+                    """)
+    
+    # --- 全球比较 ---
+    elif subcategory_key == "mkt_global":
+        render_header("全球市场比较", "globe")
+        
+        st.markdown("""
+        ### 🌍 为什么要关注全球市场？
+        
+        **全球化联动**：
+        - 美股对A股有一定领先作用
+        - 风险事件往往跨市场传导
+        - 相关性分析有助于全球资产配置
+        
+        **主要指数**：
+        - 🇨🇳 富时A50、恒生指数
+        - 🇺🇸 道琼斯、标普500、纳斯达克
+        - 🇯🇵 日经225 | 🇩🇪 德国DAX | 🇬🇧 富时100
+        """)
+        
+        st.divider()
+        
+        # 筛选器
+        left_col, right_col = st.columns([1, 5])
+        
+        with left_col:
+            st.markdown("**日期范围**")
+            global_years = st.selectbox("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_global_years")
+            global_start = default_end - timedelta(days=365*global_years)
+            
+            st.markdown("**指数选择**")
+            available_indices = get_available_global_indices()
+            
+            # 使用checkbox实现多选
+            from market_insights_loader import get_index_display_name
+            
+            # 分组展示
+            st.markdown("*亚太地区*")
+            asia_indices = ['XIN9', 'HSI', 'HKTECH', 'N225', 'KS11', 'TWII', 'AS51', 'SENSEX']
+            sel_asia = []
+            for idx in asia_indices:
+                if idx in available_indices:
+                    if st.checkbox(get_index_display_name(idx), value=idx in ['XIN9', 'HSI', 'N225'], key=f"cb_{idx}"):
+                        sel_asia.append(idx)
+            
+            st.markdown("*欧美地区*")
+            west_indices = ['DJI', 'SPX', 'IXIC', 'RUT', 'FTSE', 'GDAXI', 'FCHI', 'CSX5P', 'SPTSX']
+            sel_west = []
+            for idx in west_indices:
+                if idx in available_indices:
+                    if st.checkbox(get_index_display_name(idx), value=idx in ['DJI', 'SPX', 'IXIC'], key=f"cb_{idx}"):
+                        sel_west.append(idx)
+            
+            st.markdown("*新兴市场*")
+            em_indices = ['IBOVESPA', 'RTS', 'CKLSE', 'HKAH']
+            sel_em = []
+            for idx in em_indices:
+                if idx in available_indices:
+                    if st.checkbox(get_index_display_name(idx), value=False, key=f"cb_{idx}"):
+                        sel_em.append(idx)
+            
+            sel_indices = sel_asia + sel_west + sel_em
+        
+        if not sel_indices:
+            st.info("请选择至少一个指数进行分析。")
+        else:
+            with st.spinner('正在加载全球指数数据...'):
+                start_str = global_start.strftime('%Y%m%d')
+                end_str = default_end.strftime('%Y%m%d')
+                df_global = load_index_global(start_str, end_str, sel_indices)
+            
+            if df_global.empty:
+                st.warning("无法获取全球指数数据，请检查数据库是否已加载 index_global 表。")
+            else:
+                with right_col:
+                    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 走势对比", "📊 成交量", "🔗 相关性", "📊 收益对比", "⚖️ 风险收益"])
+                    
+                    with tab1:
+                        # 归一化走势
+                        st.subheader("归一化指数走势")
+                        df_pivot = create_normalized_pivot(df_global, 'close')
+                        fig_lines = plot_global_indices_comparison(df_pivot)
+                        if fig_lines:
+                            st.plotly_chart(fig_lines, use_container_width=True, key="mkt_global_lines")
+                        
+                        st.caption("归一化后可直观对比各指数的相对表现（起点=100）。")
+                        
+                        st.divider()
+                        
+                        # 原始价格走势
+                        st.subheader("原始价格走势")
+                        fig_raw = plot_global_indices_raw(df_global)
+                        if fig_raw:
+                            st.plotly_chart(fig_raw, use_container_width=True, key="mkt_global_raw")
+                        
+                        st.caption("分子图展示各指数原始价格，便于观察绝对数值。")
+                    
+                    with tab2:
+                        st.subheader("平均成交量对比")
+                        fig_vol = plot_global_volume(df_global)
+                        if fig_vol:
+                            st.plotly_chart(fig_vol, use_container_width=True, key="mkt_global_vol_bar")
+                        else:
+                            st.info("部分指数无成交量数据。")
+                        
+                        st.divider()
+                        
+                        st.subheader("成交量走势")
+                        fig_vol_trend = plot_global_volume_trend(df_global)
+                        if fig_vol_trend:
+                            st.plotly_chart(fig_vol_trend, use_container_width=True, key="mkt_global_vol_trend")
+                        else:
+                            st.info("选中的指数无成交量走势数据。")
+                    
+                    with tab3:
+                        df_corr = calculate_global_correlation(df_global)
+                        fig_corr = plot_global_correlation_heatmap(df_corr)
+                        if fig_corr:
+                            # 根据指数数量动态调整图表高度
+                            chart_height = max(500, len(sel_indices) * 45)
+                            fig_corr.update_layout(height=chart_height)
+                            st.plotly_chart(fig_corr, use_container_width=True, key="mkt_global_corr")
+                        
+                        st.markdown("""
+                        **相关性洞察：**
+                        - 美股三大指数（道琼斯、标普、纳指）高度相关
+                        - A50与恒生相关性较高
+                        - 低相关性的市场组合可分散风险
+                        """)
+                    
+                    with tab4:
+                        df_stats = calculate_index_returns(df_global)
+                        fig_returns = plot_index_returns_bar(df_stats)
+                        if fig_returns:
+                            st.plotly_chart(fig_returns, use_container_width=True, key="mkt_global_returns")
+                        
+                        if not df_stats.empty:
+                            st.dataframe(
+                                df_stats[['index_name', 'total_return', 'ann_return', 'ann_volatility', 'sharpe_ratio', 'max_drawdown']],
+                                use_container_width=True,
+                                hide_index=True,
+                                column_config={
+                                    "index_name": "指数",
+                                    "total_return": st.column_config.NumberColumn("区间收益", format="%.1%"),
+                                    "ann_return": st.column_config.NumberColumn("年化收益", format="%.1%"),
+                                    "ann_volatility": st.column_config.NumberColumn("年化波动", format="%.1%"),
+                                    "sharpe_ratio": st.column_config.NumberColumn("夏普比率", format="%.2f"),
+                                    "max_drawdown": st.column_config.NumberColumn("最大回撤", format="%.1%")
+                                }
+                            )
+                        
+                        # 添加计算公式说明
+                        with st.expander("📐 指标计算公式"):
+                            st.markdown(r"""
+                            **区间收益 (Total Return)**
+                            $$R = \frac{P_{end} - P_{start}}{P_{start}}$$
+                            - $P_{end}$：期末收盘价
+                            - $P_{start}$：期初收盘价
+                            
+                            ---
+                            
+                            **年化收益 (Annualized Return)**
+                            $$R_{annual} = (1 + R)^{\frac{252}{n}} - 1$$
+                            - $R$：区间收益
+                            - $n$：交易日天数
+                            - 252：一年的交易日数
+                            
+                            ---
+                            
+                            **年化波动率 (Annualized Volatility)**
+                            $$\sigma_{annual} = \sigma_{daily} \times \sqrt{252}$$
+                            - $\sigma_{daily}$：日收益率的标准差
+                            
+                            ---
+                            
+                            **夏普比率 (Sharpe Ratio)**
+                            $$Sharpe = \frac{R_{annual}}{\sigma_{annual}}$$
+                            - 简化计算，假设无风险收益率为0
+                            - 反映单位风险获得的超额收益
+                            
+                            ---
+                            
+                            **最大回撤 (Maximum Drawdown)**
+                            $$MDD = \max_{t} \left( \frac{Peak_t - P_t}{Peak_t} \right)$$
+                            - $Peak_t$：截至时点t的历史最高价
+                            - 反映从高点到低点的最大跌幅
+                            """)
+                    
+                    with tab5:
+                        df_stats = calculate_index_returns(df_global)
+                        fig_rr = plot_risk_return_global(df_stats)
+                        if fig_rr:
+                            st.plotly_chart(fig_rr, use_container_width=True, key="mkt_global_rr")
+                        
+                        st.markdown("""
+                        **风险-收益洞察：**
+                        - 右上角：高风险高收益（如新兴市场）
+                        - 左上角：低风险高收益（理想区域）
+                        - 夏普比率越高说明单位风险获得的收益越高
+                        """)
 
 # Sidebar footer
 st.sidebar.divider()

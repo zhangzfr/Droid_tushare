@@ -2207,6 +2207,98 @@ macro:
       start_param: start_m
       end_param: end_m
       api_date_format: YYYYMM
+    cn_cpi:
+      unique_keys:
+      - month
+      fields:
+      - month
+      - nt_val
+      - nt_yoy
+      - nt_mom
+      - nt_accu
+      - town_val
+      - town_yoy
+      - town_mom
+      - town_accu
+      - cnt_val
+      - cnt_yoy
+      - cnt_mom
+      - cnt_accu
+      earliest_date: '197801'
+      limit: 5000
+      date_column: month
+      date_type: natural
+      date_param: month
+      date_param_mode: range
+      start_param: start_m
+      end_param: end_m
+      api_date_format: YYYYMM
+    cn_ppi:
+      unique_keys:
+      - month
+      fields:
+      - month
+      - ppi_yoy
+      - ppi_mp_yoy
+      - ppi_mp_qm_yoy
+      - ppi_mp_rm_yoy
+      - ppi_mp_p_yoy
+      - ppi_cg_yoy
+      - ppi_cg_f_yoy
+      - ppi_cg_c_yoy
+      - ppi_cg_adu_yoy
+      - ppi_cg_dcg_yoy
+      - ppi_mom
+      - ppi_mp_mom
+      - ppi_mp_qm_mom
+      - ppi_mp_rm_mom
+      - ppi_mp_p_mom
+      - ppi_cg_mom
+      - ppi_cg_f_mom
+      - ppi_cg_c_mom
+      - ppi_cg_adu_mom
+      - ppi_cg_dcg_mom
+      - ppi_accu
+      - ppi_mp_accu
+      - ppi_mp_qm_accu
+      - ppi_mp_rm_accu
+      - ppi_mp_p_accu
+      - ppi_cg_accu
+      - ppi_cg_f_accu
+      - ppi_cg_c_accu
+      - ppi_cg_adu_accu
+      - ppi_cg_dcg_accu
+      earliest_date: '199501'
+      limit: 5000
+      date_column: month
+      date_type: natural
+      date_param: month
+      date_param_mode: range
+      start_param: start_m
+      end_param: end_m
+      api_date_format: YYYYMM
+    cn_gdp:
+      unique_keys:
+      - quarter
+      fields:
+      - quarter
+      - gdp
+      - gdp_yoy
+      - pi
+      - pi_yoy
+      - si
+      - si_yoy
+      - ti
+      - ti_yoy
+      earliest_date: '1952Q4'
+      limit: 10000
+      date_column: quarter
+      date_type: natural
+      date_param: quarter
+      date_param_mode: range
+      start_param: start_q
+      end_param: end_q
+      api_date_format: YYYYQN
     us_tycr:
       unique_keys:
       - date

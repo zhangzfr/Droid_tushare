@@ -193,8 +193,11 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
     # === 日期参数逻辑（基于 date_param_mode）===
     config = extra_params.get('config', {})
     
-    # === 日期格式适配 (YYYY-MM-DD vs YYYYMMDD) ===
-    # Tushare 一般使用 YYYYMMDD，但部分接口（如 cb_share）可能要求 YYYY-MM-DD
+    # === 日期格式适配 (YYYY-MM-DD vs YYYYMMDD vs YYYYMM vs YYYYQN) ===
+    # Tushare 一般使用 YYYYMMDD，但部分接口可能要求其他格式：
+    # - cb_share: YYYY-MM-DD
+    # - cn_cpi, cn_ppi: YYYYMM
+    # - cn_gdp: YYYYQN (e.g., 2019Q1)
     # 我们统一在内部使用 YYYYMMDD，仅在请求参数构建时进行转换
     target_format = config.get('api_date_format')
     
@@ -205,6 +208,17 @@ def build_api_params(table_name, start_date, end_date, ts_code, extra_params):
                 return f"{d_str[:4]}-{d_str[4:6]}-{d_str[6:]}"
             if target_format == 'YYYYMM' and len(d_str) == 8:
                 return d_str[:6]
+            if target_format == 'YYYYQN':
+                # Handle quarterly format (e.g., 2019Q1)
+                # If input is already in YYYYQN format, return as-is
+                if 'Q' in d_str.upper():
+                    return d_str.upper()
+                # Convert from YYYYMMDD or YYYYMM to YYYYQN
+                if len(d_str) >= 6:
+                    year = d_str[:4]
+                    month = int(d_str[4:6])
+                    quarter = (month - 1) // 3 + 1
+                    return f"{year}Q{quarter}"
             return d_str
         except:
             return d_str

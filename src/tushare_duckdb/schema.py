@@ -1183,6 +1183,71 @@ TABLE_SCHEMAS = {
             stk_endval DOUBLE,             -- 存量期末值（万亿元）
             last_updated VARCHAR
             )""",
+    'cn_cpi': """
+        CREATE TABLE cn_cpi (
+            month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
+            nt_val DOUBLE,                 -- 全国当月值
+            nt_yoy DOUBLE,                 -- 全国同比（%）
+            nt_mom DOUBLE,                 -- 全国环比（%）
+            nt_accu DOUBLE,                -- 全国累计值
+            town_val DOUBLE,               -- 城市当月值
+            town_yoy DOUBLE,               -- 城市同比（%）
+            town_mom DOUBLE,               -- 城市环比（%）
+            town_accu DOUBLE,              -- 城市累计值
+            cnt_val DOUBLE,                -- 农村当月值
+            cnt_yoy DOUBLE,                -- 农村同比（%）
+            cnt_mom DOUBLE,                -- 农村环比（%）
+            cnt_accu DOUBLE,               -- 农村累计值
+            last_updated VARCHAR
+        )""",
+    'cn_ppi': """
+        CREATE TABLE cn_ppi (
+            month VARCHAR PRIMARY KEY,     -- 月份 YYYYMM
+            ppi_yoy DOUBLE,                -- PPI：全部工业品：当月同比
+            ppi_mp_yoy DOUBLE,             -- PPI：生产资料：当月同比
+            ppi_mp_qm_yoy DOUBLE,          -- PPI：生产资料：采掘业：当月同比
+            ppi_mp_rm_yoy DOUBLE,          -- PPI：生产资料：原料业：当月同比
+            ppi_mp_p_yoy DOUBLE,           -- PPI：生产资料：加工业：当月同比
+            ppi_cg_yoy DOUBLE,             -- PPI：生活资料：当月同比
+            ppi_cg_f_yoy DOUBLE,           -- PPI：生活资料：食品类：当月同比
+            ppi_cg_c_yoy DOUBLE,           -- PPI：生活资料：衣着类：当月同比
+            ppi_cg_adu_yoy DOUBLE,         -- PPI：生活资料：一般日用品类：当月同比
+            ppi_cg_dcg_yoy DOUBLE,         -- PPI：生活资料：耐用消费品类：当月同比
+            ppi_mom DOUBLE,                -- PPI：全部工业品：环比
+            ppi_mp_mom DOUBLE,             -- PPI：生产资料：环比
+            ppi_mp_qm_mom DOUBLE,          -- PPI：生产资料：采掘业：环比
+            ppi_mp_rm_mom DOUBLE,          -- PPI：生产资料：原料业：环比
+            ppi_mp_p_mom DOUBLE,           -- PPI：生产资料：加工业：环比
+            ppi_cg_mom DOUBLE,             -- PPI：生活资料：环比
+            ppi_cg_f_mom DOUBLE,           -- PPI：生活资料：食品类：环比
+            ppi_cg_c_mom DOUBLE,           -- PPI：生活资料：衣着类：环比
+            ppi_cg_adu_mom DOUBLE,         -- PPI：生活资料：一般日用品类：环比
+            ppi_cg_dcg_mom DOUBLE,         -- PPI：生活资料：耐用消费品类：环比
+            ppi_accu DOUBLE,               -- PPI：全部工业品：累计同比
+            ppi_mp_accu DOUBLE,            -- PPI：生产资料：累计同比
+            ppi_mp_qm_accu DOUBLE,         -- PPI：生产资料：采掘业：累计同比
+            ppi_mp_rm_accu DOUBLE,         -- PPI：生产资料：原料业：累计同比
+            ppi_mp_p_accu DOUBLE,          -- PPI：生产资料：加工业：累计同比
+            ppi_cg_accu DOUBLE,            -- PPI：生活资料：累计同比
+            ppi_cg_f_accu DOUBLE,          -- PPI：生活资料：食品类：累计同比
+            ppi_cg_c_accu DOUBLE,          -- PPI：生活资料：衣着类：累计同比
+            ppi_cg_adu_accu DOUBLE,        -- PPI：生活资料：一般日用品类：累计同比
+            ppi_cg_dcg_accu DOUBLE,        -- PPI：生活资料：耐用消费品类：累计同比
+            last_updated VARCHAR
+        )""",
+    'cn_gdp': """
+        CREATE TABLE cn_gdp (
+            quarter VARCHAR PRIMARY KEY,   -- 季度 YYYYQN (e.g., 2019Q1)
+            gdp DOUBLE,                    -- GDP累计值（亿元）
+            gdp_yoy DOUBLE,                -- 当季同比增速（%）
+            pi DOUBLE,                     -- 第一产业累计值（亿元）
+            pi_yoy DOUBLE,                 -- 第一产业同比增速（%）
+            si DOUBLE,                     -- 第二产业累计值（亿元）
+            si_yoy DOUBLE,                 -- 第二产业同比增速（%）
+            ti DOUBLE,                     -- 第三产业累计值（亿元）
+            ti_yoy DOUBLE,                 -- 第三产业同比增速（%）
+            last_updated VARCHAR
+        )""",
 
     # === bond 相关 ===
     'cb_basic': """
