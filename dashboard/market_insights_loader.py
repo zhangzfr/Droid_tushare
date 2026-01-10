@@ -43,7 +43,7 @@ def get_index_display_name(code: str) -> str:
     name = GLOBAL_INDICES.get(code, code)
     return f"{code} - {name}"
 
-# A股板块代码映射
+# A股板块代码映射 - daily_info table (单位: 亿元)
 MARKET_CODES = {
     'SH_A': '上海A股',
     'SH_STAR': '科创板',
@@ -52,7 +52,17 @@ MARKET_CODES = {
     'SZ_GEM': '创业板',
     'SZ_SME': '中小板',
     'SH_MARKET': '上海市场',
-    'SZ_MARKET': '深圳市场'
+    'SZ_MARKET': '深圳市场',
+    'SH_FUND': '上海基金'
+}
+
+# sz_daily_info table codes mapping (单位: 元, 需要转换为亿元)
+SZ_DAILY_CODES = {
+    '股票': '深圳股票',
+    '创业板A股': '深圳创业板A股',
+    '主板A股': '深圳主板A股',
+    '债券': '深圳债券',
+    '基金': '深圳基金'
 }
 
 
@@ -135,8 +145,9 @@ def get_available_market_codes():
         return []
     
     try:
+        # Use simple query and dedup in python or use GROUP BY
         df = conn.execute("""
-            SELECT DISTINCT ts_code, ts_name FROM daily_info ORDER BY ts_code
+            SELECT ts_code, MAX(ts_name) as ts_name FROM daily_info GROUP BY ts_code ORDER BY ts_code
         """).fetchdf()
     except:
         return []
@@ -144,6 +155,101 @@ def get_available_market_codes():
         conn.close()
     
     return list(zip(df['ts_code'], df['ts_name']))
+
+
+@st.cache_data(ttl=3600)
+def load_sz_daily_info(start_date: str = None, end_date: str = None, ts_codes: list = None):
+    """
+    加载深圳市场统计数据 (sz_daily_info)。
+    注意：此表的amount单位是元，需要转换为亿元。
+    
+    Args:
+        start_date: 开始日期 'YYYYMMDD'
+        end_date: 结束日期 'YYYYMMDD'
+        ts_codes: 板块代码列表（如 ['股票', '创业板A股']）
+    
+    Returns:
+        DataFrame: trade_date, ts_code, count, amount (已转换为亿元)
+    """
+    conn = get_index_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        conditions = []
+        params = []
+        
+        if start_date:
+            conditions.append("trade_date >= ?")
+            params.append(start_date)
+        if end_date:
+            conditions.append("trade_date <= ?")
+            params.append(end_date)
+        if ts_codes:
+            placeholders = ",".join(["?"] * len(ts_codes))
+            conditions.append(f"ts_code IN ({placeholders})")
+            params.extend(ts_codes)
+        
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        
+        query = f"""
+            SELECT trade_date, ts_code, count, amount, vol, total_mv, float_mv
+            FROM sz_daily_info
+            WHERE {where_clause}
+            ORDER BY trade_date, ts_code
+        """
+        df = conn.execute(query, params).fetchdf()
+    except Exception as e:
+        st.error(f"加载 sz_daily_info 失败: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+    
+    if not df.empty:
+        df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
+        # 转换单位：元 -> 亿元
+        df['amount'] = df['amount'] / 1e8
+        # 添加中文名称
+        df['market_name'] = df['ts_code'].map(SZ_DAILY_CODES).fillna(df['ts_code'])
+        df['source'] = 'sz_daily_info'
+    
+    return df
+
+
+@st.cache_data(ttl=3600)
+def load_combined_amount_data(start_date: str, end_date: str):
+    """
+    加载合并的成交额数据，包括:
+    - daily_info: SH_MARKET, SZ_MARKET, SH_A, SZ_GEM, SH_STAR, SH_FUND (亿元)
+    - sz_daily_info: 股票, 创业板A股, 主板A股, 债券, 基金 (转换后亿元)
+    
+    Returns:
+        DataFrame: trade_date, ts_code, market_name, amount (亿元), source
+    """
+    # 从 daily_info 加载
+    daily_codes = ['SH_MARKET', 'SZ_MARKET', 'SH_A', 'SZ_GEM', 'SH_STAR', 'SH_FUND']
+    df_daily = load_daily_info(start_date, end_date, daily_codes)
+    if not df_daily.empty:
+        df_daily = df_daily[['trade_date', 'ts_code', 'market_name', 'amount']].copy()
+        df_daily['source'] = 'daily_info'
+    
+    # 从 sz_daily_info 加载
+    sz_codes = ['股票', '创业板A股', '主板A股', '债券', '基金']
+    df_sz = load_sz_daily_info(start_date, end_date, sz_codes)
+    if not df_sz.empty:
+        df_sz = df_sz[['trade_date', 'ts_code', 'market_name', 'amount', 'source']].copy()
+    
+    # 合并
+    if not df_daily.empty and not df_sz.empty:
+        df_combined = pd.concat([df_daily, df_sz], ignore_index=True)
+    elif not df_daily.empty:
+        df_combined = df_daily
+    elif not df_sz.empty:
+        df_combined = df_sz
+    else:
+        df_combined = pd.DataFrame()
+    
+    return df_combined
 
 
 def calculate_pe_percentile(df: pd.DataFrame, ts_code: str):

@@ -44,9 +44,218 @@ st.markdown("""
         padding-top: 1rem;
     }
     
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-        font-size: 0.9rem;
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p, 
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label div {
+        font-size: 0.85rem !important;
         color: #5C5653;
+    }
+    
+    /* Checkbox labels - smaller than nav labels */
+    [data-testid="stSidebar"] .stCheckbox label span,
+    .stCheckbox label span {
+        font-size: 0.75rem !important;
+    }
+    
+    /* ===== FONT HIERARCHY FOR MAIN CONTENT FILTERS ===== */
+    
+    /* L1: Section Headers - Bold (e.g., **Filters**, **Date Range**) */
+    .main [data-testid="stMarkdownContainer"] strong,
+    .main [data-testid="stMarkdownContainer"] b {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* L2: Category Labels - Italic (e.g., *Market*, *Publisher*) */
+    .main [data-testid="stMarkdownContainer"] em {
+        font-size: 0.75rem !important;
+    }
+    
+    /* L3: Sub-category Labels (e.g., *其他*, *亚太地区*) - smaller via <small> tag */
+    .main [data-testid="stMarkdownContainer"] small,
+    .main [data-testid="stMarkdownContainer"] small em,
+    .main [data-testid="stMarkdownContainer"] small *,
+    .main small,
+    .main small * {
+        font-size: 0.65rem !important;
+    }
+    
+    /* ===== ULTRA-AGGRESSIVE CHECKBOX STYLING ===== */
+    /* Target ALL possible checkbox label elements */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stCheckbox"] label span,
+    div[data-testid="stCheckbox"] label p,
+    div[data-testid="stCheckbox"] label div,
+    div[data-testid="stCheckbox"] > label > div,
+    div[data-testid="stCheckbox"] > label > div > p,
+    .stCheckbox label,
+    .stCheckbox label span,
+    .stCheckbox label p,
+    .stCheckbox label div,
+    .stCheckbox > label > div,
+    .stCheckbox > label > div > p {
+        font-size: 0.7rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    /* Checkbox icon - target SPAN element (confirmed by browser inspection) */
+    div[data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span:first-child,
+    div[data-testid="stCheckbox"] label > span:first-child,
+    .stCheckbox label[data-baseweb="checkbox"] > span:first-child,
+    .stCheckbox label > span:first-child,
+    [data-baseweb="checkbox"] > span:first-child {
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
+        max-width: 14px !important;
+        max-height: 14px !important;
+        transform: scale(0.8) !important;
+        transform-origin: center center !important;
+    }
+    
+    /* Checkbox container - reduce gap */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stCheckbox"] label[data-baseweb="checkbox"],
+    .stCheckbox label,
+    [data-baseweb="checkbox"] {
+        gap: 0.3rem !important;
+    }
+    
+    /* ===== RADIO BUTTON STYLING ===== */
+    /* Radio button icon - target SPAN element similar to checkbox */
+    div[data-testid="stRadio"] [role="radiogroup"] label[data-baseweb="radio"] > div:first-child,
+    div[data-testid="stRadio"] [role="radiogroup"] label > div:first-child,
+    .stRadio [role="radiogroup"] label[data-baseweb="radio"] > div:first-child,
+    .stRadio [role="radiogroup"] label > div:first-child,
+    [data-baseweb="radio"] > div:first-child {
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
+        max-width: 14px !important;
+        max-height: 14px !important;
+        transform: scale(0.8) !important;
+        transform-origin: center center !important;
+    }
+    
+    /* Radio button text */
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] label span,
+    div[data-testid="stRadio"] label p,
+    div[data-testid="stRadio"] [role="radiogroup"] label,
+    div[data-testid="stRadio"] [role="radiogroup"] label span,
+    .stRadio label,
+    .stRadio [role="radiogroup"] label,
+    .stRadio [role="radiogroup"] label span {
+        font-size: 0.7rem !important;
+        line-height: 1.1 !important;
+    }
+    
+    /* Radio container - reduce gap and align */
+    div[data-testid="stRadio"] [role="radiogroup"] label,
+    .stRadio [role="radiogroup"] label,
+    [data-baseweb="radio"] {
+        gap: 0.3rem !important;
+        align-items: center !important;
+    }
+    
+    /* ===== CHECKBOX/RADIO ALIGNMENT & SPACING ===== */
+    
+    /* FIX: Parent container gap (stVerticalBlock has 16px gap) */
+    div[data-testid="stVerticalBlock"]:has(div[data-testid="stCheckbox"]) {
+        gap: 0.1rem !important;
+    }
+    
+    /* FIX: Checkbox icon margin-top causing misalignment */
+    div[data-testid="stCheckbox"] label span[data-baseweb="checkbox"],
+    div[data-testid="stCheckbox"] label > span:first-child,
+    [data-baseweb="checkbox"] > span:first-child {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        align-self: center !important;
+    }
+    
+    /* Vertical alignment */
+    div[data-testid="stCheckbox"] label,
+    div[data-testid="stCheckbox"] label[data-baseweb="checkbox"],
+    .stCheckbox label,
+    [data-baseweb="checkbox"] {
+        align-items: center !important;
+        gap: 0.25rem !important;
+    }
+    
+    /* Reduced row spacing for checkboxes */
+    div[data-testid="stCheckbox"],
+    .stCheckbox {
+        margin-bottom: -0.5rem !important;
+        padding: 0 !important;
+    }
+    
+    /* Target element-container wrapper */
+    div[data-testid="stElementContainer"]:has(div[data-testid="stCheckbox"]) {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Checkbox label line height */
+    div[data-testid="stCheckbox"] label,
+    .stCheckbox label {
+        line-height: 1.1 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Reduced row spacing for radio buttons */
+    div[data-testid="stRadio"] [role="radiogroup"],
+    .stRadio [role="radiogroup"] {
+        gap: 0.05rem !important;
+    }
+    
+    div[data-testid="stRadio"] [role="radiogroup"] label,
+    .stRadio [role="radiogroup"] label {
+        padding: 0.1rem 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Input labels (Date, Number, etc.) */
+    .main .stDateInput label,
+    .main .stNumberInput label,
+    .main .stSlider label,
+    .main .stTextInput label,
+    .main .stSelectbox label,
+    .main .stMultiSelect label,
+    div[data-testid="stDateInput"] label,
+    div[data-testid="stNumberInput"] label {
+        font-size: 0.7rem !important;
+    }
+    
+    /* Input values */
+    .main .stDateInput input,
+    .main .stNumberInput input,
+    .main .stTextInput input,
+    .main [data-baseweb="input"] input,
+    .main .stSelectbox [data-baseweb="select"],
+    div[data-testid="stDateInput"] input,
+    [data-baseweb="input"] input {
+        font-size: 0.7rem !important;
+    }
+    
+    /* Spacing adjustments */
+    div[data-testid="stCheckbox"],
+    .stCheckbox {
+        margin-bottom: 0.05rem !important;
+        padding: 0.05rem 0 !important;
+    }
+    
+    div[data-testid="stRadio"] [role="radiogroup"],
+    .stRadio [role="radiogroup"] {
+        gap: 0.1rem !important;
+    }
+    
+    /* Date picker calendar */
+    [data-baseweb="calendar"] {
+        font-size: 0.7rem !important;
     }
     
     /* Sidebar title */
@@ -664,6 +873,7 @@ elif category_config["key"] == "macro":
                     fig_trend = plot_pmi_trend(df_pmi_f)
                     if fig_trend:
                         st.plotly_chart(fig_trend, use_container_width=True, key="pmi_trend")
+                        st.caption("Source: cn_pmi")
                 
                 with tab2:
                     col1, col2 = st.columns([1, 1])
@@ -672,6 +882,7 @@ elif category_config["key"] == "macro":
                         fig_heatmap = plot_heatmap(df_pmi_f)
                         if fig_heatmap:
                             st.plotly_chart(fig_heatmap, use_container_width=True, key="pmi_heatmap")
+                            st.caption("Source: cn_pmi")
                     
                     with col2:
                         st.subheader("Latest Month Breakdown")
@@ -682,6 +893,7 @@ elif category_config["key"] == "macro":
                             fig_bar = plot_sub_indicators_bar(df_latest)
                             if fig_bar:
                                 st.plotly_chart(fig_bar, use_container_width=True, key="pmi_bar")
+                                st.caption("Source: cn_pmi")
                 
                 with tab3:
                     st.dataframe(df_pmi_f.sort_values('month', ascending=False), use_container_width=True)
@@ -710,6 +922,7 @@ elif category_config["key"] == "macro":
                     fig_levels = plot_m_levels(df_m_f)
                     if fig_levels:
                         st.plotly_chart(fig_levels, use_container_width=True, key="m_levels")
+                        st.caption("Source: cn_m")
                 
                 with tab2:
                     col1, col2 = st.columns(2)
@@ -718,11 +931,13 @@ elif category_config["key"] == "macro":
                         fig_yoy = plot_m_yoy(df_m_f)
                         if fig_yoy:
                             st.plotly_chart(fig_yoy, use_container_width=True, key="m_yoy")
+                            st.caption("Source: cn_m")
                     with col2:
                         st.subheader("Month-over-Month (MoM)")
                         fig_mom = plot_m_mom(df_m_f)
                         if fig_mom:
                             st.plotly_chart(fig_mom, use_container_width=True, key="m_mom")
+                            st.caption("Source: cn_m")
                 
                 with tab3:
                     st.dataframe(df_m_f.sort_values('month', ascending=False), use_container_width=True)
@@ -754,11 +969,15 @@ elif category_config["key"] == "macro":
                         with col1:
                             st.subheader("Monthly Increment")
                             st.plotly_chart(fig_inc, use_container_width=True, key="sf_inc")
+                            st.caption("Source: cn_sf")
                             st.subheader("Cumulative Value")
                             st.plotly_chart(fig_cum, use_container_width=True, key="sf_cum")
+                            st.caption("Source: cn_sf")
                         with col2:
                             st.subheader("Stock End Value")
+                            st.subheader("Stock End Value")
                             st.plotly_chart(fig_stk, use_container_width=True, key="sf_stk")
+                            st.caption("Source: cn_sf")
                 
                 with tab2:
                     st.dataframe(df_sf_f.sort_values('month', ascending=False), use_container_width=True)
@@ -979,17 +1198,40 @@ elif category_config["key"] == "index":
         
         with left_col:
             st.markdown("**Filters**")
-            markets = ['All'] + sorted(df_indices['market'].dropna().unique().tolist())
-            publishers = ['All'] + sorted(df_indices['publisher'].dropna().unique().tolist())
+            markets = sorted(df_indices['market'].dropna().unique().tolist())
+            publishers = sorted(df_indices['publisher'].dropna().unique().tolist())
             
-            sel_market = st.selectbox("Market", markets, key="idx_market")
-            sel_publisher = st.selectbox("Publisher", publishers, key="idx_publisher")
+            # Market checkboxes
+            st.markdown("*Market*")
+            sel_market = []
+            for mkt in markets:
+                if st.checkbox(mkt, value=True, key=f"idx_mkt_cb_{mkt}"):
+                    sel_market.append(mkt)
+            
+            st.divider()
+            
+            # Publisher checkboxes (group top publishers)
+            st.markdown("*Publisher*")
+            sel_publisher = []
+            top_publishers = ['SSE', 'SZSE', 'CSINDEX', 'SW', 'CICC']
+            other_publishers = [p for p in publishers if p not in top_publishers]
+            
+            for pub in top_publishers:
+                if pub in publishers:
+                    if st.checkbox(pub, value=True, key=f"idx_pub_cb_{pub}"):
+                        sel_publisher.append(pub)
+            
+            if other_publishers:
+                st.markdown("<small>*其他*</small>", unsafe_allow_html=True)
+                for pub in other_publishers:
+                    if st.checkbox(pub, value=False, key=f"idx_pub_cb_{pub}"):
+                        sel_publisher.append(pub)
         
         df_filtered = df_indices.copy()
-        if sel_market != 'All':
-            df_filtered = df_filtered[df_filtered['market'] == sel_market]
-        if sel_publisher != 'All':
-            df_filtered = df_filtered[df_filtered['publisher'] == sel_publisher]
+        if sel_market:
+            df_filtered = df_filtered[df_filtered['market'].isin(sel_market)]
+        if sel_publisher:
+            df_filtered = df_filtered[df_filtered['publisher'].isin(sel_publisher)]
         
         df_filtered['has_weight'] = df_filtered['ts_code'].isin(indices_with_weight)
         
@@ -1049,6 +1291,7 @@ elif category_config["key"] == "index":
                     fig_heatmap = plot_index_heatmap(df_heatmap)
                     if fig_heatmap:
                         st.plotly_chart(fig_heatmap, use_container_width=True, key="idx_heatmap")
+                        st.caption("Source: index_daily, index_basic")
                 
                 with tab2:
                     all_indices = sorted(df_heatmap['ts_code'].unique().tolist())
@@ -1063,6 +1306,7 @@ elif category_config["key"] == "index":
                         fig_line = plot_cumulative_returns(df_line)
                         if fig_line:
                             st.plotly_chart(fig_line, use_container_width=True, key="idx_returns")
+                            st.caption("Source: index_daily")
                         
                         st.caption("Note: Cumulative returns are calculated from the first available date in the selected range, indexed to 100.")
                     else:
@@ -1083,6 +1327,7 @@ elif category_config["key"] == "index":
         )
         from sw_index_charts import plot_sw_treemap, plot_sw_stock_treemap, plot_l2_stock_treemap, plot_l1_stock_treemap
         from datetime import datetime, timedelta
+        import pandas as pd
         
         # Load Hierarchy
         df_hier = get_sw_hierarchy()
@@ -1091,7 +1336,7 @@ elif category_config["key"] == "index":
             st.stop()
         
         # Left-right layout
-        left_col, right_col = st.columns([1, 7])
+        left_col, right_col = st.columns([1, 4])
         
         with left_col:
             st.markdown("**Trading Date**")
@@ -1109,24 +1354,94 @@ elif category_config["key"] == "index":
                 index=0,
                 key="sw_view_mode"
             )
-        
-        with right_col:
-            # ==================== L1 Drill-down ====================
+            
+            st.markdown("---")
+            
+            # Initialize option variables to avoid NameError
+            selected_l1_drill = None
+            level = None
+            top_n = 100
+            
+            # --- Dynamic Controls moved to Left Column ---
             if view_mode == "L1 Drill-down":
-                st.caption("Default shows L1→L2→L3 indices. Select industry to drill down to stocks.")
+                st.markdown("**Drill-down Options**")
                 
                 l1_options = df_hier[['l1_code', 'l1_name']].drop_duplicates().sort_values('l1_code')
                 l1_dict = dict(zip(l1_options['l1_code'], l1_options['l1_name']))
-                l1_choices = ['All (L1→L2→L3 Index View)'] + l1_options['l1_code'].tolist()
+                l1_codes = l1_options['l1_code'].tolist()
                 
-                selected_l1_drill = st.selectbox(
-                    "Select L1 Industry to view stocks",
-                    l1_choices,
-                    format_func=lambda x: x if x.startswith('All') else f"{x} - {l1_dict.get(x, x)}",
-                    key="l1_drill"
+                # Group by sector category
+                # Consumer, Manufacturing, Finance, Tech, Resources, Services
+                consumer = [c for c in l1_codes if l1_dict.get(c, '') in ['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理']]
+                mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', '轻工制造', '建筑材料', '建筑装饰']]
+                finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', '非银金融', '房地产']]
+                tech = [c for c in l1_codes if l1_dict.get(c, '') in ['计算机', '传媒', '通信']]
+                resources = [c for c in l1_codes if l1_dict.get(c, '') in ['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']]
+                health = [c for c in l1_codes if l1_dict.get(c, '') in ['医药生物']]
+                others = [c for c in l1_codes if c not in consumer + mfg + finance + tech + resources + health]
+                
+                selected_l1_drill = []
+                
+                # All option
+                all_selected = st.checkbox("全选所有", value=True, key="l1_cb_all")
+                if all_selected:
+                    selected_l1_drill = ['All']
+                else:
+                    st.markdown("<small>*消费*</small>", unsafe_allow_html=True)
+                    for code in consumer:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    st.markdown("<small>*制造*</small>", unsafe_allow_html=True)
+                    for code in mfg:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    st.markdown("<small>*金融*</small>", unsafe_allow_html=True)
+                    for code in finance:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    st.markdown("<small>*科技*</small>", unsafe_allow_html=True)
+                    for code in tech:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    st.markdown("<small>*资源*</small>", unsafe_allow_html=True)
+                    for code in resources:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    st.markdown("<small>*医药*</small>", unsafe_allow_html=True)
+                    for code in health:
+                        if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                            selected_l1_drill.append(code)
+                    
+                    if others:
+                        st.markdown("<small>*其他*</small>", unsafe_allow_html=True)
+                        for code in others:
+                            if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
+                                selected_l1_drill.append(code)
+                
+            elif view_mode == "Full View":
+                st.markdown("**View Options**")
+                level = st.radio(
+                    "Select Level", 
+                    ["L1", "L2", "L3", "Stock"], 
+                    index=0, 
+                    key="opt_a_level"
                 )
+                st.caption("Stock level might be slow to load.")
                 
-                if selected_l1_drill.startswith('All'):
+            elif view_mode == "Top 100 Hot Stocks":
+                st.markdown("**Filter Options**")
+                top_n = st.slider("Display Count", 50, 300, 100, step=50, key="top_n_slider")
+        
+        with right_col:
+            if view_mode == "L1 Drill-down":
+                st.caption(f"Viewing: {', '.join([str(x) for x in selected_l1_drill])}")
+                
+                if 'All' in selected_l1_drill or not selected_l1_drill:
                     with st.spinner("Loading L3 index data..."):
                         target_codes = df_hier['l3_code'].unique().tolist()
                         df_sw_daily = load_sw_daily_data(date_str, target_codes)
@@ -1144,14 +1459,17 @@ elif category_config["key"] == "index":
                         fig = plot_sw_treemap(df_hier, df_sw_daily, level='L3')
                         if fig:
                             st.plotly_chart(fig, use_container_width=True, key="l1_tab_index_chart")
+                            st.caption("Source: sw_daily, sw_index_member")
                 else:
-                    l1_name = l1_dict.get(selected_l1_drill, selected_l1_drill)
-                    
-                    with st.spinner(f"Loading stocks for {l1_name}..."):
-                        df_l1_stocks = load_stocks_by_l1(date_str, selected_l1_drill)
+                    # Handle multiple L1 selection
+                    with st.spinner(f"Loading stocks for selected L1 industries..."):
+                        df_l1_stocks = pd.DataFrame()
+                        for l1_code in selected_l1_drill:
+                            df_part = load_stocks_by_l1(date_str, l1_code)
+                            df_l1_stocks = pd.concat([df_l1_stocks, df_part], ignore_index=True)
                     
                     if df_l1_stocks.empty:
-                        st.warning(f"No stock data for {l1_name} on {date_str}.")
+                        st.warning(f"No stock data for selected industries on {date_str}.")
                     else:
                         up_count = len(df_l1_stocks[df_l1_stocks['pct_change'] > 0])
                         down_count = len(df_l1_stocks[df_l1_stocks['pct_change'] < 0])
@@ -1163,16 +1481,13 @@ elif category_config["key"] == "index":
                         c3.metric("Amount", f"{total_amt/100000000:.2f} B")
                         c4.metric("Stocks", len(df_l1_stocks))
                         
-                        fig = plot_l1_stock_treemap(df_l1_stocks, l1_name)
+                        fig = plot_l1_stock_treemap(df_l1_stocks, "Selected L1 Industries")
                         if fig:
                             st.plotly_chart(fig, use_container_width=True, key="l1_tab_stock_chart")
+                            st.caption("Source: stock_daily, sw_index_member")
             
             # ==================== Original View ====================
             elif view_mode == "Full View":
-                st.caption("Select level to view full data (Stock level might be slow)")
-                
-                level = st.radio("Select Level", ["L1", "L2", "L3", "Stock"], index=0, horizontal=True, key="opt_a_level")
-                
                 with st.spinner(f"Loading {level} data for {date_str}..."):
                     if level == 'Stock':
                         df_hier_full = get_sw_members()
@@ -1206,13 +1521,10 @@ elif category_config["key"] == "index":
                         fig = plot_sw_treemap(df_hier, df_sw_daily, level=level)
                     if fig:
                         st.plotly_chart(fig, use_container_width=True, key="opt_a_chart")
+                        st.caption("Source: sw_daily, sw_index_member")
             
             # ==================== Top N Stocks ====================
             elif view_mode == "Top 100 Hot Stocks":
-                st.caption("Show top stocks by amount (fast loading)")
-                
-                top_n = st.slider("Display Count", 50, 300, 100, step=50, key="top_n_slider")
-                
                 with st.spinner(f"Loading Top {top_n} stocks..."):
                     df_top = load_top_stocks(date_str, top_n)
                 
@@ -1230,6 +1542,7 @@ elif category_config["key"] == "index":
                     fig_top = plot_sw_stock_treemap(df_top, f"Top {top_n} Stocks by Amount")
                     if fig_top:
                         st.plotly_chart(fig_top, use_container_width=True, key="top_n_chart")
+                        st.caption("Source: stock_daily")
     
 
     # --- Market Width Sub-category ---
@@ -1245,9 +1558,10 @@ elif category_config["key"] == "index":
         
         with left_col:
             st.markdown("**Parameters**")
-            level = st.selectbox("Industry Level", ["L1", "L2", "L3"], index=0, key="mw_level")
-            ma_period = st.selectbox("MA Period", [5, 10, 20, 50, 90, 120], index=2, key="mw_ma")
-            days = st.slider("Display Days", 10, 60, 30, step=5, key="mw_days")
+            level = st.radio("Industry Level", ["L1", "L2", "L3"], index=0, key="mw_level", horizontal=True)
+            
+            ma_period = st.number_input("MA Period", min_value=1, value=20, step=1, key="mw_ma")
+            days = st.number_input("Display Days", min_value=5, max_value=500, value=30, step=5, key="mw_days")
             
             today = datetime.now()
             if today.weekday() >= 5:
@@ -1278,6 +1592,7 @@ elif category_config["key"] == "index":
                 fig = plot_market_width_heatmap(df_width, level, ma_period)
                 if fig:
                     st.plotly_chart(fig, use_container_width=True, key="market_width_heatmap")
+                    st.caption("Source: stock_daily, sw_index_member")
     
 
     elif subcategory_key == "index_details":
@@ -1376,6 +1691,7 @@ elif category_config["key"] == "index":
                     fig = plot_constituent_count_over_time(df_counts)
                     if fig:
                         st.plotly_chart(fig, use_container_width=True)
+                        st.caption("Source: index_composition")
                     
                     col1, col2, col3 = st.columns(3)
                     with col1:
@@ -1437,9 +1753,23 @@ elif category_config["key"] == "stock":
             
             with left_col:
                 st.markdown("**Year Filter**")
-                sel_year = st.multiselect("Select Year(s)", years, default=years[:10], key="listing_years")
+                # Modified to Radio with ranges for better UI
+                period_opt = st.radio(
+                    "Select Period", 
+                    ["Last 5 Years", "Last 10 Years", "All History"], 
+                    index=0, 
+                    key="listing_period"
+                )
+                
+                current_year = df_stats['year'].max()
+                if period_opt == "Last 5 Years":
+                    start_year = current_year - 4
+                elif period_opt == "Last 10 Years":
+                    start_year = current_year - 9
+                else:
+                    start_year = df_stats['year'].min()
             
-            df_f = df_stats[df_stats['year'].isin(sel_year)]
+            df_f = df_stats[df_stats['year'] >= start_year]
             
             with right_col:
                 # Key Metrics
@@ -1463,11 +1793,13 @@ elif category_config["key"] == "stock":
                     fig_trend = plot_listing_delisting_trend(df_f)
                     if fig_trend:
                         st.plotly_chart(fig_trend, use_container_width=True, key="listing_trend")
+                        st.caption("Source: stock_basic")
                         
                 with tab2:
                     fig_growth = plot_listing_summary(df_f)
                     if fig_growth:
                         st.plotly_chart(fig_growth, use_container_width=True, key="listing_growth")
+                        st.caption("Source: stock_basic")
                         
                 with tab3:
                     st.markdown("**Monthly Statistics (Sorted by Date)**")
@@ -1563,6 +1895,7 @@ elif category_config["key"] == "stock":
                                 
                                 if fig:
                                     st.plotly_chart(fig, use_container_width=True)
+                                    st.caption("Source: stock_daily")
                                     
                                     # Summary stats
                                     uplift_days = df_analyzed[df_analyzed['main_uplift']]
@@ -1610,13 +1943,24 @@ elif category_config["key"] == "vix":
         left_col, right_col = st.columns([1, 6])
         
         with left_col:
-            st.markdown("**Underlying Asset**")
-            selected_underlying = st.selectbox(
-                "Select ETF/Index",
-                underlying_codes,
-                format_func=lambda x: underlyings.get(x, x),
-                key="vix_underlying"
-            )
+            # ETF Options group
+            st.markdown("<small>*ETF期权*</small>", unsafe_allow_html=True)
+            etf_codes = ['510050.SH', '510300.SH', '510500.SH', '159919.SZ', '159915.SZ', '159922.SZ']
+            sel_etf = []
+            for code in etf_codes:
+                if code in underlying_codes:
+                    if st.checkbox(underlyings.get(code, code), value=code == '510050.SH', key=f"vix_cb_{code}"):
+                        sel_etf.append(code)
+            
+            st.markdown("<small>*指数期权*</small>", unsafe_allow_html=True)
+            index_codes = ['000300.SH', '000016.SH', '000852.SH', '000905.SH', '000510.SH']
+            sel_index = []
+            for code in index_codes:
+                if code in underlying_codes:
+                    if st.checkbox(underlyings.get(code, code), value=False, key=f"vix_cb_{code}"):
+                        sel_index.append(code)
+            
+            selected_underlyings = sel_etf + sel_index
             
             st.markdown("---")
             st.markdown("**Date Range**")
@@ -1638,7 +1982,7 @@ elif category_config["key"] == "vix":
         end_str = end_date.strftime('%Y%m%d')
         
         # Create a unique key for current parameters to detect changes
-        current_params = f"{selected_underlying}_{start_str}_{end_str}"
+        current_params = f"{'-'.join(selected_underlyings)}_{start_str}_{end_str}"
         
         with right_col:
             # Calculate when button is clicked
@@ -1649,8 +1993,21 @@ elif category_config["key"] == "vix":
             
             # Show results if calculated with current params
             if st.session_state.get('vix_calculated', False) and st.session_state.get('vix_params') == current_params:
-                with st.spinner(f"Calculating VIX for {selected_underlying}..."):
-                    df_summary, df_near, df_next = calculate_vix_series(start_str, end_str, selected_underlying)
+                with st.spinner(f"Calculating VIX for {', '.join(selected_underlyings)}..."):
+                    # Loop calculation
+                    results_map = {}
+                    df_summary = pd.DataFrame() # Combined summary for table (maybe just last one? or concat)
+                    df_near_all = pd.DataFrame()
+                    df_next_all = pd.DataFrame()
+                    
+                    for code in selected_underlyings:
+                         s_df, n_df, nx_df = calculate_vix_series(start_str, end_str, code)
+                         if not s_df.empty:
+                             s_df['underlying'] = code
+                             results_map[code] = s_df
+                             df_summary = pd.concat([df_summary, s_df])
+                             df_near_all = pd.concat([df_near_all, n_df])
+                             df_next_all = pd.concat([df_next_all, nx_df])
                 
                 if df_summary.empty:
                     st.warning("No VIX data could be calculated. Please check if option data and Shibor data are available for the selected period.")
@@ -1659,19 +2016,25 @@ elif category_config["key"] == "vix":
                     actual_start = df_summary['date'].min().strftime('%Y-%m-%d')
                     actual_end = df_summary['date'].max().strftime('%Y-%m-%d')
                     if actual_end != end_date.strftime('%Y-%m-%d'):
-                        st.caption(f"ℹ️ Data available: {actual_start} to {actual_end} ({len(df_summary)} trading days). VIX requires both option and Shibor data.")
+                        st.caption(f"ℹ️ Data available for {len(results_map)} assets. VIX requires both option and Shibor data.")
                     
-                    # Key Metrics
-                    latest_vix = df_summary['vix'].iloc[-1]
-                    avg_vix = df_summary['vix'].mean()
-                    max_vix = df_summary['vix'].max()
-                    min_vix = df_summary['vix'].min()
-                    
-                    col1, col2, col3, col4 = st.columns(4)
-                    col1.metric("Latest VIX", f"{latest_vix:.2f}")
-                    col2.metric("Average", f"{avg_vix:.2f}")
-                    col3.metric("Maximum", f"{max_vix:.2f}")
-                    col4.metric("Minimum", f"{min_vix:.2f}")
+                    # Key Metrics (Aggregated or for first asset)
+                    if results_map:
+                         # Just display first one or average? Let's display metrics for the first selected asset as primary
+                         primary_code = selected_underlyings[0]
+                         if primary_code in results_map:
+                            prim_df = results_map[primary_code]
+                            latest_vix = prim_df['vix'].iloc[-1]
+                            avg_vix = prim_df['vix'].mean()
+                            max_vix = prim_df['vix'].max()
+                            min_vix = prim_df['vix'].min()
+                            
+                            st.markdown(f"**Metrics for {underlyings.get(primary_code, primary_code)}**")
+                            col1, col2, col3, col4 = st.columns(4)
+                            col1.metric("Latest VIX", f"{latest_vix:.2f}")
+                            col2.metric("Average", f"{avg_vix:.2f}")
+                            col3.metric("Maximum", f"{max_vix:.2f}")
+                            col4.metric("Minimum", f"{min_vix:.2f}")
                     
                     st.divider()
                     
@@ -1679,9 +2042,17 @@ elif category_config["key"] == "vix":
                     tab1, tab2, tab3, tab4 = st.tabs(["VIX Trend", "Components", "Analysis", "Raw Data"])
                     
                     with tab1:
-                        fig_trend = plot_vix_trend(df_summary, selected_underlying)
-                        if fig_trend:
-                            st.plotly_chart(fig_trend, use_container_width=True, key="vix_trend")
+                        if len(results_map) > 1:
+                            # Plot multiple lines
+                            import plotly.express as px
+                            fig_trend = px.line(df_summary, x='date', y='vix', color='underlying', title="VIX Trend Comparison")
+                            st.plotly_chart(fig_trend, use_container_width=True, key="vix_trend_multi")
+                        elif primary_code in results_map:
+                            fig_trend = plot_vix_trend(results_map[primary_code], primary_code)
+                            if fig_trend:
+                                st.plotly_chart(fig_trend, use_container_width=True, key="vix_trend")
+                        
+                        st.caption("Source: opt_daily, shibor")
                         
                         # Distribution
                         col1, col2 = st.columns(2)
@@ -1689,19 +2060,23 @@ elif category_config["key"] == "vix":
                             fig_dist = plot_vix_distribution(df_summary)
                             if fig_dist:
                                 st.plotly_chart(fig_dist, use_container_width=True, key="vix_dist")
+                                st.caption("Source: opt_daily")
                         with col2:
                             fig_weight = plot_weight_trend(df_summary)
                             if fig_weight:
                                 st.plotly_chart(fig_weight, use_container_width=True, key="vix_weight")
+                                st.caption("Source: opt_daily")
                     
                     with tab2:
                         fig_comp = plot_vix_components(df_summary)
                         if fig_comp:
                             st.plotly_chart(fig_comp, use_container_width=True, key="vix_comp")
+                            st.caption("Source: opt_daily")
                         
                         fig_fwd = plot_forward_prices(df_summary)
                         if fig_fwd:
                             st.plotly_chart(fig_fwd, use_container_width=True, key="vix_fwd")
+                            st.caption("Source: opt_daily")
                     
                     with tab3:
                         st.subheader("VIX Statistics")
@@ -1837,12 +2212,13 @@ elif category_config["key"] == "fx_edu":
         with left_col:
             st.markdown("**Filters**")
             classifications = df_obasic['classify'].dropna().unique().tolist()
-            sel_classify = st.multiselect(
-                "Category",
-                options=classifications,
-                default=classifications,
-                key="fx_classify_filter"
-            )
+            
+            # Category checkboxes
+            st.markdown("*Category*")
+            sel_classify = []
+            for cls in classifications:
+                if st.checkbox(cls, value=True, key=f"fx_cls_cb_{cls}"):
+                    sel_classify.append(cls)
         
         # Filter data
         df_filtered = df_obasic.copy()
@@ -1859,11 +2235,13 @@ elif category_config["key"] == "fx_edu":
                     fig_pie = plot_classify_pie(df_filtered)
                     if fig_pie:
                         st.plotly_chart(fig_pie, use_container_width=True, key="fx_pie")
+                        st.caption("Source: fx_obasic")
                 
                 with col2:
                     fig_bar = plot_asset_table_summary(df_filtered)
                     if fig_bar:
                         st.plotly_chart(fig_bar, use_container_width=True, key="fx_bar")
+                        st.caption("Source: fx_obasic")
                 
                 # Summary metrics
                 col1, col2, col3 = st.columns(3)
@@ -1923,16 +2301,28 @@ elif category_config["key"] == "fx_edu":
             end_date = st.date_input("End", default_end.date(), key="fx_price_end")
             
             st.markdown("**Select Assets**")
-            # Filter by category first
+            # Filter by category first - checkboxes
             classifications = df_obasic['classify'].dropna().unique().tolist()
-            sel_classify = st.multiselect("Category Filter", classifications, default=classifications, key="fx_price_classify")
+            st.markdown("*Category Filter*")
+            sel_classify = []
+            for cls in classifications:
+                if st.checkbox(cls, value=True, key=f"fx_price_cls_{cls}"):
+                    sel_classify.append(cls)
             
             # Filter codes
             available = df_obasic[df_obasic['classify'].isin(sel_classify)]['ts_code'].tolist() if sel_classify else all_codes
             
-            # Default selection
-            defaults = [c for c in DEFAULT_FX_ASSETS if c in available][:4]
-            sel_codes = st.multiselect("Assets", available, default=defaults, key="fx_price_assets")
+            # Group assets by classification for checkbox selection
+            st.markdown("*Assets*")
+            sel_codes = []
+            default_assets = DEFAULT_FX_ASSETS[:4]
+            for cls in sel_classify:
+                cls_assets = [a for a in available if df_obasic[df_obasic['ts_code'] == a]['classify'].values[0] == cls if len(df_obasic[df_obasic['ts_code'] == a]) > 0]
+                if cls_assets:
+                    st.markdown(f"_{cls}_")
+                    for asset in cls_assets[:10]:  # Limit per group
+                        if st.checkbox(asset, value=asset in default_assets, key=f"fx_price_ast_{asset}"):
+                            sel_codes.append(asset)
         
         if not sel_codes:
             st.info("Please select at least one asset to analyze.")
@@ -1956,16 +2346,19 @@ elif category_config["key"] == "fx_edu":
                         fig_lines = plot_price_lines(df_daily, sel_codes, normalize=normalize)
                         if fig_lines:
                             st.plotly_chart(fig_lines, use_container_width=True, key="fx_price_lines")
+                            st.caption("Source: fx_daily")
                     
                     with tab2:
                         fig_returns = plot_log_returns(df_returns, sel_codes)
                         if fig_returns:
                             st.plotly_chart(fig_returns, use_container_width=True, key="fx_returns")
+                            st.caption("Source: fx_daily")
                         
                         st.subheader("Returns Distribution")
                         fig_dist = plot_price_distribution(df_returns.dropna(), None)
                         if fig_dist:
                             st.plotly_chart(fig_dist, use_container_width=True, key="fx_dist")
+                            st.caption("Source: fx_daily")
                     
                     with tab3:
                         # Calculate annualized stats
@@ -1978,6 +2371,7 @@ elif category_config["key"] == "fx_edu":
                             fig_vol_bar = plot_volatility_bar(df_stats)
                             if fig_vol_bar:
                                 st.plotly_chart(fig_vol_bar, use_container_width=True, key="fx_vol_bar")
+                                st.caption("Source: fx_daily")
                             
                             # Stats table
                             st.subheader("Summary Statistics")
@@ -2039,8 +2433,18 @@ elif category_config["key"] == "fx_edu":
             end_date = st.date_input("End", default_end.date(), key="fx_corr_end")
             
             st.markdown("**Select Assets**")
-            defaults = [c for c in DEFAULT_FX_ASSETS if c in all_codes][:6]
-            sel_codes = st.multiselect("Assets (min 2)", all_codes, default=defaults, key="fx_corr_assets")
+            # Group assets by category for checkbox selection
+            classifications = df_obasic['classify'].dropna().unique().tolist()
+            sel_codes = []
+            default_assets = DEFAULT_FX_ASSETS[:6]
+            
+            for cls in classifications:
+                cls_assets = df_obasic[df_obasic['classify'] == cls]['ts_code'].tolist()
+                if cls_assets:
+                    st.markdown(f"*{cls}*")
+                    for asset in cls_assets[:8]:  # Limit per group
+                        if st.checkbox(asset, value=asset in default_assets, key=f"fx_corr_ast_{asset}"):
+                            sel_codes.append(asset)
         
         if len(sel_codes) < 2:
             st.info("Please select at least 2 assets to analyze correlations.")
@@ -2066,6 +2470,7 @@ elif category_config["key"] == "fx_edu":
                             fig_heatmap = plot_correlation_heatmap(df_corr)
                             if fig_heatmap:
                                 st.plotly_chart(fig_heatmap, use_container_width=True, key="fx_corr_heatmap")
+                                st.caption("Source: fx_daily")
                             
                             # Highlight interesting pairs
                             st.subheader("Notable Correlations")
@@ -2096,6 +2501,7 @@ elif category_config["key"] == "fx_edu":
                             fig_roll = plot_rolling_correlation(rolling_corr, asset1, asset2)
                             if fig_roll:
                                 st.plotly_chart(fig_roll, use_container_width=True, key="fx_roll_corr")
+                                st.caption("Source: fx_daily")
                     
                     with tab3:
                         # Limit to 5 assets for readability
@@ -2103,6 +2509,7 @@ elif category_config["key"] == "fx_edu":
                         fig_scatter = plot_scatter_matrix(df_pivot, scatter_codes)
                         if fig_scatter:
                             st.plotly_chart(fig_scatter, use_container_width=True, key="fx_scatter")
+                            st.caption("Source: fx_daily")
                 
                 # Thought questions
                 with st.expander("🤔 Think About It"):
@@ -2144,8 +2551,18 @@ elif category_config["key"] == "fx_edu":
             end_date = st.date_input("End", default_end.date(), key="fx_adv_end")
             
             st.markdown("**Select Assets**")
-            defaults = [c for c in DEFAULT_FX_ASSETS if c in all_codes][:4]
-            sel_codes = st.multiselect("Assets", all_codes, default=defaults, key="fx_adv_assets")
+            # Group assets by category for checkbox selection
+            classifications = df_obasic['classify'].dropna().unique().tolist()
+            sel_codes = []
+            default_assets = DEFAULT_FX_ASSETS[:4]
+            
+            for cls in classifications:
+                cls_assets = df_obasic[df_obasic['classify'] == cls]['ts_code'].tolist()
+                if cls_assets:
+                    st.markdown(f"*{cls}*")
+                    for asset in cls_assets[:6]:  # Limit per group
+                        if st.checkbox(asset, value=asset in default_assets, key=f"fx_adv_ast_{asset}"):
+                            sel_codes.append(asset)
         
         if not sel_codes:
             st.info("Please select at least one asset for advanced analysis.")
@@ -2176,18 +2593,21 @@ elif category_config["key"] == "fx_edu":
                             fig_monthly = plot_monthly_return_heatmap(df_monthly, sel_asset)
                             if fig_monthly:
                                 st.plotly_chart(fig_monthly, use_container_width=True, key="fx_monthly_heatmap")
+                                st.caption("Source: fx_daily")
                             
                             # Seasonality bar
                             st.subheader("Average Return by Month")
                             fig_season = plot_seasonality_bar(df_monthly, sel_asset)
                             if fig_season:
                                 st.plotly_chart(fig_season, use_container_width=True, key="fx_season_bar")
+                                st.caption("Source: fx_daily")
                     
                     with tab2:
                         st.subheader("Rolling 20-Day Volatility")
                         fig_vol_line = plot_volatility_line(df_vol, sel_codes)
                         if fig_vol_line:
                             st.plotly_chart(fig_vol_line, use_container_width=True, key="fx_vol_line")
+                            st.caption("Source: fx_daily")
                         
                         st.caption("Notice how volatility tends to cluster - periods of high volatility are often followed by more high volatility.")
                     
@@ -2197,6 +2617,7 @@ elif category_config["key"] == "fx_edu":
                             fig_rr = plot_risk_return_scatter(df_stats)
                             if fig_rr:
                                 st.plotly_chart(fig_rr, use_container_width=True, key="fx_risk_return")
+                                st.caption("Source: fx_daily")
                             
                             st.markdown("""
                             **How to Read This Chart:**
@@ -2269,20 +2690,21 @@ elif category_config["key"] == "stock_edu":
         render_header("第1层：认识A股市场", "market")
         
         # 教育内容
-        st.markdown("""
-        ### 📚 什么是A股市场？
-        
-        **A股**是指在中国境内上市、以人民币计价交易的股票。主要交易场所：
-        
-        - **上海证券交易所 (SSE)**：主板、科创板
-        - **深圳证券交易所 (SZSE)**：主板、创业板
-        - **北京证券交易所 (BSE)**：北交所
-        
-        **板块分类**：
-        - **主板**：成熟大型企业，盈利要求较高
-        - **创业板**：成长型创新企业
-        - **科创板**：科技创新企业，注册制
-        """)
+        with st.expander("📘 相关知识：什么是A股市场？"):
+            st.markdown("""
+            ### 📚 什么是A股市场？
+            
+            **A股**是指在中国境内上市、以人民币计价交易的股票。主要交易场所：
+            
+            - **上海证券交易所 (SSE)**：主板、科创板
+            - **深圳证券交易所 (SZSE)**：主板、创业板
+            - **北京证券交易所 (BSE)**：北交所
+            
+            **板块分类**：
+            - **主板**：成熟大型企业，盈利要求较高
+            - **创业板**：成长型创新企业
+            - **科创板**：科技创新企业，注册制
+            """)
         
         st.divider()
         
@@ -2318,20 +2740,24 @@ elif category_config["key"] == "stock_edu":
                     fig_market = plot_market_pie(summary.get('by_market', {}))
                     if fig_market:
                         st.plotly_chart(fig_market, use_container_width=True, key="stock_market_pie")
+                        st.caption("Source: stock_basic")
                 with col2:
                     fig_status = plot_status_pie(df_basic)
                     if fig_status:
                         st.plotly_chart(fig_status, use_container_width=True, key="stock_status_pie")
+                        st.caption("Source: stock_basic")
             
             with tab2:
                 fig_industry = plot_industry_bar(summary.get('by_industry', {}))
                 if fig_industry:
                     st.plotly_chart(fig_industry, use_container_width=True, key="stock_industry_bar")
+                    st.caption("Source: stock_basic")
             
             with tab3:
                 fig_area = plot_area_bar(summary.get('by_area', {}))
                 if fig_area:
                     st.plotly_chart(fig_area, use_container_width=True, key="stock_area_bar")
+                    st.caption("Source: stock_basic")
             
             with tab4:
                 st.dataframe(
@@ -2361,21 +2787,22 @@ elif category_config["key"] == "stock_edu":
         render_header("第2层：理解股票价格", "chart")
         
         # 教育内容
-        st.markdown("""
-        ### 📈 股票价格的基本概念
-        
-        **K线图（蜡烛图）**是展示价格走势的经典方式：
-        - **开盘价 (Open)**：当日第一笔交易价格
-        - **收盘价 (Close)**：当日最后一笔交易价格
-        - **最高价 (High)**：当日最高成交价
-        - **最低价 (Low)**：当日最低成交价
-        
-        **收益率**衡量投资回报：
-        - 简单收益率：(P_t - P_{t-1}) / P_{t-1}
-        - 对数收益率：ln(P_t / P_{t-1})
-        
-        **波动率**反映价格变化的剧烈程度，是衡量风险的重要指标。
-        """)
+        with st.expander("📘 相关知识：股票价格概念"):
+            st.markdown("""
+            ### 📈 股票价格的基本概念
+            
+            **K线图（蜡烛图）**是展示价格走势的经典方式：
+            - **开盘价 (Open)**：当日第一笔交易价格
+            - **收盘价 (Close)**：当日最后一笔交易价格
+            - **最高价 (High)**：当日最高成交价
+            - **最低价 (Low)**：当日最低成交价
+            
+            **收益率**衡量投资回报：
+            - 简单收益率：(P_t - P_{t-1}) / P_{t-1}
+            - 对数收益率：ln(P_t / P_{t-1})
+            
+            **波动率**反映价格变化的剧烈程度，是衡量风险的重要指标。
+            """)
         
         st.divider()
         
@@ -2388,9 +2815,15 @@ elif category_config["key"] == "stock_edu":
             end_date = st.date_input("结束", default_end.date(), key="stock_price_end")
             
             st.markdown("**选择股票**")
-            # 筛选行业
-            industries = df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist()
-            sel_industry = st.multiselect("行业筛选", industries, key="stock_price_industry")
+            # 筛选行业 - checkboxes
+            industries = sorted(df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist())
+            
+            st.markdown("*行业筛选*")
+            sel_industry = []
+            # Group by first character for organization
+            for ind in industries[:20]:  # Limit display
+                if st.checkbox(ind, value=False, key=f"stock_price_ind_{ind}"):
+                    sel_industry.append(ind)
             
             if sel_industry:
                 available = df_basic[(df_basic['list_status'] == 'L') & (df_basic['industry'].isin(sel_industry))]['ts_code'].tolist()
@@ -2424,6 +2857,7 @@ elif category_config["key"] == "stock_edu":
                         fig_kline = plot_candlestick(df_daily, sel_kline, name_map)
                         if fig_kline:
                             st.plotly_chart(fig_kline, use_container_width=True, key="stock_kline")
+                            st.caption("Source: stock_daily")
                     
                     with tab2:
                         normalize = st.toggle("归一化价格 (首日=100)", value=True, key="stock_normalize")
@@ -2431,6 +2865,7 @@ elif category_config["key"] == "stock_edu":
                         fig_lines = plot_price_lines(df_pivot, normalize=normalize, name_map=name_map)
                         if fig_lines:
                             st.plotly_chart(fig_lines, use_container_width=True, key="stock_price_lines")
+                            st.caption("Source: stock_daily")
                     
                     with tab3:
                         col1, col2 = st.columns(2)
@@ -2438,10 +2873,12 @@ elif category_config["key"] == "stock_edu":
                             fig_dist = plot_return_distribution(df_returns, name_map=name_map)
                             if fig_dist:
                                 st.plotly_chart(fig_dist, use_container_width=True, key="stock_return_dist")
+                                st.caption("Source: stock_daily")
                         with col2:
                             fig_vol = plot_volatility_comparison(df_stats, name_map=name_map)
                             if fig_vol:
                                 st.plotly_chart(fig_vol, use_container_width=True, key="stock_vol_compare")
+                                st.caption("Source: stock_daily")
                     
                     with tab4:
                         st.dataframe(
@@ -2470,23 +2907,24 @@ elif category_config["key"] == "stock_edu":
         render_header("第3层：分析估值指标", "valuation")
         
         # 教育内容
-        st.markdown("""
-        ### 💰 核心估值指标
-        
-        **市盈率 (PE - Price to Earnings)**
-        - 公式：股价 / 每股收益 = 总市值 / 净利润
-        - 含义：投资者愿意为每1元利润支付多少钱
-        - PE高可能意味着高成长预期，也可能是高估
-        
-        **市净率 (PB - Price to Book)**
-        - 公式：股价 / 每股净资产 = 总市值 / 净资产
-        - 适用于重资产行业（银行、地产）
-        - PB<1 可能意味着被低估
-        
-        **换手率 (Turnover Rate)**
-        - 公式：成交量 / 流通股本 × 100%
-        - 反映股票活跃度和市场情绪
-        """)
+        with st.expander("📘 相关知识：核心估值指标"):
+            st.markdown("""
+            ### 💰 核心估值指标
+            
+            **市盈率 (PE - Price to Earnings)**
+            - 公式：股价 / 每股收益 = 总市值 / 净利润
+            - 含义：投资者愿意为每1元利润支付多少钱
+            - PE高可能意味着高成长预期，也可能是高估
+            
+            **市净率 (PB - Price to Book)**
+            - 公式：股价 / 每股净资产 = 总市值 / 净资产
+            - 适用于重资产行业（银行、地产）
+            - PB<1 可能意味着被低估
+            
+            **换手率 (Turnover Rate)**
+            - 公式：成交量 / 流通股本 × 100%
+            - 反映股票活跃度和市场情绪
+            """)
         
         st.divider()
         
@@ -2520,6 +2958,7 @@ elif category_config["key"] == "stock_edu":
                         fig_pe = plot_pe_timeseries(df_valuation, sel_codes, name_map)
                         if fig_pe:
                             st.plotly_chart(fig_pe, use_container_width=True, key="stock_pe_line")
+                            st.caption("Source: daily_basic")
                         
                         st.caption("PE-TTM：滚动12个月净利润计算的市盈率，更能反映最新盈利状况。")
                     
@@ -2527,6 +2966,7 @@ elif category_config["key"] == "stock_edu":
                         fig_pb = plot_pb_timeseries(df_valuation, sel_codes, name_map)
                         if fig_pb:
                             st.plotly_chart(fig_pb, use_container_width=True, key="stock_pb_line")
+                            st.caption("Source: daily_basic")
                     
                     with tab3:
                         col1, col2 = st.columns(2)
@@ -2534,10 +2974,12 @@ elif category_config["key"] == "stock_edu":
                             fig_pe_box = plot_valuation_boxplot(df_valuation, 'pe_ttm', name_map)
                             if fig_pe_box:
                                 st.plotly_chart(fig_pe_box, use_container_width=True, key="stock_pe_box")
+                                st.caption("Source: daily_basic")
                         with col2:
                             fig_pb_box = plot_valuation_boxplot(df_valuation, 'pb', name_map)
                             if fig_pb_box:
                                 st.plotly_chart(fig_pb_box, use_container_width=True, key="stock_pb_box")
+                                st.caption("Source: daily_basic")
                     
                     with tab4:
                         st.dataframe(
@@ -2568,23 +3010,24 @@ elif category_config["key"] == "stock_edu":
         render_header("第4层：行业分析与选股", "industry")
         
         # 教育内容
-        st.markdown("""
-        ### 🏭 行业分析框架
-        
-        **为什么要分析行业？**
-        - 不同行业有不同的商业周期和估值逻辑
-        - 行业轮动是重要的投资策略
-        - 分散投资于低相关行业可以降低组合风险
-        
-        **关键指标**：
-        - **行业PE中位数**：反映行业整体估值水平
-        - **行业收益率**：衡量行业表现
-        - **行业相关性**：用于构建分散组合
-        
-        **风险-收益分析**：
-        - 高收益伴随高风险是普遍规律
-        - 夏普比率 = (收益率 - 无风险收益率) / 波动率
-        """)
+        with st.expander("📘 相关知识：行业分析框架"):
+            st.markdown("""
+            ### 🏭 行业分析框架
+            
+            **为什么要分析行业？**
+            - 不同行业有不同的商业周期和估值逻辑
+            - 行业轮动是重要的投资策略
+            - 分散投资于低相关行业可以降低组合风险
+            
+            **关键指标**：
+            - **行业PE中位数**：反映行业整体估值水平
+            - **行业收益率**：衡量行业表现
+            - **行业相关性**：用于构建分散组合
+            
+            **风险-收益分析**：
+            - 高收益伴随高风险是普遍规律
+            - 夏普比率 = (收益率 - 无风险收益率) / 波动率
+            """)
         
         st.divider()
         
@@ -2598,8 +3041,15 @@ elif category_config["key"] == "stock_edu":
             end_date = st.date_input("结束", default_end.date(), key="stock_ind_end")
             
             st.markdown("**行业筛选**")
-            all_industries = df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist()
-            sel_industries = st.multiselect("选择行业", all_industries, default=all_industries[:10], key="stock_ind_select")
+            all_industries = sorted(df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist())
+            
+            # Checkboxes with defaults
+            sel_industries = []
+            default_industries = all_industries[:10]
+            
+            for ind in all_industries[:25]:  # Limit display
+                if st.checkbox(ind, value=ind in default_industries, key=f"stock_ind_sel_{ind}"):
+                    sel_industries.append(ind)
         
         if not sel_industries:
             st.info("请选择至少一个行业进行分析。")
@@ -2628,6 +3078,7 @@ elif category_config["key"] == "stock_edu":
                             fig_ind_val = plot_industry_valuation(df_industry_val)
                             if fig_ind_val:
                                 st.plotly_chart(fig_ind_val, use_container_width=True, key="stock_ind_val")
+                                st.caption("Source: daily_basic, stock_basic")
                             
                             st.subheader("行业估值一览")
                             st.dataframe(df_industry_val, use_container_width=True, hide_index=True)
@@ -2641,6 +3092,7 @@ elif category_config["key"] == "stock_edu":
                             fig_heatmap = plot_industry_returns_heatmap(df_ind_daily)
                             if fig_heatmap:
                                 st.plotly_chart(fig_heatmap, use_container_width=True, key="stock_ind_ret")
+                                st.caption("Source: stock_daily")
                     else:
                         st.warning("无法获取行情数据。")
                 
@@ -2653,6 +3105,7 @@ elif category_config["key"] == "stock_edu":
                                 fig_corr = plot_industry_correlation_heatmap(df_corr)
                                 if fig_corr:
                                     st.plotly_chart(fig_corr, use_container_width=True, key="stock_ind_corr")
+                                    st.caption("Source: stock_daily")
                                 
                                 st.caption("低相关性的行业组合可以有效分散风险。")
                 
@@ -2666,6 +3119,7 @@ elif category_config["key"] == "stock_edu":
                             fig_rr = plot_risk_return_scatter(df_stats, name_map)
                             if fig_rr:
                                 st.plotly_chart(fig_rr, use_container_width=True, key="stock_risk_return")
+                                st.caption("Source: stock_daily")
                             
                             st.markdown("""
                             **如何解读风险-收益图：**
@@ -2710,18 +3164,19 @@ elif category_config["key"] == "market_insights":
     if subcategory_key == "mkt_valuation":
         render_header("市场估值分析", "gauge")
         
-        st.markdown("""
-        ### 📊 什么是市场估值？
-        
-        **市盈率 (PE)** 是衡量整个市场估值水平的核心指标：
-        - PE = 总市值 / 总净利润
-        - PE偏高可能意味着市场估值过热
-        - PE偏低可能意味着市场被低估
-        
-        **PE历史分位数**：当前PE在历史中处于什么位置
-        - 低于30%分位：历史低估区域
-        - 高于70%分位：历史高估区域
-        """)
+        with st.expander("📘 相关知识：什么是市场估值？"):
+            st.markdown("""
+            ### 📊 什么是市场估值？
+            
+            **市盈率 (PE)** 是衡量整个市场估值水平的核心指标：
+            - PE = 总市值 / 总净利润
+            - PE偏高可能意味着市场估值过热
+            - PE偏低可能意味着市场被低估
+            
+            **PE历史分位数**：当前PE在历史中处于什么位置
+            - 低于30%分位：历史低估区域
+            - 高于70%分位：历史高估区域
+            """)
         
         st.divider()
         
@@ -2730,16 +3185,21 @@ elif category_config["key"] == "market_insights":
         
         with left_col:
             st.markdown("**日期范围**")
-            hist_years = st.selectbox("历史数据", [1, 3, 5, 10], index=2, format_func=lambda x: f"{x}年", key="mkt_pe_years")
+            hist_years = st.radio("历史数据", [1, 3, 5, 10], index=2, format_func=lambda x: f"{x}年", key="mkt_pe_years", horizontal=True)
             hist_start = default_end - timedelta(days=365*hist_years)
             
             st.markdown("**板块选择**")
-            # 主要板块
+            # 主要板块 - Checkboxes for multi-select
             main_codes = ['SH_A', 'SZ_GEM', 'SH_STAR', 'SZ_MAIN']
             available_codes = [c for c, n in get_available_market_codes() if c in main_codes]
             if not available_codes:
                 available_codes = ['SH_A', 'SZ_A']
-            sel_codes = st.multiselect("板块", available_codes, default=available_codes[:3], format_func=lambda x: MARKET_CODES.get(x, x), key="mkt_pe_codes")
+            
+            # Checkboxes for multi-selection
+            sel_codes = []
+            for code in available_codes:
+                if st.checkbox(MARKET_CODES.get(code, code), value=code == 'SH_A', key=f"mkt_pe_cb_{code}"):
+                    sel_codes.append(code)
         
         if not sel_codes:
             st.info("请选择至少一个板块进行分析。")
@@ -2759,6 +3219,7 @@ elif category_config["key"] == "market_insights":
                         fig_pe = plot_pe_trend(df_info, sel_codes)
                         if fig_pe:
                             st.plotly_chart(fig_pe, use_container_width=True, key="mkt_pe_trend")
+                            st.caption("Source: daily_info")
                         
                         st.caption("PE走势反映市场整体估值变化，可用于判断市场周期位置。")
                     
@@ -2776,6 +3237,7 @@ elif category_config["key"] == "market_insights":
                                     )
                                     if fig_gauge:
                                         st.plotly_chart(fig_gauge, use_container_width=True, key=f"mkt_pe_gauge_{i}_{code}")
+                                        st.caption("Source: daily_info")
                         
                         st.markdown("""
                         **如何解读PE分位数：**
@@ -2788,28 +3250,31 @@ elif category_config["key"] == "market_insights":
                         fig_bar = plot_pe_comparison_bar(df_info)
                         if fig_bar:
                             st.plotly_chart(fig_bar, use_container_width=True, key="mkt_pe_bar")
+                            st.caption("Source: daily_info")
                         
                         # 市值走势
                         fig_mv = plot_market_mv_trend(df_info, sel_codes)
                         if fig_mv:
                             st.plotly_chart(fig_mv, use_container_width=True, key="mkt_mv_trend")
+                            st.caption("Source: daily_info")
     
     # --- 市场情绪 ---
     elif subcategory_key == "mkt_sentiment":
         render_header("市场情绪分析", "pulse")
         
-        st.markdown("""
-        ### 📈 市场情绪指标
-        
-        **成交额**反映市场活跃程度：
-        - 放量上涨：多方力量强劲
-        - 缩量下跌：空方力量衰竭，可能见底
-        - 天量见天价：警惕风险
-        
-        **换手率**反映市场交易频率：
-        - 高换手率：市场情绪高涨或有大资金进出
-        - 低换手率：市场冷淡
-        """)
+        with st.expander("📘 相关知识：市场情绪指标"):
+            st.markdown("""
+            ### 📈 市场情绪指标
+            
+            **成交额**反映市场活跃程度：
+            - 放量上涨：多方力量强劲
+            - 缩量下跌：空方力量衰竭，可能见底
+            - 天量见天价：警惕风险
+            
+            **换手率**反映市场交易频率：
+            - 高换手率：市场情绪高涨或有大资金进出
+            - 低换手率：市场冷淡
+            """)
         
         st.divider()
         
@@ -2818,65 +3283,156 @@ elif category_config["key"] == "market_insights":
         
         with left_col:
             st.markdown("**日期范围**")
-            sent_years = st.selectbox("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_sent_years")
-            sent_start = default_end - timedelta(days=365*sent_years)
+            date_mode = st.radio("选择方式", ["预设", "自定义"], index=0, key="mkt_sent_date_mode", horizontal=True)
+            
+            if date_mode == "预设":
+                sent_years = st.radio("时间跨度", [1, 2, 3, 5, 10], index=1, format_func=lambda x: f"{x}年", key="mkt_sent_years", horizontal=True)
+                sent_start = default_end - timedelta(days=365*sent_years)
+            else:
+                from datetime import date
+                col1, col2 = st.columns(2)
+                with col1:
+                    sent_start = st.date_input("开始日期", value=default_end - timedelta(days=365*2), key="mkt_sent_start")
+                with col2:
+                    sent_end_input = st.date_input("结束日期", value=default_end, key="mkt_sent_end_input")
+                default_end = sent_end_input
             
             st.markdown("**板块选择**")
-            sel_code = st.selectbox("选择板块", ['SH_A', 'SZ_A', 'SZ_GEM', 'SH_STAR'], format_func=lambda x: MARKET_CODES.get(x, x), key="mkt_sent_code")
+            
+            # daily_info 板块 (亿元)
+            st.markdown("<small>*上海/深交所数据*</small>", unsafe_allow_html=True)
+            daily_codes = ['SH_MARKET', 'SZ_MARKET', 'SH_A', 'SZ_GEM', 'SH_STAR', 'SH_FUND']
+            sel_daily_codes = []
+            for code in daily_codes:
+                if st.checkbox(MARKET_CODES.get(code, code), value=code in ['SH_A', 'SZ_GEM'], key=f"mkt_sent_daily_{code}"):
+                    sel_daily_codes.append(code)
+            
+            # sz_daily_info 板块 (需要转换)
+            st.markdown("<small>*深交所分类*</small>", unsafe_allow_html=True)
+            sz_codes = ['股票', '创业板A股', '主板A股', '债券', '基金']
+            sel_sz_codes = []
+            for code in sz_codes:
+                from market_insights_loader import SZ_DAILY_CODES
+                if st.checkbox(SZ_DAILY_CODES.get(code, code), value=False, key=f"mkt_sent_sz_{code}"):
+                    sel_sz_codes.append(code)
         
-        with st.spinner('正在加载数据...'):
-            start_str = sent_start.strftime('%Y%m%d')
-            end_str = default_end.strftime('%Y%m%d')
-            df_info = load_daily_info(start_str, end_str, [sel_code])
-        
-        if df_info.empty:
-            st.warning("无法获取市场统计数据。")
+        if not sel_daily_codes and not sel_sz_codes:
+            st.info("请选择至少一个板块进行分析。")
         else:
-            with right_col:
-                tab1, tab2, tab3 = st.tabs(["📊 成交额走势", "🔥 换手率热力图", "📈 量价关系"])
+            with st.spinner('正在加载数据...'):
+                start_str = sent_start.strftime('%Y%m%d')
+                end_str = default_end.strftime('%Y%m%d')
                 
-                with tab1:
-                    fig_amount = plot_amount_trend(df_info, sel_code)
-                    if fig_amount:
-                        st.plotly_chart(fig_amount, use_container_width=True, key="mkt_amount")
-                    
-                    st.caption("成交额突破均线往往预示着趋势变化。")
+                # 加载 daily_info 数据
+                import pandas as pd
+                df_daily = pd.DataFrame()
+                if sel_daily_codes:
+                    df_daily = load_daily_info(start_str, end_str, sel_daily_codes)
+                    if not df_daily.empty:
+                        df_daily = df_daily[['trade_date', 'ts_code', 'market_name', 'amount', 'pe', 'tr']].copy()
+                        df_daily['source'] = 'daily_info'
                 
-                with tab2:
-                    fig_tr = plot_turnover_heatmap(df_info, sel_code)
-                    if fig_tr:
-                        st.plotly_chart(fig_tr, use_container_width=True, key="mkt_tr_heatmap")
-                    
-                    st.caption("通过月度换手率热力图观察市场情绪的季节性规律。")
+                # 加载 sz_daily_info 数据
+                df_sz = pd.DataFrame()
+                if sel_sz_codes:
+                    from market_insights_loader import load_sz_daily_info, SZ_DAILY_CODES
+                    df_sz = load_sz_daily_info(start_str, end_str, sel_sz_codes)
+                    if not df_sz.empty:
+                        df_sz = df_sz[['trade_date', 'ts_code', 'market_name', 'amount']].copy()
+                        df_sz['pe'] = None
+                        df_sz['tr'] = None
+                        df_sz['source'] = 'sz_daily_info'
                 
-                with tab3:
-                    fig_vp = plot_volume_price_scatter(df_info, sel_code)
-                    if fig_vp:
-                        st.plotly_chart(fig_vp, use_container_width=True, key="mkt_vp_scatter")
+                # 合并数据
+                if not df_daily.empty and not df_sz.empty:
+                    df_info = pd.concat([df_daily, df_sz], ignore_index=True)
+                elif not df_daily.empty:
+                    df_info = df_daily
+                elif not df_sz.empty:
+                    df_info = df_sz
+                else:
+                    df_info = pd.DataFrame()
+            
+            if df_info.empty:
+                st.warning("无法获取市场统计数据。")
+            else:
+                # Get all selected codes (combined)
+                all_sel_codes = sel_daily_codes + sel_sz_codes
+                
+                with right_col:
+                    tab1, tab2, tab3 = st.tabs(["📊 成交额走势", "🔥 换手率热力图", "📈 量价关系"])
                     
-                    st.markdown("""
-                    **量价关系洞察：**
-                    - 成交额与PE变化的关系反映资金推动效果
-                    - 放量时PE上涨幅度可观察市场效率
-                    """)
+                    with tab1:
+                        # 绘制所有选中板块的成交额走势
+                        import plotly.express as px
+                        
+                        fig_amount = px.line(
+                            df_info.sort_values('trade_date'),
+                            x='trade_date', 
+                            y='amount',
+                            color='market_name',
+                            title='成交额走势对比 (单位: 亿元)'
+                        )
+                        fig_amount.update_layout(
+                            xaxis_title='日期',
+                            yaxis_title='成交额 (亿元)',
+                            legend_title='板块',
+                            height=500
+                        )
+                        st.plotly_chart(fig_amount, use_container_width=True, key="mkt_sent_amount_combined")
+                        st.caption("Source: daily_info, sz_daily_info")
+                        st.caption("成交额突破均线往往预示着趋势变化。")
+                    
+                    with tab2:
+                        # 只显示有换手率数据的板块
+                        df_with_tr = df_info[df_info['tr'].notna()]
+                        if df_with_tr.empty:
+                            st.info("选中的板块没有换手率数据。")
+                        else:
+                            for sel_code in sel_daily_codes:
+                                fig_tr = plot_turnover_heatmap(df_with_tr, sel_code)
+                                if fig_tr:
+                                    st.plotly_chart(fig_tr, use_container_width=True, key=f"mkt_tr_heatmap_{sel_code}")
+                                    st.caption(f"Source: daily_info ({MARKET_CODES.get(sel_code, sel_code)})")
+                        
+                        st.caption("通过月度换手率热力图观察市场情绪的季节性规律。")
+                    
+                    with tab3:
+                        # 只显示有PE数据的板块
+                        df_with_pe = df_info[df_info['pe'].notna()]
+                        if df_with_pe.empty:
+                            st.info("选中的板块没有PE数据。")
+                        else:
+                            for sel_code in sel_daily_codes:
+                                fig_vp = plot_volume_price_scatter(df_with_pe, sel_code)
+                                if fig_vp:
+                                    st.plotly_chart(fig_vp, use_container_width=True, key=f"mkt_vp_scatter_{sel_code}")
+                                    st.caption(f"Source: daily_info ({MARKET_CODES.get(sel_code, sel_code)})")
+                        
+                        st.markdown("""
+                        **量价关系洞察：**
+                        - 成交额与PE变化的关系反映资金推动效果
+                        - 放量时PE上涨幅度可观察市场效率
+                        """)
     
     # --- 全球比较 ---
     elif subcategory_key == "mkt_global":
         render_header("全球市场比较", "globe")
         
-        st.markdown("""
-        ### 🌍 为什么要关注全球市场？
-        
-        **全球化联动**：
-        - 美股对A股有一定领先作用
-        - 风险事件往往跨市场传导
-        - 相关性分析有助于全球资产配置
-        
-        **主要指数**：
-        - 🇨🇳 富时A50、恒生指数
-        - 🇺🇸 道琼斯、标普500、纳斯达克
-        - 🇯🇵 日经225 | 🇩🇪 德国DAX | 🇬🇧 富时100
-        """)
+        with st.expander("📘 相关知识：全球市场"):
+            st.markdown("""
+            ### 🌍 为什么要关注全球市场？
+            
+            **全球化联动**：
+            - 美股对A股有一定领先作用
+            - 风险事件往往跨市场传导
+            - 相关性分析有助于全球资产配置
+            
+            **主要指数**：
+            - 🇨🇳 富时A50、恒生指数
+            - 🇺🇸 道琼斯、标普500、纳斯达克
+            - 🇯🇵 日经225 | 🇩🇪 德国DAX | 🇬🇧 富时100
+            """)
         
         st.divider()
         
@@ -2885,7 +3441,7 @@ elif category_config["key"] == "market_insights":
         
         with left_col:
             st.markdown("**日期范围**")
-            global_years = st.selectbox("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_global_years")
+            global_years = st.radio("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_global_years", horizontal=True)
             global_start = default_end - timedelta(days=365*global_years)
             
             st.markdown("**指数选择**")
@@ -2895,7 +3451,7 @@ elif category_config["key"] == "market_insights":
             from market_insights_loader import get_index_display_name
             
             # 分组展示
-            st.markdown("*亚太地区*")
+            st.markdown("<small>*亚太地区*</small>", unsafe_allow_html=True)
             asia_indices = ['XIN9', 'HSI', 'HKTECH', 'N225', 'KS11', 'TWII', 'AS51', 'SENSEX']
             sel_asia = []
             for idx in asia_indices:
@@ -2903,7 +3459,7 @@ elif category_config["key"] == "market_insights":
                     if st.checkbox(get_index_display_name(idx), value=idx in ['XIN9', 'HSI', 'N225'], key=f"cb_{idx}"):
                         sel_asia.append(idx)
             
-            st.markdown("*欧美地区*")
+            st.markdown("<small>*欧美地区*</small>", unsafe_allow_html=True)
             west_indices = ['DJI', 'SPX', 'IXIC', 'RUT', 'FTSE', 'GDAXI', 'FCHI', 'CSX5P', 'SPTSX']
             sel_west = []
             for idx in west_indices:
@@ -2911,7 +3467,7 @@ elif category_config["key"] == "market_insights":
                     if st.checkbox(get_index_display_name(idx), value=idx in ['DJI', 'SPX', 'IXIC'], key=f"cb_{idx}"):
                         sel_west.append(idx)
             
-            st.markdown("*新兴市场*")
+            st.markdown("<small>*新兴市场*</small>", unsafe_allow_html=True)
             em_indices = ['IBOVESPA', 'RTS', 'CKLSE', 'HKAH']
             sel_em = []
             for idx in em_indices:
@@ -2942,6 +3498,7 @@ elif category_config["key"] == "market_insights":
                         fig_lines = plot_global_indices_comparison(df_pivot)
                         if fig_lines:
                             st.plotly_chart(fig_lines, use_container_width=True, key="mkt_global_lines")
+                            st.caption("Source: index_global")
                         
                         st.caption("归一化后可直观对比各指数的相对表现（起点=100）。")
                         
