@@ -10,9 +10,10 @@ from datetime import date
 from dashboard.components.headers import render_header
 
 # Import data loaders and charts
-from dashboard.data_loader import load_pmi_data, load_sf_data, load_m_data
+from dashboard.data_loader import load_pmi_data, load_sf_data, load_m_data, load_gdp_data
 from dashboard.charts import (plot_pmi_trend, plot_sub_indicators_bar, plot_heatmap, 
-                    plot_sf_charts, plot_m_levels, plot_m_yoy, plot_m_mom)
+                    plot_sf_charts, plot_m_levels, plot_m_yoy, plot_m_mom,
+                    plot_gdp_trend, plot_gdp_yoy)
 
 # Import Price Index modules
 from dashboard.price_index_data_loader import (
@@ -40,8 +41,59 @@ def render_macro_page(subcategory_key):
         mask = (df['month'].dt.date >= start) & (df['month'].dt.date <= end)
         return df.loc[mask]
 
+    # --- GDP Sub-category ---
+    if subcategory_key == "gdp":
+        with st.spinner('Loading GDP data...'):
+            df_gdp = load_gdp_data()
+        
+        render_header("Gross Domestic Product (GDP)", "gdp")
+        
+        if not df_gdp.empty and 'quarter_date' in df_gdp.columns:
+            min_date = df_gdp['quarter_date'].min().date()
+            max_date = df_gdp['quarter_date'].max().date()
+        else:
+            min_date, max_date = date(1990, 1, 1), date.today()
+            
+        left_col, right_col = st.columns([1, 7])
+        
+        with left_col:
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date, key="gdp_start")
+            end_date = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date, key="gdp_end")
+            
+        # Filter helper for quarter_date
+        def filter_gdp(df, start, end):
+             if df.empty or 'quarter_date' not in df.columns: return df
+             mask = (df['quarter_date'].dt.date >= start) & (df['quarter_date'].dt.date <= end)
+             return df.loc[mask]
+
+        df_gdp_f = filter_gdp(df_gdp, start_date, end_date)
+        
+        with right_col:
+            if df_gdp_f.empty:
+                 st.warning("No GDP data available")
+            else:
+                 tab1, tab2 = st.tabs(["Trends", "Raw Data"])
+                 with tab1:
+                     st.subheader("GDP Growth & Structure")
+                     fig_trend = plot_gdp_trend(df_gdp_f)
+                     if fig_trend:
+                         st.plotly_chart(fig_trend, use_container_width=True)
+                         st.caption("Source: cn_gdp")
+                     
+                     st.markdown("---")
+                     
+                     st.subheader("YoY Growth Rate")
+                     fig_yoy = plot_gdp_yoy(df_gdp_f)
+                     if fig_yoy:
+                         st.plotly_chart(fig_yoy, use_container_width=True)
+                         st.caption("Source: cn_gdp")
+                         
+                 with tab2:
+                     st.dataframe(df_gdp_f.sort_values('quarter_date', ascending=False), use_container_width=True)
+
     # --- PMI Sub-category ---
-    if subcategory_key == "pmi":
+    elif subcategory_key == "pmi":
         with st.spinner('Loading PMI data...'):
             df_pmi = load_pmi_data()
             

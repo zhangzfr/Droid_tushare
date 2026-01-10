@@ -104,3 +104,48 @@ def load_m_data():
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
     return df.sort_values('month')
+
+
+@st.cache_data
+def load_gdp_data():
+    """Fetch and preprocess GDP data from DuckDB."""
+    conn = get_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        df = conn.execute("SELECT * FROM cn_gdp").fetchdf()
+    except Exception as e:
+        st.error(f"Error executing query: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
+    if df.empty:
+        return df
+
+    # Convert 'quarter' (e.g., 2023Q1 or 20230101) to datetime
+    if 'quarter' in df.columns:
+        # Helper to convert Tushare quarter string to datetime (end of quarter)
+        def parse_quarter(q_str):
+            if pd.isna(q_str): return pd.NaT
+            q_str = str(q_str)
+            try:
+                # Try YYYYQN format (e.g. 2023Q1)
+                if 'Q' in q_str.upper():
+                    return pd.Period(q_str, freq='Q').to_timestamp(how='end')
+                # Try YYYYMMDD format (e.g. 20230101)
+                else:
+                    return pd.to_datetime(q_str, format='%Y%m%d', errors='coerce')
+            except:
+                return pd.NaT
+        
+        df['quarter_date'] = df['quarter'].apply(parse_quarter)
+
+    # Preprocessing numeric columns
+    numeric_cols = ['gdp', 'gdp_yoy', 'pi', 'pi_yoy', 'si', 'si_yoy', 'ti', 'ti_yoy']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    return df.sort_values('quarter_date')

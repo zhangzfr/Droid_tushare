@@ -40,6 +40,7 @@ def plot_pmi_trend(df):
     
     fig.update_layout(
         legend_title_text='PMI Indices',
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
@@ -149,7 +150,11 @@ def plot_sf_charts(df):
     
     for fig in [fig_inc, fig_cum, fig_stk]:
         if fig:
-            fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            fig.update_layout(
+                legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+                paper_bgcolor='rgba(0,0,0,0)', 
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
     
     return fig_inc, fig_cum, fig_stk
 
@@ -166,7 +171,11 @@ def plot_m_levels(df):
                  title='Money Supply: M0, M1, M2 Levels',
                  labels={'month': 'Date', 'value': 'Level', 'variable': 'Category'},
                  barmode='group')
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 def plot_m_yoy(df):
@@ -184,7 +193,11 @@ def plot_m_yoy(df):
     
     names = {'m0_yoy': 'M0 YoY', 'm1_yoy': 'M1 YoY', 'm2_yoy': 'M2 YoY'}
     fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 def plot_m_mom(df):
@@ -202,7 +215,75 @@ def plot_m_mom(df):
     
     names = {'m0_mom': 'M0 MoM', 'm1_mom': 'M1 MoM', 'm2_mom': 'M2 MoM'}
     fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+
+def plot_gdp_trend(df):
+    """Plot GDP absolute value and structure (PI, SI, TI)."""
+    if df.empty:
+        return None
+    
+    # Ensure date column exists
+    if 'quarter_date' not in df.columns:
+        return None
+        
+    df = df.sort_values('quarter_date')
+    
+    # Primary, Secondary, Tertiary Industry
+    cols = ['pi', 'si', 'ti']
+    valid_cols = [c for c in cols if c in df.columns]
+    
+    if not valid_cols:
+         # Fallback to just GDP if components missing
+         if 'gdp' in df.columns:
+             fig = px.bar(df, x='quarter_date', y='gdp', title='China GDP (Accumulated)')
+             fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+             return fig
+         return None
+
+    # Stacked bar for structure
+    fig = px.bar(df, x='quarter_date', y=valid_cols, 
+                 title='China GDP Composition (Accumulated)',
+                 labels={'quarter_date': 'Quarter', 'value': 'GDP (100 Million RMB)', 'variable': 'Industry'},
+                 barmode='stack')
+    
+    # Customize names
+    names = {'pi': 'Primary Industry', 'si': 'Secondary Industry', 'ti': 'Tertiary Industry'}
+    fig.for_each_trace(lambda t: t.update(name = names.get(t.name, t.name)))
+    
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+
+def plot_gdp_yoy(df):
+    """Plot GDP YoY Growth."""
+    if df.empty or 'gdp_yoy' not in df.columns:
+        return None
+        
+    if 'quarter_date' not in df.columns:
+        return None
+        
+    df = df.sort_values('quarter_date')
+    
+    fig = px.line(df, x='quarter_date', y='gdp_yoy',
+                  title='GDP YoY Growth (%)',
+                  labels={'quarter_date': 'Quarter', 'gdp_yoy': 'YoY (%)'},
+                  markers=True)
+    
+    fig.update_layout(
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 

@@ -66,6 +66,7 @@ NAVIGATION = {
         "key": "macro",
         "icon": "macro",
         "subcategories": {
+            "GDP Data": {"key": "gdp", "icon": "gdp"},
             "PMI Index": {"key": "pmi", "icon": "pmi"},
             "Money Supply": {"key": "money_supply", "icon": "money"},
             "Social Financing": {"key": "social_financing", "icon": "social"},

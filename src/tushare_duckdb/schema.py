@@ -697,6 +697,20 @@ TABLE_SCHEMAS = {
             PRIMARY KEY (ts_code, trade_date)
         )""",
 
+    'cn_gdp': """
+        CREATE TABLE cn_gdp (
+            quarter VARCHAR NOT NULL,      -- 季度
+            gdp DOUBLE,                    -- GDP累计值（亿元）
+            gdp_yoy DOUBLE,                -- GDP同比增速（%）
+            pi DOUBLE,                     -- 第一产业累计值（亿元）
+            pi_yoy DOUBLE,                 -- 第一产业同比增速（%）
+            si DOUBLE,                     -- 第二产业累计值（亿元）
+            si_yoy DOUBLE,                 -- 第二产业同比增速（%）
+            ti DOUBLE,                     -- 第三产业累计值（亿元）
+            ti_yoy DOUBLE,                 -- 第三产业同比增速（%）
+            PRIMARY KEY (quarter)
+        )""",
+
     'index_weight': """
         CREATE TABLE index_weight (
             index_code VARCHAR NOT NULL,   -- 指数代码
