@@ -24,6 +24,7 @@ quant-ml-qlib
 
 # 5. Exclude utils diretory
 utils/
+extension/
 docs/Tushare/
 
 # --- General Python Environment ---
