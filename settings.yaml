@@ -44,92 +44,9 @@
 #
 # ============================================================================
 
-stock_list:
-  db_path: ${DB_ROOT}/tushare_duck_basic.db
-  list_exchange: SSE
-  tables:
-    stock_basic:
-      fields:
-      - ts_code
-      - symbol
-      - name
-      - area
-      - industry
-      - fullname
-      - enname
-      - cnspell
-      - market
-      - exchange
-      - curr_type
-      - list_status
-      - list_date
-      - delist_date
-      - is_hs
-      - act_name
-      - act_ent_type
-      unique_keys:
-      - ts_code
-      date_column: list_date
-      date_type: trade
-      earliest_date: '19900101'
-      requires_paging: false
-      requires_date: false
-      required_params:
-        list_status:
-        - L
-        - D
-        - P
-      statistics_queries:
-        - label: "股票上市状态分布"
-          query: "SELECT list_status, count(*) as count FROM stock_basic GROUP BY 1"
-          map: {"L": "上市", "D": "退市", "P": "暂停上市"}
-        - label: "最近18个月上市/退市趋势(Top 18)"
-          query: |
-            SELECT 
-              strftime(strptime(list_date, '%Y%m%d'), '%Y-%m') as month,
-              count(CASE WHEN list_status = 'L' THEN 1 END) as New_Listed,
-              count(CASE WHEN list_status = 'D' THEN 1 END) as Delisted
-            FROM stock_basic 
-            WHERE list_date IS NOT NULL AND list_date != '' 
-              AND strptime(list_date, '%Y%m%d') >= (current_date - interval 18 month)
-            GROUP BY 1 ORDER BY 1 DESC LIMIT 18
-    stock_company:
-      fields:
-      - ts_code
-      - com_name
-      - com_id
-      - exchange
-      - chairman
-      - manager
-      - secretary
-      - reg_capital
-      - setup_date
-      - province
-      - city
-      - introduction
-      - website
-      - email
-      - office
-      - employees
-      - main_business
-      - business_scope
-      unique_keys:
-      - ts_code
-      date_column: setup_date
-      earliest_date: '19900101'
-      requires_date: false
-      requires_paging: false
-      required_params:
-        exchange:
-        - SSE
-        - SZSE
-      statistics_queries:
-        - label: "各交易所上市公司分布"
-          query: "SELECT exchange, count(*) FROM stock_company GROUP BY 1"
-        - label: "各省份上市公司分布TOP10"
-          query: "SELECT province, count(*) FROM stock_company GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+
 stock_events:
-  db_path: ${DB_ROOT}/tushare_duck_basic.db
+  db_path: ${DB_ROOT}/tushare_duck_stock.db
   list_exchange: SSE
   tables:
     namechange:
@@ -241,9 +158,86 @@ stock_events:
       date_column: cal_date
       date_type: natural
       date_param_mode: range
+
 stock:
   db_path: ${DB_ROOT}/tushare_duck_stock.db
+  list_exchange: SSE
   tables:
+    stock_basic:
+      fields:
+      - ts_code
+      - symbol
+      - name
+      - area
+      - industry
+      - fullname
+      - enname
+      - cnspell
+      - market
+      - exchange
+      - curr_type
+      - list_status
+      - list_date
+      - delist_date
+      - is_hs
+      - act_name
+      - act_ent_type
+      unique_keys:
+      - ts_code
+      date_column: list_date
+      date_type: trade
+      earliest_date: '19900101'
+      requires_paging: false
+      requires_date: false
+      required_params:
+        list_status:
+        - L
+        - D
+        - P
+      statistics_queries:
+        - label: "股票上市状态分布"
+          query: "SELECT list_status, count(*) as count FROM stock_basic GROUP BY 1"
+          map: {"L": "上市", "D": "退市", "P": "暂停上市"}
+        - label: "最近18个月上市/退市趋势(Top 18)"
+          query: |
+            SELECT 
+              strftime(strptime(list_date, '%Y%m%d'), '%Y-%m') as month,
+              count(CASE WHEN list_status = 'L' THEN 1 END) as New_Listed,
+              count(CASE WHEN list_status = 'D' THEN 1 END) as Delisted
+            FROM stock_basic 
+            WHERE list_date IS NOT NULL AND list_date != '' 
+              AND strptime(list_date, '%Y%m%d') >= (current_date - interval 18 month)
+            GROUP BY 1 ORDER BY 1 DESC LIMIT 18
+    stock_company:
+      fields:
+      - ts_code
+      - com_name
+      - com_id
+      - chairman
+      - manager
+      - secretary
+      - reg_capital
+      - setup_date
+      - province
+      - city
+      - introduction
+      - website
+      - email
+      - office
+      - business_scope
+      - employees
+      - main_business
+      limit: 4000
+      earliest_date: '19900101'
+      requires_paging: true
+      requires_date: false
+      unique_keys:
+      - ts_code
+      date_column: setup_date
+      date_type: trade
+      statistics_queries:
+        - label: "上市公司省份分布(Top 10)"
+          query: "SELECT province, count(*) as count FROM stock_company WHERE province IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
     daily:
       fields:
       - ts_code
@@ -784,7 +778,7 @@ index_member:
       #   - h30066.CSI
       #   - h30067.CSI
 
-index_market:
+index:
   db_path: ${DB_ROOT}/tushare_duck_index.db
   tables:
     index_daily:
@@ -827,6 +821,62 @@ index_market:
       date_column: trade_date
       date_type: trade
       date_param_mode: range
+    ths_index:
+      api_table: ths_index
+      unique_keys:
+      - ts_code
+      fields:
+      - ts_code
+      - name
+      - count
+      - exchange
+      - list_date
+      - type
+      requires_date: false
+      requires_paging: true
+      limit: 5000
+      date_column: list_date
+    dc_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - leading
+      - leading_code
+      - pct_change
+      - leading_pct
+      - total_mv
+      - turnover_rate
+      - up_num
+      - down_num
+      limit: 5000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      field_mappings:
+        leading: leading_stock
+      date_column: trade_date
+    tdx_index:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - idx_type
+      - close
+      - change
+      - change_pct
+      - list_date
+      limit: 5000
+      earliest_date: '19900101'
+      latest_date: null
+      unique_keys:
+      - ts_code
+      - trade_date
+      requires_paging: true
+      date_column: trade_date
     index_dailybasic:
       unique_keys:
       - ts_code
@@ -1081,7 +1131,9 @@ index_market:
       date_type: natural
       date_param_mode: range
 
-fund_info:
+
+
+fund:
   db_path: ${DB_ROOT}/tushare_duck_fund.db
   tables:
     fund_basic:
@@ -1191,10 +1243,6 @@ fund_info:
       unique_keys:
       - ts_code
       date_column: pub_date
-
-fund:
-  db_path: ${DB_ROOT}/tushare_duck_fund.db
-  tables:
     fund_nav:
       fields:
       - ts_code
@@ -1503,8 +1551,9 @@ bond:
       unique_keys:
       - ts_code
       - ann_date
+      - issue_type
       date_column: ann_date
-      requires_date: true
+      requires_date: false
     cb_call:
       fields:
       - ts_code
@@ -1526,6 +1575,7 @@ bond:
       unique_keys:
       - ts_code
       - ann_date
+      - call_type
       date_column: ann_date
     cb_rate:
       fields:

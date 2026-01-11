@@ -101,11 +101,13 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
 
             for table_name, date_column in tables:
                 # 获取表的 date_type 配置
-                table_date_type = 'natural'  # 默认自然日
+                requires_date_config = True
                 for cat_key, cat_val in API_CONFIG.items():
                     tables_conf = cat_val.get('tables', {})
                     if table_name in tables_conf:
-                        table_date_type = tables_conf[table_name].get('date_type', 'natural')
+                        table_conf = tables_conf[table_name]
+                        table_date_type = table_conf.get('date_type', 'natural')
+                        requires_date_config = table_conf.get('requires_date', True)
                         break
                 try:
                     if not table_exists(conn, table_name):
@@ -135,8 +137,8 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                         logger.warning(f"警告：表 {table_name} 不包含日期列 {date_column}")
                         irregular = True
                     
-                    # 只有当 date_column 为 None 且不属于 irregular 时，我们认为它是快照表
-                    is_snapshot = (date_column is None) and not irregular
+                    # 只有当 date_column 为 None 或配置中显式指定不需要日期参数时，我们认为它是快照表
+                    is_snapshot = (date_column is None or not requires_date_config) and not irregular
 
                     total_records = conn.execute(f"SELECT COUNT(*) FROM \"{table_name}\"").fetchone()[0]
                     earliest_date = 'N/A'
@@ -407,15 +409,14 @@ def get_database_status(db_path, basic_db_path=None, tables=None, start_date=Non
                         else:
                             anomaly_dates = '无数据'
 
-                        if daily_data:
+                        if daily_data and not is_snapshot:
                             for i, date in enumerate(valid_days):
                                 daily_data[i][table_name] = count_dict.get(date,
                                                                            0) if date >= effective_start_date else 0
 
                     elif is_snapshot and daily_data:
-                         # 快照数据逐日详情填充 '-'
-                         for i in range(len(valid_days)):
-                             daily_data[i][table_name] = '-'
+                         # 快照数据不填入 daily_data，从而不在逐日详情表格中显示列
+                         pass
 
                     status = {
                         '数据库名称': db_name,

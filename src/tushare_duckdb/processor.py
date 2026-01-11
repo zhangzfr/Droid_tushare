@@ -212,7 +212,10 @@ class DataProcessor:
 
     def _process_daily(self, table_name, api_table, api_config_entry, unique_keys, date_list, current_ts_code, extra, 
                        date_column_in_db, overwrite, ts_code, param_grid, fetch_type):
-        logger.info(f"{table_name}: date_param_mode=single，强制逐日拉取（共 {len(date_list)} 天）")
+        if not api_config_entry.get('requires_date', True):
+            logger.info(f"{table_name}: 快照模式 (Snapshot)，执行全量/增量拉取")
+        else:
+            logger.info(f"{table_name}: date_param_mode=single，强制逐日拉取（共 {len(date_list)} 天）")
         total_stored = 0
         
         # Batch optimization logic for overwrite
@@ -254,12 +257,22 @@ class DataProcessor:
                 df = self.fetcher.fetch_data(api_table, api_params, api_config_entry)
                 if df is not None and not df.empty:
                     storage_mode = 'replace' if overwrite else 'insert_new'
+                    
+                    # === Fix for Snapshot tables in daily loop ===
+                    # If requires_date is False, we must wipe the whole table (or ts_code scope)
+                    # not just the current_date, because snapshot data doesn't respect date filtering in DELETE
+                    ov_start = current_date
+                    ov_end = current_date
+                    if overwrite and not api_config_entry.get('requires_date', True):
+                         ov_start = None
+                         ov_end = None
+                         
                     stored = self.storage.store_data(
                         table_name, df, unique_keys,
                         date_column=date_column_in_db,
                         storage_mode=storage_mode,
-                        overwrite_start_date=current_date,
-                        overwrite_end_date=current_date,
+                        overwrite_start_date=ov_start,
+                        overwrite_end_date=ov_end,
                         ts_code=current_ts_code,
                         api_config_entry=api_config_entry
                     )

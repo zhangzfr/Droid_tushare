@@ -216,10 +216,10 @@ def main():
     print("=" * 80)
 
     category_map = {
-        '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market', '5': 'index_basic',
-        '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option', '10': 'future', '11': 'bond',
-        '12': 'finance', '13': 'margin', '14': 'moneyflow', '15': 'reference', '16': 'macro', '17': 'fx',
-        '18': 'commodity'
+        '1': 'stock', '2': 'stock_events', '3': 'index', '4': 'index_member',
+        '5': 'fund', '6': 'option', '7': 'future', '8': 'bond', '9': 'finance',
+        '10': 'margin', '11': 'moneyflow', '12': 'reference', '13': 'macro', '14': 'fx',
+        '15': 'commodity'
     }
 
     all_tables_dict = {k: list(v['tables'].keys()) for k, v in API_CONFIG.items() if k in category_map.values()}
@@ -230,42 +230,41 @@ def main():
     while True:
         print("\n" + "-" * 60)
         print("主菜单：")
-        print(" [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情")
-        print(" [ 4] 指数行情(日频)   [ 5] 指数基本信息     [ 6] 指数成员/权重")
-        print(" [ 7] 基金行情         [ 8] 基金信息         [ 9] 期权行情")
-        print(" [10] 期货行情         [11] 债卷行情         [12] 财务数据")
-        print(" [13] 融资融券         [14] 资金流向         [15] 参考数据")
-        print(" [16] 宏观数据         [17] 外汇数据         [18] 商品数据")
-        print(" [19] 查看数据         [20] 数据库管理       [ 0] 退出")
+        print(" [ 1] 股票数据         [ 2] 股票事件         [ 3] 指数数据")
+        print(" [ 4] 指数成员/权重   [ 5] 基金数据         [ 6] 期权行情")
+        print(" [ 7] 期货行情         [ 8] 债券行情         [ 9] 财务数据")
+        print(" [10] 融资融券         [11] 资金流向         [12] 参考数据")
+        print(" [13] 宏观数据         [14] 外汇数据         [15] 商品数据")
+        print(" [16] 查看数据         [17] 数据库管理       [ 0] 退出")
         choice = input("\n请选择操作: ").strip()
 
         if choice == '0':
             print("再见！数据已安全存储至本地 DuckDB")
             break
 
-        elif choice == '19':
+        elif choice == '16':
             print("\n" + "=" * 70)
             print("          数据库状态校验（支持数字快速选择）")
             print("=" * 70)
 
             # === 第一步：显示可选择的类别（与主菜单完全一致）===
             status_menu = {
-                '1': 'stock_list', '2': 'stock_events', '3': 'stock', '4': 'index_market',
-                '5': 'index_basic', '6': 'index_member', '7': 'fund', '8': 'fund_info', '9': 'option',
-                '10': 'future', '11': 'bond', '12': 'finance', '13': 'margin', '14': 'moneyflow',
-                '15': 'reference', '16': 'macro', '17': 'fx', '18': 'commodity', 'all': 'all'
+                '1': 'stock', '2': 'stock_events', '3': 'index', '4': 'index_member',
+                '5': 'fund', '6': 'option', '7': 'future', '8': 'bond',
+                '9': 'finance', '10': 'margin', '11': 'moneyflow', '12': 'reference',
+                '13': 'macro', '14': 'fx', '15': 'commodity', 'all': 'all'
             }
 
             print("可校验的类别（输入数字或 all）：")
             for num, cat in status_menu.items():
                 if num != 'all':
                     desc = {
-                        'stock': '股票行情', 'index_market': '指数行情(日频)', 'index_basic': '指数基本信息',
-                        'index_member': '指数成员/权重', 'fund': '基金行情', 'fund_info': '基金信息(ETF等)',
-                        'option': '期权行情', 'future': '期货行情', 'bond': '券债行情', 'finance': '财务数据',
+                        'stock': '股票数据', 'index': '指数数据',
+                        'index_member': '指数成员/权重', 'fund': '基金数据',
+                        'option': '期权行情', 'future': '期货行情', 'bond': '债券情况和行情', 'finance': '财务数据',
                         'margin': '融资融券', 'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
                         'fx': '外汇数据', 'commodity': '商品数据(上金所)',
-                        'stock_list': '股票列表', 'stock_events': '股票事件'
+                        'stock_events': '股票事件'
                     }.get(cat, cat)
                     print(f"  [{num.rjust(2)}] {desc}")
             print("  [all] 所有类别")
@@ -279,11 +278,11 @@ def main():
                 if user_input in status_menu:
                     selected_key = user_input
                     break
-                elif user_input in [str(i) for i in range(1, 19)]:
+                elif user_input in [str(i) for i in range(1, 16)]:
                     selected_key = user_input
                     break
                 else:
-                    print("输入无效，请输入 1~18 或 all")
+                    print("输入无效，请输入 1~15 或 all")
 
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
@@ -559,19 +558,48 @@ def main():
                 continue
             
             # === 非宏观数据的标准处理流程 ===
-            print(f"可用表（{len(all_tables_dict[category])}个）: {', '.join(all_tables_dict[category])}")
+            # === 智能分类：快照数据 vs 行情数据 ===
+            config_group_tables = API_CONFIG[category]['tables']
+            current_all_tables = all_tables_dict[category]
+            
+            snapshot_tables = [t for t in current_all_tables if config_group_tables[t].get('requires_date', True) is False]
+            market_tables = [t for t in current_all_tables if config_group_tables[t].get('requires_date', True) is not False]
+            
+            target_tables = current_all_tables
+            
+            # 如果该类别混合了快照和行情数据，提供子菜单
+            if snapshot_tables and market_tables:
+                print(f"\n{category.upper()} 数据类型选择：")
+                print(f"  1. 基础/快照数据 (Snapshot) - 无需日期 ({len(snapshot_tables)}个表)")
+                print(f"  2. 行情/时序数据 (Market)   - 需指定日期 ({len(market_tables)}个表)")
+                print(f"  3. 全部")
+                
+                sub_choice = get_input("请选择数据类型 [默认 3]: ", allow_zero=True, default='3')
+                if sub_choice == '1':
+                    target_tables = snapshot_tables
+                    print(f"\n已选择快照数据模式，自动跳过日期输入。")
+                elif sub_choice == '2':
+                    target_tables = market_tables
+                    print(f"\n已选择行情数据模式。")
+                elif sub_choice is None:
+                    continue
+            
+            print(f"可用表（{len(target_tables)}个）: {', '.join(target_tables)}")
             selected_tables = get_input("选择表（逗号分隔，all 为全部，默认 all）: ", allow_zero=True, default='all')
             if selected_tables is None: continue
             
-            # === 智能判断：所选表是否需要日期 ===
-            config_group_tables = API_CONFIG[category]['tables']
             if selected_tables == 'all':
-                target_tables = all_tables_dict[category]
+                final_tables = target_tables
             else:
-                target_tables = [t.strip() for t in selected_tables.split(',') if t.strip() in all_tables_dict[category]]
+                 # 校验用户输入的表是否在当前目标列表中
+                final_tables = [t.strip() for t in selected_tables.split(',') if t.strip() in target_tables]
             
+            if not final_tables:
+                print("错误：未选中任何有效表")
+                continue
+
             # 检查是否所有选中的表都不需要日期 (requires_date: false)
-            all_tables_no_date = all(config_group_tables[t].get('requires_date', True) is False for t in target_tables)
+            all_tables_no_date = all(config_group_tables[t].get('requires_date', True) is False for t in final_tables)
             
             if all_tables_no_date:
                 logger.info("检测到所选表均为基础信息表 (requires_date=False)，自动跳过日期输入")
@@ -631,7 +659,7 @@ def main():
                     category=category,
                     start_date=start_date,
                     end_date=end_date,
-                    selected_tables=selected_tables,
+                    selected_tables=','.join(final_tables),
                     ts_code=ts_code or None,
                     exchange=exchange,
                     batch_size=batch_size,
@@ -641,7 +669,7 @@ def main():
             except Exception as e:
                 logger.error(f"更新失败: {e}")
 
-        elif choice == '20':
+        elif choice == '17':
             run_explorer()
 
         else:
