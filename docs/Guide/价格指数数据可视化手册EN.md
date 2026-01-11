@@ -142,12 +142,61 @@ Color-coded tables for multi-dimensional data.
 
 ## Section 4: Tools and Implementation Tips
 
-- **Software**: Excel/Google Sheets for heatmaps; Python (Matplotlib/Seaborn) or R for lines/bars; Tableau for interactivity.
-- **Data Sources**: Use APIs like Wind; import from PDFs via tools like search_pdf_attachment.
-- **Steps for a Project**:
-  1. Extract data (e.g., from document tables).
-  2. Choose type based on goal (trends → lines; breakdowns → bars/heatmaps).
-  3. Test iterations; ensure mobile-friendly.
+### Recommended Tool Stack
+
+- **Data Acquisition**: Tushare Pro API → Local DuckDB Storage
+- **Data Processing**: Python pandas/numpy → Data cleaning and preprocessing
+- **Visualization Framework**: Streamlit + Plotly → Interactive web applications
+- **Chart Library**: Plotly Express/Graph Objects → Professional financial charts
+- **Styling Framework**: Custom CSS + Anthropic design language → Modern interfaces
+
+### Droid-Tushare Integration Solution
+
+Based on the project's dashboard module best practices:
+
+```python
+# 1. Data Loading (dashboard/data_loader.py)
+@st.cache_data(ttl=3600)
+def load_pmi_data():
+    conn = duckdb.connect('data/tushare_duck_macro.db')
+    df = conn.execute("SELECT * FROM cn_pmi").fetchdf()
+    conn.close()
+    return df
+
+# 2. Chart Generation (dashboard/charts.py)
+def plot_pmi_trend(df):
+    fig = px.line(df, x='month', y=['pmi', 'pmi_production'],
+                  title='PMI Trend Analysis')
+    fig.update_layout(template='plotly_white')
+    return fig
+
+# 3. Page Rendering (dashboard/pages/macro_page.py)
+def render_macro_page():
+    df = load_pmi_data()
+    fig = plot_pmi_trend(df)
+    st.plotly_chart(fig, use_container_width=True)
+```
+
+### Project Implementation Steps
+
+1. **Data Preparation**:
+   - Use `src/tushare_duckdb` to sync macroeconomic data to DuckDB
+   - Verify data completeness and quality
+
+2. **Visualization Design**:
+   - Select appropriate chart types based on this guide
+   - Use existing components from the dashboard module
+   - Follow the project's design standards
+
+3. **Interaction Optimization**:
+   - Add date range selectors
+   - Implement data filtering functionality
+   - Ensure responsive layout
+
+4. **Deployment and Publishing**:
+   - Use Streamlit Cloud or self-hosting
+   - Configure appropriate caching strategies
+   - Monitor performance and user experience
 
 ## Section 5: Common Pitfalls and Solutions
 

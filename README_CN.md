@@ -6,6 +6,10 @@
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
 [![DuckDB](https://img.shields.io/badge/DuckDB-0.8+-yellow.svg)](https://duckdb.org/)
 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/downloads/)
+[![DuckDB](https://img.shields.io/badge/DuckDB-0.8+-yellow.svg)](https://duckdb.org/)
+
 `Droid-Tushare` 是一个为专业量化交易者设计的本地化数据同步方案。它不仅是将 Tushare 数据存入数据库，更是通过 **DuckDB** 的列式存储优势、**智能分页算法** 以及 **自动化异常校验**，解决金融数据获取中的所有痛点。
 
 ---
@@ -77,20 +81,16 @@ python -m src.tushare_duckdb.main
 
 # 按照提示操作：
 # >>> 请选择数据类别 (输入数字):
-# 1. 股票 (Stock)
-# >>> 1
+#  [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情
+# >>> 3
 
-# >>> 请输入开始日期 (YYYYMMDD, 回车使用默认):
-# >>> 20240101
+# >>> 可用表（15个）: daily, adj_factor, daily_basic, stk_limit, suspend_d
+# >>> 选择表（逗号分隔，all 为全部，默认 all）: daily,adj_factor
 
-# >>> 请输入结束日期 (YYYYMMDD, 回车使用默认):
-# >>> 20241231
+# >>> 开始日期（YYYYMMDD/YYYYMM，默认 20241001）: 20240101
+# >>> 结束日期（YYYYMMDD/YYYYMM，默认 20241231）: 20241231
 
-# >>> 请输入要同步的表名 (all 或 表名列表):
-# >>> daily
-
-# >>> 请选择同步模式 (1=增量插入, 2=覆盖):
-# >>> 1
+# >>> 模式: 1.增量插入 2.强制覆盖 3.强制去重插入 [默认1]: 1
 ```
 
 ### 实战案例 2：计算 VIX 波动率指数

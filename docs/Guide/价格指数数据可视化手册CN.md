@@ -140,14 +140,63 @@
 - **可访问性**：高对比度；为图片提供替代文本。
 - **数据准备**：从表格中清理数据，例如文档第 9-10 页；将 #N/A 视为缺失值处理。
 
-## 第 4 节：工具与实施提示
+## 第 4 节：工具与实施技巧
 
-- **软件**：用于热力图的 Excel/Google Sheets；用于折线图/柱状图的 Python (Matplotlib/Seaborn) 或 R；用于交互式可视化的 Tableau。
-- **数据来源**：使用如 Wind 等 API；通过 search_pdf_attachment 等工具从 PDF 导入。
-- **项目步骤**：
-  1. 提取数据（例如，从文档表格中）。
-  2. 根据目标选择类型（趋势 → 折线图；构成分解 → 条形图/热力图）。
-  3. 测试迭代方案；确保适配移动端。
+### 推荐工具栈
+
+- **数据获取**：Tushare Pro API → 本地 DuckDB 存储
+- **数据处理**：Python pandas/numpy → 数据清洗和预处理
+- **可视化框架**：Streamlit + Plotly → 交互式web应用
+- **图表库**：Plotly Express/Graph Objects → 专业金融图表
+- **样式框架**：自定义CSS + Anthropic设计语言 → 现代化界面
+
+### Droid-Tushare 集成方案
+
+基于项目 dashboard 模块的最佳实践：
+
+```python
+# 1. 数据加载 (dashboard/data_loader.py)
+@st.cache_data(ttl=3600)
+def load_pmi_data():
+    conn = duckdb.connect('data/tushare_duck_macro.db')
+    df = conn.execute("SELECT * FROM cn_pmi").fetchdf()
+    conn.close()
+    return df
+
+# 2. 图表生成 (dashboard/charts.py)
+def plot_pmi_trend(df):
+    fig = px.line(df, x='month', y=['pmi', 'pmi_production'],
+                  title='PMI 趋势分析')
+    fig.update_layout(template='plotly_white')
+    return fig
+
+# 3. 页面渲染 (dashboard/pages/macro_page.py)
+def render_macro_page():
+    df = load_pmi_data()
+    fig = plot_pmi_trend(df)
+    st.plotly_chart(fig, use_container_width=True)
+```
+
+### 项目实施步骤
+
+1. **数据准备**：
+   - 使用 `src/tushare_duckdb` 同步宏观数据到 DuckDB
+   - 验证数据完整性和质量
+
+2. **可视化设计**：
+   - 基于本文档选择合适的图表类型
+   - 使用 dashboard 模块的现有组件
+   - 遵循项目的设计规范
+
+3. **交互优化**：
+   - 添加日期范围选择器
+   - 实现数据筛选功能
+   - 确保响应式布局
+
+4. **部署发布**：
+   - 使用 Streamlit Cloud 或自托管
+   - 配置适当的缓存策略
+   - 监控性能和用户体验
 
 ## 第 5 节：常见陷阱与解决方案
 

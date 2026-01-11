@@ -39,6 +39,39 @@
 
 项目内置 **50+ 张金融数据表**，涵盖股票、基金、期货、期权、债券、指数、宏观等全品种数据。所有表结构均基于 Tushare Pro API 标准，开箱即用，支持自动更新和数据校验。
 
+#### 🔧 核心模块架构
+
+项目采用**模块化设计**，代码结构清晰：
+
+```
+Droid_tushare/
+├── src/tushare_duckdb/          # 数据同步引擎
+│   ├── main.py                  # CLI 主入口
+│   ├── fetcher.py               # API 通信层
+│   ├── processor.py             # 数据处理引擎
+│   ├── storage.py               # DuckDB 存储层
+│   ├── data_validation.py       # 数据校验工具
+│   ├── schema.py                # 数据库表结构
+│   ├── config.py                # 配置管理
+│   └── utils.py                 # 工具函数
+├── src/vix/                     # VIX 计算模块
+│   ├── run.py                   # 计算入口
+│   ├── calculator.py            # VIX 算法实现
+│   ├── data_loader.py           # 数据加载
+│   └── config.py                # VIX 配置
+└── dashboard/                   # 可视化仪表盘
+    ├── app.py                   # Streamlit 主应用
+    ├── pages/                   # 页面模块
+    │   ├── home_page.py         # 首页
+    │   ├── macro_page.py        # 宏观数据
+    │   ├── index_page.py        # 指数数据
+    │   ├── market_page.py       # 市场数据
+    │   └── ...
+    └── components/              # UI 组件
+        ├── styles.py            # 样式定义
+        └── headers.py           # 页面头组件
+```
+
 #### 📈 股票数据 (Stock)
 - **基础信息**：`stock_basic` (股票列表), `stock_company` (公司信息)
 - **行情数据**：`daily` (日线行情), `adj_factor` (复权因子), `daily_basic` (每日指标)
@@ -201,39 +234,70 @@ conn.close()
 ### 系统架构图
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Interface│    │  Data Processor │    │  Tushare API    │
-│                 │    │                 │    │                 │
-│ • Interactive   │◄──►│ • Date Range     │◄──►│ • Pagination     │
-│   Menu          │    │   Generation     │    │ • Retry Logic   │
-│ • API Calls     │    │ • Parameter Grid  │    │ • Rate Limiting │
-│ • Validation    │    │ • Batch Control  │    │ • Error Handling│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Data Storage  │    │ Data Validation │    │   Metadata      │
-│                 │    │                 │    │                 │
-│ • DuckDB        │◄──►│ • Coverage       │◄──►│ • Min/Max Dates │
-│   Atomic Ops    │    │   Analysis       │    │ • Record Counts │
-│ • Insert/Replace│    │ • Anomaly        │    │ • Last Update   │
-│ • Deduplication │    │   Detection      │    │ • Statistics    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                        用户界面层 (User Interface)                  │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
+│  │  CLI 终端   │  │  Streamlit  │  │ Python API  │  │   Notebooks │ │
+│  │  (main.py)  │  │ Dashboard   │  │ (processor) │  │   (VIX)     │ │
+│  │             │  │  (app.py)   │  │             │  │             │ │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        数据同步引擎 (tushare_duckdb)                │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
+│  │ TushareFetcher│  │ DataProcessor│  │ DuckDBStorage│  │ DataValidator│ │
+│  │ (API通信)    │  │ (处理调度)   │  │ (存储操作)   │  │ (质量校验)   │ │
+│  │ •分页处理    │  │ •三种模式    │  │ •原子操作    │  │ •覆盖率分析  │ │
+│  │ •重试机制    │  │ •参数网格    │  │ •去重插入    │  │ •异常检测    │ │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        数据存储层 (Data Storage)                    │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐    │
+│  │Stock│ │Index│ │Fund │ │Option│ │Future│ │Bond │ │Macro│ │Margin│   │
+│  │DB   │ │DB   │ │DB   │ │DB    │ │DB    │ │DB   │ │DB   │ │DB    │   │
+│  │.db  │ │.db  │ │.db  │ │.db   │ │.db   │ │.db  │ │.db  │ │.db   │   │
+│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘    │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 核心模块职责
 
 代码结构遵循**解耦设计**，确保长期可维护性：
 
-* **`config.py`**：配置加载器，解析 YAML 配置和环境变量
-* **`fetcher.py`**：API 通信层，处理分页、重试和限流
-* **`processor.py`**：同步引擎核心，调度数据处理流程
-* **`storage.py`**：DuckDB 存储层，支持原子化操作和去重
-* **`data_validation.py`**：数据质量校验工具集
-* **`schema.py`**：数据库表结构定义
-* **`metadata.py`**：元数据管理
-* **`utils.py`**：通用工具函数
-* **`logger.py`**：日志系统配置
+#### 数据同步引擎 (`src/tushare_duckdb/`)
+
+* **`main.py`**：交互式 CLI 终端，菜单驱动的数据同步界面
+* **`config.py`**：配置加载器，解析 YAML 配置和环境变量，支持环境变量插值
+* **`fetcher.py`**：API 通信层，处理分页、重试、限流，自动检测频率限制并等待
+* **`processor.py`**：同步引擎核心，支持三种处理模式（逐日、范围、智能分页）
+* **`storage.py`**：DuckDB 存储层，支持增量插入和覆盖模式，自动去重和字段映射
+* **`data_validation.py`**：数据质量校验工具集，覆盖率分析、异常检测
+* **`metadata.py`**：元数据管理，记录表结构、最小/最大日期、记录数
+* **`schema.py`**：数据库表结构定义，50+ 张金融数据表的 SQL CREATE 语句
+* **`utils.py`**：通用工具函数，日期处理、连接管理、参数生成
+
+#### 量化分析引擎 (`src/vix/`)
+
+* **`run.py`**：CLI 入口，支持批量 VIX 计算
+* **`calculator.py`**：CBOE VIX 算法实现，支持多种期权标的
+* **`data_loader.py`**：从 DuckDB 加载期权和利率数据
+* **`config.py`**：VIX 计算配置，支持 9 个 ETF + 3 个指数期权
+
+#### 可视化引擎 (`dashboard/`)
+
+* **`app.py`**：Streamlit 主应用，统一的导航和页面路由
+* **页面模块**：`home_page.py`、`macro_page.py`、`index_page.py` 等
+* **数据加载器**：`*_data_loader.py`，带缓存的数据加载函数
+* **图表生成**：`*_charts.py`，Plotly 图表生成逻辑
+* **UI 组件**：`components/` 目录下的样式和布局组件
 
 ### 数据流
 
@@ -335,36 +399,43 @@ python -m src.vix.run --start_date 20230101 --end_date 20230110 --underlying 510
 
 ```bash
 # 启动主程序
-python -m tushare_duckdb.main
+python -m src.tushare_duckdb.main
 ```
 
 #### 基本同步流程
 
-1. **选择数据类别**：输入数字选择如 `1`（股票）、`2`（指数）等
-2. **设置日期范围**：输入开始日期（YYYYMMDD），回车使用默认值（上次更新后一天）
+1. **选择数据类别**：输入数字选择数据类别，支持 18 个类别（股票、指数、基金、期权、期货等）
+2. **设置日期范围**：输入开始日期（YYYYMMDD），回车使用默认值（上月第一天）
 3. **选择表**：输入 `all` 同步该类别所有表，或指定表名如 `daily,adj_factor`
 4. **选择模式**：
    - `1`: **增量插入**（推荐，快速，只插入新数据）
    - `2`: **覆盖模式**（慎用，会删除指定日期范围数据）
+   - `3`: **强制去重插入**（覆盖 + 去重）
 
 #### 示例操作
 
 ```
 >>> 请选择数据类别 (输入数字):
-1. 股票 (Stock)
-2. 指数 (Index)
-3. 基金 (Fund)
-...
->>> 1
->>> 请输入开始日期 (YYYYMMDD, 回车使用默认):
->>> 20240101
->>> 请输入结束日期 (YYYYMMDD, 回车使用默认):
->>> 20241231
->>> 请输入要同步的表名 (all 或 表名列表):
->>> daily,adj_factor,daily_basic
->>> 请选择同步模式 (1=增量插入, 2=覆盖):
->>> 1
+ [ 1] 股票列表         [ 2] 股票事件         [ 3] 股票行情
+ [ 4] 指数行情(日频)   [ 5] 指数基本信息     [ 6] 指数成员/权重
+ [ 7] 基金行情         [ 8] 基金信息         [ 9] 期权行情
+ [10] 期货行情         [11] 债卷行情         [12] 财务数据
+ [13] 融资融券         [14] 资金流向         [15] 参考数据
+ [16] 宏观数据         [17] 外汇数据         [18] 商品数据
+>>> 3
+>>> 可用表（15个）: daily, adj_factor, daily_basic, stk_limit, suspend_d
+>>> 选择表（逗号分隔，all 为全部，默认 all）: daily,adj_factor
+>>> 开始日期（YYYYMMDD/YYYYMM，默认 20241001）: 20240101
+>>> 结束日期（YYYYMMDD/YYYYMM，默认 20241231）: 20241231
+>>> 模式: 1.增量插入 2.强制覆盖 3.强制去重插入 [默认1]: 1
 ```
+
+#### 高级功能
+
+- **特定代码同步**：在表名后添加 `@code` 如 `daily@000001.SZ`
+- **智能分页**：针对基础表自动使用智能增量同步
+- **批量处理**：支持多参数组合并行处理（如多个交易所）
+- **数据校验**：输入 `19` 进入数据库状态校验菜单
 
 #### 数据校验
 
@@ -390,35 +461,51 @@ python -m tushare_duckdb.main
 除了交互式终端，您也可以在代码中直接调用：
 
 ```python
-from tushare_duckdb.processor import DataProcessor
+from src.tushare_duckdb.processor import DataProcessor
+from src.tushare_duckdb.config import get_connection
 
-# 初始化处理器
-processor = DataProcessor()
+# 初始化处理器（传入数据库连接）
+with get_connection('data/tushare_duck_stock.db') as conn:
+    processor = DataProcessor(conn)
 
-# 同步股票日线数据
-processor.process_data(
-    category='stock',
-    table='daily',
-    start_date='20240101',
-    end_date='20241231',
-    mode='insert_new'  # 或 'replace'
-)
-
-# 同步多个表
-tables = ['daily', 'adj_factor', 'daily_basic']
-for table in tables:
-    processor.process_data(
-        category='stock',
-        table=table,
-        start_date='20240101',
-        end_date='20241231'
+    # 同步股票日线数据
+    processor.process_dates(
+        table_name='daily',
+        api_config_entry={
+            'api_table': 'daily',
+            'fields': ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount'],
+            'unique_keys': ['ts_code', 'trade_date'],
+            'date_param_mode': 'single'
+        },
+        unique_keys=['ts_code', 'trade_date'],
+        date_list=['20240101', '20240102'],  # 日期列表
+        batch_size=50,
+        force_fetch=False,
+        overwrite=False
     )
 
+# 直接查询数据
+import duckdb
+conn = duckdb.connect('data/tushare_duck_stock.db')
+df = conn.execute("""
+    SELECT ts_code, trade_date, close, vol, amount
+    FROM daily
+    WHERE ts_code = '000001.SZ'
+        AND trade_date BETWEEN '20240101' AND '20241231'
+    ORDER BY trade_date
+""").fetchdf()
+conn.close()
+
 # 数据校验
-from tushare_duckdb.data_validation import DataValidator
-validator = DataValidator()
-report = validator.get_coverage_report('stock', 'daily')
-print(report)
+from src.tushare_duckdb.data_validation import get_database_status
+status_report = get_database_status(
+    db_path='data/tushare_duck_stock.db',
+    basic_db_path='data/tushare_duck_basic.db',
+    tables=[('daily', 'trade_date')],
+    start_date='20240101',
+    end_date='20241231',
+    detailed=True
+)
 ```
 
 ## 🔧 故障排除
@@ -426,41 +513,71 @@ print(report)
 ### 常见问题
 
 #### 1. API 频率限制
-**症状**：日志显示 "达到访问频率限制，等待重试"
+**症状**：日志显示 "达到访问频率限制，等待重试" 或 "每分钟最多访问"
 **解决方案**：
-- 免费用户受 500 次/分钟限制
-- 程序自动等待 65 秒后重试
-- 考虑升级到付费版获取更高限制
+- 免费用户受 500 次/分钟限制，付费用户更高
+- 程序自动检测并等待 65 秒后重试，无需手动干预
+- 升级到付费版获取更高限制（推荐积分版）
+- 分批次运行，避免短时间内大量请求
 
 #### 2. 数据库锁定错误
 **症状**：`IO Error: Cannot open file ... because it is being used by another process`
-**原因**：DuckDB 是单进程写锁数据库
+**原因**：DuckDB 是单进程写锁数据库，不支持并发写入
 **解决方案**：
-- 确保没有其他程序（如 DBeaver）同时连接数据库
+- 确保没有其他程序（如 DBeaver、Python 脚本）同时连接数据库
 - 等待当前同步完成后再访问
-- 读取操作通常不受影响
+- 读取操作通常不受影响，可以并发读取
+- 使用上下文管理器确保连接正确关闭
 
 #### 3. 数据覆盖率异常
-**症状**：校验报告显示覆盖率低于预期
+**症状**：校验报告显示覆盖率低于预期或有数据缺失
 **解决方案**：
-- 检查日期范围是否正确
-- 验证 Tushare Token 是否有效
-- 查看日志中的错误信息
+- 检查日期范围是否正确（注意交易日历）
+- 验证 Tushare Token 是否有效且有足够积分
+- 查看日志文件中的详细错误信息
 - 对缺失日期使用覆盖模式重新同步
+- 检查网络连接稳定性
 
-#### 4. 内存不足
-**症状**：大表同步时程序崩溃
+#### 4. 内存不足或性能问题
+**症状**：大表同步时程序变慢或崩溃，内存使用过高
 **解决方案**：
-- 分批同步数据（减少日期范围）
-- 检查系统内存使用情况
-- 考虑使用覆盖模式分段处理
+- 分批同步数据（减少日期范围，如每月同步）
+- 增加系统内存或使用更大内存的机器
+- 使用覆盖模式分段处理，避免一次性加载过多数据
+- 监控系统资源使用情况
 
 #### 5. 表结构不匹配
-**症状**：插入失败，字段类型错误
+**症状**：插入失败，显示字段类型错误或列不存在
+**原因**：数据库中已存在旧表结构，与新版本不兼容
 **解决方案**：
-- 检查 `settings.yaml` 中的字段定义
-- 如果数据库已存在旧表，可能需要手动删除重建
-- 查看日志中的详细错误信息
+- 检查 `schema.py` 中的表结构定义
+- 如果数据库已存在旧表，可能需要手动删除重建：`DROP TABLE table_name;`
+- 确保所有依赖的表都已创建
+- 查看详细日志定位具体字段问题
+
+#### 6. VIX 计算相关问题
+**症状**：VIX 计算失败或结果异常
+**解决方案**：
+- 确保期权数据已同步（opt_basic、opt_daily 表）
+- 检查 Shibor 利率数据是否完整
+- 验证标的代码是否支持（510050.SH、510300.SH 等）
+- 检查期权到期时间和合约状态
+
+#### 7. Dashboard 启动失败
+**症状**：Streamlit 应用无法启动或页面空白
+**解决方案**：
+- 确保所有依赖包已安装：`pip install -r requirements.txt`
+- 检查 DuckDB 数据库文件是否存在且可访问
+- 验证数据表是否已创建并有数据
+- 检查端口是否被占用（默认 8501）
+
+#### 8. 数据质量问题
+**症状**：数据中存在 NULL 值、重复记录或异常值
+**解决方案**：
+- 使用数据校验功能检查数据质量
+- 对于 NULL 值，程序会自动过滤
+- 重复记录通过唯一键自动去重
+- 使用覆盖模式重新同步修复异常数据
 
 ### 调试模式
 
