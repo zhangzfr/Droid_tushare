@@ -246,7 +246,6 @@ def render_macro_page(subcategory_key):
                             st.caption("Source: cn_sf")
                         with col2:
                             st.subheader("Stock End Value")
-                            st.subheader("Stock End Value")
                             st.plotly_chart(fig_stk, use_container_width=True, key="sf_stk")
                             st.caption("Source: cn_sf")
                 

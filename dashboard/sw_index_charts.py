@@ -448,4 +448,222 @@ def plot_l1_stock_treemap(df_stocks, l1_name: str):
         plot_bgcolor='rgba(0,0,0,0)'
     )
     
+    
+    return fig
+
+
+def plot_sw_l1_price_volume(df):
+    """
+    Plot Price (Close) and Volume/Amount trend.
+    """
+    if df.empty:
+        return None
+        
+    # Dual Axis: Left=Close, Right=Amount
+    fig = go.Figure()
+
+    # Bar for Amount (Right Axis)
+    fig.add_trace(go.Bar(
+        x=df['trade_date'],
+        y=df['amount'],
+        name='Amount (RMB)',
+        marker_color='rgba(200, 200, 200, 0.5)', # Light grey
+        yaxis='y2'
+    ))
+
+    # Line for Close (Left Axis)
+    fig.add_trace(go.Scatter(
+        x=df['trade_date'],
+        y=df['close'],
+        name='Close Point',
+        line=dict(color='#2962FF', width=2)
+    ))
+
+    fig.update_layout(
+        title='Price & Amount Trend',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Index Point'),
+        yaxis2=dict(
+            title='Amount',
+            overlaying='y',
+            side='right',
+            showgrid=False
+        ),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        height=500,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
+
+
+def plot_sw_l1_valuation(df):
+    """
+    Plot PE and PB trends.
+    """
+    if df.empty or 'pe' not in df.columns or 'pb' not in df.columns:
+        return None
+    
+    # Dual Axis: Left=PE, Right=PB
+    fig = go.Figure()
+
+    # Line for PE
+    fig.add_trace(go.Scatter(
+        x=df['trade_date'],
+        y=df['pe'],
+        name='PE Ratio',
+        line=dict(color='#FF6D00', width=2)
+    ))
+
+    # Line for PB (Right Axis)
+    fig.add_trace(go.Scatter(
+        x=df['trade_date'],
+        y=df['pb'],
+        name='PB Ratio',
+        line=dict(color='#00B8D4', width=2),
+        yaxis='y2'
+    ))
+
+    fig.update_layout(
+        title='Valuation Trend (PE & PB)',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='PE Ratio'),
+        yaxis2=dict(
+            title='PB Ratio',
+            overlaying='y',
+            side='right',
+            showgrid=False
+        ),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
+
+def plot_multi_index_price_normalized(df):
+    """
+    Plot Normalized Price Trend for multiple indices.
+    Base 100 at the start date.
+    """
+    if df.empty:
+        return None
+    
+    fig = go.Figure()
+    
+    indices = df['ts_code'].unique()
+    
+    for code in indices:
+        sub_df = df[df['ts_code'] == code].sort_values('trade_date')
+        if sub_df.empty:
+            continue
+            
+        base_value = sub_df['close'].iloc[0]
+        if base_value == 0: continue
+            
+        sub_df['norm_close'] = sub_df['close'] / base_value * 100
+        
+        # Determine Name (Ideally passed in, but we can use code or try to map if provided. 
+        name = code
+        if 'l1_name' in sub_df.columns:
+            name = sub_df['l1_name'].iloc[0]
+        
+        fig.add_trace(go.Scatter(
+            x=sub_df['trade_date'],
+            y=sub_df['norm_close'],
+            mode='lines',
+            name=name
+        ))
+
+    fig.update_layout(
+        title='Normalized Price Trend (Base=100)',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Normalized Index'),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        height=500,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+def plot_multi_index_valuation(df, metric='pe'):
+    """
+    Plot PE or PB trend for multiple indices.
+    metric: 'pe' or 'pb'
+    """
+    if df.empty or metric not in df.columns:
+        return None
+        
+    fig = go.Figure()
+    indices = df['ts_code'].unique()
+    
+    for code in indices:
+        sub_df = df[df['ts_code'] == code].sort_values('trade_date')
+        if sub_df.empty: continue
+            
+        name = code
+        if 'l1_name' in sub_df.columns:
+            name = sub_df['l1_name'].iloc[0]
+            
+        fig.add_trace(go.Scatter(
+            x=sub_df['trade_date'],
+            y=sub_df[metric],
+            mode='lines',
+            name=name
+        ))
+
+    title_map = {'pe': 'PE Ratio Trend', 'pb': 'PB Ratio Trend'}
+    
+    fig.update_layout(
+        title=title_map.get(metric, 'Valuation Trend'),
+        xaxis=dict(title='Date'),
+        yaxis=dict(title=metric.upper()),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+def plot_multi_index_amount(df):
+    """
+    Plot Transaction Amount trend for multiple indices.
+    """
+    if df.empty:
+        return None
+        
+    fig = go.Figure()
+    indices = df['ts_code'].unique()
+    
+    for code in indices:
+        sub_df = df[df['ts_code'] == code].sort_values('trade_date')
+        if sub_df.empty: continue
+            
+        name = code
+        if 'l1_name' in sub_df.columns:
+            name = sub_df['l1_name'].iloc[0]
+            
+        fig.add_trace(go.Scatter(
+            x=sub_df['trade_date'],
+            y=sub_df['amount'],
+            mode='lines',
+            name=name
+        ))
+        
+    fig.update_layout(
+        title='Transaction Amount Trend',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Amount (RMB)'),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig

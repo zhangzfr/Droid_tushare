@@ -478,3 +478,46 @@ def calculate_market_width(end_date_str: str, days: int = 30, ma_period: int = 2
     grouped = grouped.rename(columns={code_col: 'index_code', name_col: 'index_name'})
     
     return grouped[['trade_date', 'index_code', 'index_name', 'width_ratio']]
+
+
+@st.cache_data
+@st.cache_data
+def load_sw_l1_daily_history(l1_codes: list, start_date: str, end_date: str):
+    """
+    Fetch historical daily data for specific SW Level 1 indices.
+    Includes close, vol, amount, pe, pb.
+    
+    Args:
+        l1_codes (list): List of Index codes (e.g., ['801010.SI', ...])
+        start_date (str): YYYYMMDD
+        end_date (str): YYYYMMDD
+    """
+    conn = get_db_connection()
+    if not conn:
+        return pd.DataFrame()
+        
+    try:
+        codes_placeholder = ",".join([f"'{c}'" for c in l1_codes])
+        
+        query = f"""
+            SELECT ts_code, trade_date, close, vol, amount, pe, pb
+            FROM sw_daily
+            WHERE ts_code IN ({codes_placeholder})
+              AND trade_date >= '{start_date}'
+              AND trade_date <= '{end_date}'
+            ORDER BY trade_date ASC
+        """
+        df = conn.execute(query).fetchdf()
+        
+        # Convert date column to datetime for plotting
+        df['trade_date'] = pd.to_datetime(df['trade_date'])
+        
+    except Exception as e:
+        st.error(f"Error fetching SW history for {l1_codes}: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+        
+    return df
+        
+    return df
