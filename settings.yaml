@@ -1304,7 +1304,7 @@ fund:
       - vol
       - amount
       limit: 2000
-      earliest_date: '19980101'
+      earliest_date: '19980407'
       latest_date: null
       requires_date: true
       unique_keys:
@@ -1320,7 +1320,7 @@ fund:
       - trade_date
       - adj_factor
       limit: 2000
-      earliest_date: '19980101'
+      earliest_date: '19980407'
       latest_date: null
       requires_date: true
       requires_paging: true
@@ -1341,7 +1341,7 @@ fund:
       - close
       - exchange
       limit: 5000
-      earliest_date: '20000101'
+      earliest_date: '20090105'
       latest_date: null
       requires_date: true
       requires_paging: true
@@ -1799,7 +1799,7 @@ option:
       date_type: trade
       date_param: trade_date
       date_param_mode: single
-future_info:
+future:
   db_path: ${DB_ROOT}/tushare_duck_future.db
   tables:
     fut_basic:
@@ -1838,6 +1838,8 @@ future_info:
         - SSE
       date_column: list_date
     trade_cal_future:
+      api_table: trade_cal
+      table_name: trade_cal_future
       fields:
       - exchange
       - cal_date
@@ -1847,7 +1849,7 @@ future_info:
       - exchange
       - cal_date
       earliest_date: '19900101'
-      requires_date: false
+      requires_date: True
       requires_paging: false
       required_params:
         exchange:
@@ -1860,10 +1862,8 @@ future_info:
         - INE
         - SSE
       date_column: cal_date
-      date_type: trade
-future:
-  db_path: ${DB_ROOT}/tushare_duck_future.db
-  tables:
+      date_type: natural
+      date_param_mode: range
     fut_daily:
       fields:
       - ts_code

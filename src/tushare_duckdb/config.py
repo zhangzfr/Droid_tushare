@@ -56,7 +56,8 @@ API_CONFIG = interpolate_config(_raw_config, DB_ROOT)
 # Export Database Paths for backward compatibility
 # These are derived from the loaded config to ensure consistency
 try:
-    BASIC_DB_PATH = API_CONFIG.get('stock_list', {}).get('db_path') or API_CONFIG.get('stock_info', {}).get('db_path')
+    # BASIC_DB_PATH now points to stock DB as stock_list was merged into stock
+    BASIC_DB_PATH = API_CONFIG.get('stock', {}).get('db_path')
     STOCK_DB_PATH = API_CONFIG.get('stock', {}).get('db_path')
     MARGIN_DB_PATH = API_CONFIG.get('margin', {}).get('db_path')
     MONEYFLOW_DB_PATH = API_CONFIG.get('moneyflow', {}).get('db_path')
