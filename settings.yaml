@@ -469,7 +469,7 @@ margin:
       - cb
       limit: 6000
       earliest_date: '20140102'
-      latest_date: null
+      latest_date: '20250725'
       unique_keys:
       - trade_date
       date_column: trade_date
@@ -485,7 +485,7 @@ margin:
       - end_bal
       limit: 5000
       earliest_date: '20221114'
-      latest_date: null
+      latest_date: '20250725'
       unique_keys:
       - trade_date
       - ts_code
