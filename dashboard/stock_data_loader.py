@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 # Database paths
-STOCK_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_basic.db'
+STOCK_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_stock.db'
 
 def get_stock_db_connection():
     """Establish connection to stock basic info DuckDB."""

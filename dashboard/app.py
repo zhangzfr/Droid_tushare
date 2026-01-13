@@ -89,7 +89,10 @@ NAVIGATION = {
         "icon": "market",
         "subcategories": {
             "Listing Stats": {"key": "listing_stats", "icon": "stats"},
-            "Uplift Detection": {"key": "uplift_detect", "icon": "trend"}
+            "Uplift Detection": {"key": "uplift_detect", "icon": "trend"},
+            "Equity Pledge": {"key": "pledge_data", "icon": "pulse"},
+            "Block Trade": {"key": "block_trade", "icon": "chart"},
+            "Risk Radar": {"key": "risk_radar", "icon": "alert"}
         }
     },
     "Market Insights": {
@@ -164,58 +167,46 @@ with st.sidebar:
             if found:
                 break
     
-    def mk_nav_item(link, icon, text, active=False, is_sub=False):
+    def mk_nav_item(link, text, active=False, is_sub=False):
         # Style calculation
         bg_color = "#EBE3DC" if active else "transparent"
         text_color = "#D97757" if active else "#5C5653"
         font_weight = "600" if active else ( "400" if is_sub else "500" )
         
         # Padding adjustment
-        padding = "6px 12px 6px 36px" if is_sub else "8px 12px"
+        padding = "6px 12px 6px 12px" if is_sub else "8px 12px" # Added indent for sub-items conceptually via container, but let's keep it simple
         margin = "2px" if is_sub else "4px"
         
-        # HTML template - Reset to clean flexbox layout
-        # 1. <a> needs display: block to fill width
-        # 2. <div> needs display: flex to align icon and text horizontally
-        # 3. Icon span needs flex-shrink: 0 and fixed width/margin to stay stable
-        # 4. Text span needs overflow: hidden and white-space: nowrap for ellipsis
-        html = f"""<a href="{link}" target="_self" style="text-decoration: none; display: block; width: 100%;"><div style="display: flex; flex-direction: row; align-items: center; padding: {padding}; margin-bottom: {margin}; background-color: {bg_color}; border-radius: 6px; transition: background-color 0.2s;"><span style="display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 12px; color: {text_color}; width: 18px; height: 18px;">{icon}</span><span style="color: {text_color}; font-weight: {font_weight}; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{text}</span></div></a>"""
+        # HTML template - Simple text link
+        html = f"""<a href="{link}" target="_self" style="text-decoration: none; display: block; width: 100%;"><div style="display: flex; flex-direction: row; align-items: center; padding: {padding}; margin-bottom: {margin}; background-color: {bg_color}; border-radius: 6px; transition: background-color 0.2s;"><span style="color: {text_color}; font-weight: {font_weight}; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{text}</span></div></a>"""
         return html
 
-    def mk_nav_header(icon, text):
-        return f"""<div style="display: flex; flex-direction: row; align-items: center; padding: 8px 12px; margin-top: 8px; margin-bottom: 4px;"><span style="display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 12px; color: #5C5653; width: 18px; height: 18px;">{icon}</span><span style="color: #5C5653; font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{text}</span></div>"""
-
     # Render Navigation
-    nav_html = ""
     for category, config in NAVIGATION.items():
         # Render category header/link
         is_active_cat = (category == active_category)
         
-        # Icon handling
-        cat_icon = config.get("icon", "")
-        icon_svg = ICONS.get(cat_icon, "")
-        
         # Create clickable category
         if not config["subcategories"]:
             # Single item (Home)
-            nav_html += mk_nav_item(f"?page={config['key']}", icon_svg, category, active=is_active_cat)
+            nav_html = mk_nav_item(f"?page={config['key']}", category, active=is_active_cat)
+            st.markdown(nav_html, unsafe_allow_html=True)
         else:
-            # Category with subcategories
-            nav_html += mk_nav_header(icon_svg, category)
+            # Category with subcategories - USE EXPANDER
             
-            # Render subcategories
-            for sub_name, sub_config in config["subcategories"].items():
-                is_active_sub = (sub_name == active_subcategory) and (category == active_category)
+            # Logic: If active category, expand by default
+            expanded_state = is_active_cat
+            
+            # We use st.expander for the collapsible effect
+            with st.expander(category, expanded=expanded_state):
+                # Inside expander, we render the sub-links
+                sub_nav_html = ""
+                for sub_name, sub_config in config["subcategories"].items():
+                    is_active_sub = (sub_name == active_subcategory) and (category == active_category)
+                    
+                    sub_nav_html += mk_nav_item(f"?page={sub_config['key']}", sub_name, active=is_active_sub, is_sub=True)
                 
-                # Sub-icon
-                sub_icon_key = sub_config.get("icon", "")
-                sub_icon_svg = ICONS.get(sub_icon_key, "")
-                if sub_icon_svg:
-                    sub_icon_svg = sub_icon_svg.replace('width="18"', 'width="14"').replace('height="18"', 'height="14"')
-                
-                nav_html += mk_nav_item(f"?page={sub_config['key']}", sub_icon_svg, sub_name, active=is_active_sub, is_sub=True)
-                
-    st.markdown(nav_html, unsafe_allow_html=True)
+                st.markdown(sub_nav_html, unsafe_allow_html=True)
 
     # Footer
     st.divider()

@@ -255,7 +255,7 @@ CUSTOM_CSS = """
         font-weight: 600;
         color: #1A1A1A;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid #E8E0D8;
+        border-bottom: none; /* Removed border */
         margin-bottom: 1rem;
     }
     
@@ -294,13 +294,14 @@ CUSTOM_CSS = """
         padding: 1.5rem;
         background: white;
         border-radius: 0.75rem;
-        border: none;
+        border: none !important; /* STRICTLY NO BORDER */
+        box-shadow: none;
     }
     
     /* Metric cards */
     [data-testid="metric-container"] {
         background: #FDFBF9;
-        border: 1px solid #E8E0D8;
+        border: none !important; /* STRICTLY NO BORDER */
         border-radius: 0.75rem;
         padding: 1rem;
     }
@@ -327,12 +328,13 @@ CUSTOM_CSS = """
     .stButton > button {
         border-radius: 0.5rem;
         font-weight: 500;
-        border: 1px solid #E8E0D8;
+        border: none !important; /* STRICTLY NO BORDER */
+        background-color: #F5F5F5; /* Light background instead of border */
         transition: all 0.15s ease;
     }
     
     .stButton > button:hover {
-        border-color: #D97757;
+        background-color: #E0E0E0;
         color: #D97757;
     }
     
@@ -340,7 +342,7 @@ CUSTOM_CSS = """
     [data-testid="stDataFrame"] {
         border-radius: 0.75rem;
         overflow: hidden;
-        border: 1px solid #E8E0D8;
+        border: none !important; /* STRICTLY NO BORDER */
     }
     
     /* Selectbox */
@@ -454,6 +456,65 @@ NAV_CSS = """
         height: 1px;
         background-color: #E8E0D8;
         margin: 16px 0;
+    }
+
+    /* ===== Sidebar Expander Styling ===== */
+    /* Target the expander container in sidebar */
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin-bottom: 0px !important;
+    }
+
+    /* Target the details element itself (the border often lives here) */
+    [data-testid="stSidebar"] [data-testid="stExpander"] details {
+        border-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        background-color: transparent !important;
+    }
+
+    /* Target the summary (clickable header) */
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        padding: 0px 12px 0px 4px !important; /* Align with nav links */
+        min-height: 0px !important;
+        height: auto !important;
+        background-color: transparent !important;
+        color: #8C8580 !important; /* Match .nav-header color */
+        transition: color 0.2s ease;
+        border: none !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+        color: #1A1A1A !important;
+        background-color: transparent !important;
+    }
+
+    /* Text inside summary (The Category Name) */
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+        font-size: 13px !important; /* Slightly larger than tiny header */
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 !important;
+    }
+    
+    /* Content inside expander */
+    [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+        padding: 0px 0px 8px 10px !important; /* Indent sub-items */
+        border: none !important;
+    }
+    
+    /* Remove default streamlit expander content border */
+    .streamlit-expanderContent {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Fix strict top padding for expanders */
+    [data-testid="stSidebar"] .streamlit-expanderHeader {
+        margin-top: 8px !important;
     }
 </style>
 """

@@ -11,19 +11,16 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # 数据库路径
-BASIC_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_basic.db'
+BASIC_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_stock.db'
 STOCK_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_stock.db'
 
 # 默认股票列表（热门标的）
 DEFAULT_STOCKS = [
-    '600519.SH',  # 贵州茅台
-    '000858.SZ',  # 五粮液
-    '601318.SH',  # 中国平安
-    '000001.SZ',  # 平安银行
-    '600036.SH',  # 招商银行
-    '300750.SZ',  # 宁德时代
-    '002594.SZ',  # 比亚迪
-    '601888.SH',  # 中国中免
+    '600460.SH',  # 士兰微
+    '000776.SZ',  # 广发证券
+    '300480.SZ',  # 光力科技
+    '300124.SZ',  # 汇川技术
+    '002129.SH',  # 中环
 ]
 
 # 板块映射
