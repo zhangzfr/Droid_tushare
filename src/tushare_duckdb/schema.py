@@ -154,8 +154,8 @@ TABLE_SCHEMAS = {
             ts_code VARCHAR NOT NULL,        -- 股票代码
             ann_date VARCHAR NOT NULL,       -- 公告日期
             holder_name VARCHAR NOT NULL,    -- 股东名称
-            pledge_amount DOUBLE,            -- 质押数量(万股)
-            start_date VARCHAR NOT NULL,     -- 质押开始日期
+            pledge_amount DOUBLE NOT NULL,   -- 质押数量(万股)
+            start_date VARCHAR,              -- 质押开始日期
             end_date VARCHAR,                -- 质押结束日期
             is_release VARCHAR,              -- 是否已解押
             release_date VARCHAR,            -- 解押日期
@@ -165,7 +165,7 @@ TABLE_SCHEMAS = {
             p_total_ratio DOUBLE,            -- 占总股本比例(%)
             h_total_ratio DOUBLE,            -- 占持股比例(%)
             is_buyback VARCHAR,              -- 是否回购
-            PRIMARY KEY (ts_code, ann_date, holder_name, start_date)
+            PRIMARY KEY (ts_code, ann_date, holder_name, pledge_amount)
         )""",
 
     # === basic 相关 ===

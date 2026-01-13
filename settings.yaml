@@ -493,7 +493,7 @@ reference:
       - ts_code
       - ann_date
       - holder_name
-      - start_date
+      - pledge_amount
       date_column: ann_date
       fetch_by_ts_code: true
 margin:
