@@ -159,7 +159,8 @@ DAILY_TABLES = {
         'daily_basic',        # 每日指标
         'stk_limit',          # 涨跌停价格
         'suspend_d',          # 停复牌信息
-        'bak_basic',          # 备用行情
+        'bak_basic',          # 股票历史列表
+        'bak_daily'           # 备用行情
     ],
     
     'margin': [
