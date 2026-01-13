@@ -203,10 +203,6 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
 
     return total_stored
 
-    return total_stored
-
-# ==================== 主交互循环 ====================
-
 
 # ==================== 主交互循环 ====================
 def main():
@@ -231,8 +227,8 @@ def main():
         print("\n" + "-" * 60)
         print("主菜单：")
         print(" [ 1] 股票数据         [ 2] 股票事件         [ 3] 指数数据")
-        print(" [ 4] 指数成员/权重    [ 5] 基金数据         [ 6] 期权行情")
-        print(" [ 7] 期货行情         [ 8] 债券行情         [ 9] 财务数据")
+        print(" [ 4] 指数权重         [ 5] 基金数据         [ 6] 期权数据")
+        print(" [ 7] 期货数据         [ 8] 债券数据         [ 9] 财务数据")
         print(" [10] 融资融券         [11] 资金流向         [12] 参考数据")
         print(" [13] 宏观数据         [14] 外汇数据         [15] 商品数据")
         print(" [16] 查看数据         [17] 数据库管理       [ 0] 退出")
@@ -261,7 +257,7 @@ def main():
                     desc = {
                         'stock': '股票数据', 'index': '指数数据',
                         'index_member': '指数成员/权重', 'fund': '基金数据',
-                        'option': '期权行情', 'future': '期货行情', 'bond': '债券情况和行情', 'finance': '财务数据',
+                        'option': '期权数据', 'future': '期货数据', 'bond': '债券数据', 'finance': '财务数据',
                         'margin': '融资融券', 'moneyflow': '资金流向', 'reference': '参考数据', 'macro': '宏观数据',
                         'fx': '外汇数据', 'commodity': '商品数据(上金所)',
                         'stock_events': '股票事件'
@@ -287,7 +283,6 @@ def main():
             target_category = status_menu[selected_key] if selected_key != 'all' else 'all'
             print(f"您选择了：{target_category if target_category != 'all' else '所有类别'}")
 
-            # === 第三步：日期范围与详情选项（保持您原习惯）===
             # === 第三步：日期范围与详情选项（保持您原习惯）===
             default_start = '20251101'
             default_end = datetime.now().strftime('%Y%m%d')
