@@ -457,7 +457,7 @@ reference:
       - total_share
       - pledge_ratio
       limit: 3000
-      earliest_date: '20180101'
+      earliest_date: '20140307'
       latest_date: null
       requires_date: true
       requires_paging: true
