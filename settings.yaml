@@ -447,6 +447,55 @@ reference:
       date_type: trade
       date_param: trade_date
       date_param_mode: range
+    pledge_stat:
+      fields:
+      - ts_code
+      - end_date
+      - pledge_count
+      - unrest_pledge
+      - rest_pledge
+      - total_share
+      - pledge_ratio
+      limit: 3000
+      earliest_date: '20180101'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - end_date
+      date_column: end_date
+      date_type: trade
+      date_param: end_date
+      date_param_mode: single
+    pledge_detail:
+      fields:
+      - ts_code
+      - ann_date
+      - holder_name
+      - pledge_amount
+      - start_date
+      - end_date
+      - is_release
+      - release_date
+      - pledgor
+      - holding_amount
+      - pledged_amount
+      - p_total_ratio
+      - h_total_ratio
+      - is_buyback
+      limit: 1000
+      earliest_date: '20050101'
+      latest_date: null
+      requires_date: false
+      requires_paging: false
+      unique_keys:
+      - ts_code
+      - ann_date
+      - holder_name
+      - start_date
+      date_column: ann_date
+      fetch_by_ts_code: true
 margin:
   db_path: ${DB_ROOT}/tushare_duck_margin.db
   tables:

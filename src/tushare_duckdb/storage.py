@@ -76,6 +76,42 @@ class DuckDBStorage:
                      processed_df['update_flag'] = processed_df['update_flag'].fillna('0').astype(str)
         # === End Finance Hook ===
 
+        # === Moneyflow ts_code Fill Hook ===
+        # Fix missing ts_code for moneyflow_cnt_ths based on name mapping
+        if table_name == 'moneyflow_cnt_ths':
+            # Known concept boards without ts_code in API response
+            TS_CODE_MAPPING = {
+                '蚂蚁集团概念': '885749.TI',
+                '2025年报预增': '886107.TI',
+            }
+            
+            if 'ts_code' in processed_df.columns and 'name' in processed_df.columns:
+                # Find rows with missing ts_code
+                mask = processed_df['ts_code'].isna() | (processed_df['ts_code'] == '')
+                
+                if mask.any():
+                    missing_count = mask.sum()
+                    # Fill from mapping
+                    processed_df.loc[mask, 'ts_code'] = processed_df.loc[mask, 'name'].map(TS_CODE_MAPPING)
+                    
+                    # Check if still missing after mapping
+                    still_missing = processed_df['ts_code'].isna() | (processed_df['ts_code'] == '')
+                    filled_count = missing_count - still_missing.sum()
+                    
+                    if filled_count > 0:
+                        logger.info(f"{table_name}: 通过 name 映射填充了 {filled_count} 条缺失的 ts_code")
+                    
+                    # Drop rows that still have missing ts_code after mapping
+                    if still_missing.any():
+                        unknown_names = processed_df.loc[still_missing, 'name'].unique().tolist()
+                        logger.warning(f"{table_name}: 发现未知 name 的 ts_code 缺失: {unknown_names}, 已丢弃 {still_missing.sum()} 条")
+                        processed_df = processed_df[~still_missing]
+                
+                if processed_df.empty:
+                    logger.warning(f"{table_name}: 清洗后为空，跳过存储")
+                    return 0
+        # === End Moneyflow Hook ===
+
         # === 核心逻辑：日期格式归一化 (YYYY-MM-DD -> YYYYMMDD) ===
         # 根据 api_config_entry['date_columns'] 列表进行批量洗数
         date_cols_to_fix = api_config_entry.get('date_columns', [])

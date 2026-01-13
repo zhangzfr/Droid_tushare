@@ -138,6 +138,35 @@ TABLE_SCHEMAS = {
             seller VARCHAR,                  -- 卖方营业部
             PRIMARY KEY (ts_code, trade_date)
         )""",
+    'pledge_stat': """
+        CREATE TABLE pledge_stat (
+            ts_code VARCHAR NOT NULL,        -- 股票代码
+            end_date VARCHAR NOT NULL,       -- 截止日期
+            pledge_count INTEGER,            -- 质押次数
+            unrest_pledge DOUBLE,            -- 无限售股质押数量(万股)
+            rest_pledge DOUBLE,              -- 限售股质押数量(万股)
+            total_share DOUBLE,              -- 总股本(万股)
+            pledge_ratio DOUBLE,             -- 质押比例(%)
+            PRIMARY KEY (ts_code, end_date)
+        )""",
+    'pledge_detail': """
+        CREATE TABLE pledge_detail (
+            ts_code VARCHAR NOT NULL,        -- 股票代码
+            ann_date VARCHAR NOT NULL,       -- 公告日期
+            holder_name VARCHAR NOT NULL,    -- 股东名称
+            pledge_amount DOUBLE,            -- 质押数量(万股)
+            start_date VARCHAR NOT NULL,     -- 质押开始日期
+            end_date VARCHAR,                -- 质押结束日期
+            is_release VARCHAR,              -- 是否已解押
+            release_date VARCHAR,            -- 解押日期
+            pledgor VARCHAR,                 -- 质押方
+            holding_amount DOUBLE,           -- 持股数量(万股)
+            pledged_amount DOUBLE,           -- 已质押数量(万股)
+            p_total_ratio DOUBLE,            -- 占总股本比例(%)
+            h_total_ratio DOUBLE,            -- 占持股比例(%)
+            is_buyback VARCHAR,              -- 是否回购
+            PRIMARY KEY (ts_code, ann_date, holder_name, start_date)
+        )""",
 
     # === basic 相关 ===
     'trade_cal': """
