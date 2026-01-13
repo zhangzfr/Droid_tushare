@@ -90,6 +90,41 @@ TABLE_SCHEMAS = {
             holder_num INTEGER,
             PRIMARY KEY (ts_code, trade_date)
             )""",
+    'bak_daily': """
+        CREATE TABLE bak_daily (
+            ts_code VARCHAR NOT NULL,        -- 股票代码
+            trade_date VARCHAR NOT NULL,     -- 交易日期
+            name VARCHAR,                    -- 股票名称
+            pct_change DOUBLE,               -- 涨跌幅
+            close DOUBLE,                    -- 收盘价
+            change DOUBLE,                   -- 涨跌额
+            open DOUBLE,                     -- 开盘价
+            high DOUBLE,                     -- 最高价
+            low DOUBLE,                      -- 最低价
+            pre_close DOUBLE,                -- 昨收价
+            vol_ratio DOUBLE,                -- 量比
+            turn_over DOUBLE,                -- 换手率
+            swing DOUBLE,                    -- 振幅
+            vol DOUBLE,                      -- 成交量
+            amount DOUBLE,                   -- 成交额
+            selling DOUBLE,                  -- 内盘（主动卖）
+            buying DOUBLE,                   -- 外盘（主动买）
+            total_share DOUBLE,              -- 总股本
+            float_share DOUBLE,              -- 流通股本
+            pe DOUBLE,                       -- 市盈率
+            industry VARCHAR,                -- 行业
+            area VARCHAR,                    -- 地区
+            float_mv DOUBLE,                 -- 流通市值
+            total_mv DOUBLE,                 -- 总市值
+            avg_price DOUBLE,                -- 均价
+            strength DOUBLE,                 -- 强弱度
+            activity DOUBLE,                 -- 活跃度
+            avg_turnover DOUBLE,             -- 平均换手
+            attack DOUBLE,                   -- 攻击波
+            interval_3 DOUBLE,               -- 近3月涨幅
+            interval_6 DOUBLE,               -- 近6月涨幅
+            PRIMARY KEY (ts_code, trade_date)
+            )""",
 
     # === ref 相关 ===
     'block_trade': """

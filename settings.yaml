@@ -381,6 +381,50 @@ stock:
       date_type: trade
       date_param: trade_date
       date_param_mode: single
+    bak_daily:
+      fields:
+      - ts_code
+      - trade_date
+      - name
+      - pct_change
+      - close
+      - change
+      - open
+      - high
+      - low
+      - pre_close
+      - vol_ratio
+      - turn_over
+      - swing
+      - vol
+      - amount
+      - selling
+      - buying
+      - total_share
+      - float_share
+      - pe
+      - industry
+      - area
+      - float_mv
+      - total_mv
+      - avg_price
+      - strength
+      - activity
+      - avg_turnover
+      - attack
+      - interval_3
+      - interval_6
+      limit: 7000
+      earliest_date: '20170614'
+      latest_date: null
+      requires_date: true
+      requires_paging: true
+      unique_keys:
+      - ts_code
+      - trade_date
+      date_column: trade_date
+      date_type: trade
+      date_param_mode: single
 reference:
   db_path: ${DB_ROOT}/tushare_duck_ref.db
   tables:
