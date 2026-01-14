@@ -27,6 +27,7 @@ utils/
 quant-ml-qlib/
 extension/
 docs/Tushare/
+AGENTS.md
 
 # --- General Python Environment ---
 .venv/
