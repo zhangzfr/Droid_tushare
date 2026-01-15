@@ -524,8 +524,19 @@ def plot_industry_valuation(df_industry: pd.DataFrame):
     if df_industry.empty:
         return None
     
+    df = df_industry.copy()
+
+    # Normalize column names (loader returns中文列名)
+    if 'PEMedian' not in df.columns and 'PE中位数' in df.columns:
+        df = df.rename(columns={'PE中位数': 'PEMedian'})
+    if 'Industry' not in df.columns and '行业' in df.columns:
+        df = df.rename(columns={'行业': 'Industry'})
+
+    if 'PEMedian' not in df.columns or 'Industry' not in df.columns:
+        return None
+
     # PEMedianTOP20Industry
-    df = df_industry.dropna(subset=['PEMedian']).sort_values('PEMedian', ascending=True).head(25)
+    df = df.dropna(subset=['PEMedian']).sort_values('PEMedian', ascending=True).head(25)
     
     fig = px.bar(
         df,

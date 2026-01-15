@@ -39,6 +39,7 @@ from dashboard.pages.vix_page import render_vix_page
 from dashboard.pages.fx_page import render_fx_edu_page
 from dashboard.pages.stock_page import render_stock_edu_page
 from dashboard.pages.market_insights_page import render_market_insights_page
+from dashboard.pages.finance_page import render_finance_page
 
 # Apply Custom CSS
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -93,6 +94,13 @@ NAVIGATION = {
             "Equity Pledge": {"key": "pledge_data", "icon": "pulse"},
             "Block Trade": {"key": "block_trade", "icon": "chart"},
             "Risk Radar": {"key": "risk_radar", "icon": "alert"}
+        }
+    },
+    "Financial Data": {
+        "key": "finance",
+        "icon": "finance",
+        "subcategories": {
+            "Financial Analysis": {"key": "fin_analysis", "icon": "finance"}
         }
     },
     "Market Insights": {
@@ -255,6 +263,9 @@ if active_category and active_category in NAVIGATION:
         
     elif category_key == "fx_edu":
         render_fx_edu_page(subcategory_key)
+
+    elif category_key == "finance":
+        render_finance_page(subcategory_key)
         
     elif category_key == "market_insights":
         render_market_insights_page(subcategory_key)
