@@ -177,7 +177,7 @@ DAILY_TABLES = {
         'moneyflow_ind_ths',  # 同花顺行业资金流
         'moneyflow_ind_dc',   # 东财行业资金流
         'moneyflow_mkt_dc',   # 东财大盘资金流
-        # 排除: moneyflow_cnt_ths (获取逻辑待完善)
+        'moneyflow_cnt_ths',  # 排除: moneyflow_cnt_ths (获取逻辑待完善)
     ],
     
     'index': [

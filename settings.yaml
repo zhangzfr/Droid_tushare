@@ -3101,7 +3101,6 @@ finance:
       - equity_yoy
       - rd_exp
       - update_flag
-      date_param: period
       earliest_date: '19900630'
     fina_audit:
       api_table: fina_audit_vip
