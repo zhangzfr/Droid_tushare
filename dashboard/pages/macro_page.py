@@ -292,14 +292,14 @@ def render_macro_page(subcategory_key):
                 
                 if metrics['cpi_yoy'] is not None:
                     delta = f"{metrics['cpi_yoy_change']:+.1f}" if metrics['cpi_yoy_change'] else None
-                    st.metric("CPI 同比", f"{metrics['cpi_yoy']:.1f}%", delta=delta)
+                    st.metric("CPI YoY", f"{metrics['cpi_yoy']:.1f}%", delta=delta)
                 
                 if metrics['ppi_yoy'] is not None:
                     delta = f"{metrics['ppi_yoy_change']:+.1f}" if metrics['ppi_yoy_change'] else None
-                    st.metric("PPI 同比", f"{metrics['ppi_yoy']:.1f}%", delta=delta)
+                    st.metric("PPI YoY", f"{metrics['ppi_yoy']:.1f}%", delta=delta)
                 
                 if metrics['cpi_date']:
-                    st.caption(f"更新至: {metrics['cpi_date']}")
+                    st.caption(f"Updated to: {metrics['cpi_date']}")
             
             df_cpi_f = filter_df(df_cpi, start_date, end_date)
             df_ppi_f = filter_df(df_ppi, start_date, end_date)
@@ -320,14 +320,14 @@ def render_macro_page(subcategory_key):
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.subheader("CPI 环比走势")
-                        fig_cpi_mom = plot_mom_trend(df_cpi_f, 'nt_mom', "CPI 全国环比")
+                        st.subheader("CPI MoM Trend")
+                        fig_cpi_mom = plot_mom_trend(df_cpi_f, 'nt_mom', "CPI National MoM")
                         if fig_cpi_mom:
                             st.plotly_chart(fig_cpi_mom, use_container_width=True, key="cpi_mom")
                     
                     with col2:
-                        st.subheader("PPI 环比走势")
-                        fig_ppi_mom = plot_mom_trend(df_ppi_f, 'ppi_mom', "PPI 总指数环比")
+                        st.subheader("PPI MoM Trend")
+                        fig_ppi_mom = plot_mom_trend(df_ppi_f, 'ppi_mom', "PPI Overall Index MoM")
                         if fig_ppi_mom:
                             st.plotly_chart(fig_ppi_mom, use_container_width=True, key="ppi_mom")
                 
@@ -383,14 +383,14 @@ def render_macro_page(subcategory_key):
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.subheader("CPI 环比季节性")
-                        fig_cpi_season = plot_seasonality_chart(df_cpi_f, 'nt_mom', "CPI 环比季节性", n_years=3)
+                        st.subheader("CPI MoM Seasonality")
+                        fig_cpi_season = plot_seasonality_chart(df_cpi_f, 'nt_mom', "CPI MoM Seasonality", n_years=3)
                         if fig_cpi_season:
                             st.plotly_chart(fig_cpi_season, use_container_width=True, key="cpi_seasonality")
                     
                     with col2:
-                        st.subheader("PPI 环比季节性")
-                        fig_ppi_season = plot_seasonality_chart(df_ppi_f, 'ppi_mom', "PPI 环比季节性", n_years=3)
+                        st.subheader("PPI MoM Seasonality")
+                        fig_ppi_season = plot_seasonality_chart(df_ppi_f, 'ppi_mom', "PPI MoM Seasonality", n_years=3)
                         if fig_ppi_season:
                             st.plotly_chart(fig_ppi_season, use_container_width=True, key="ppi_seasonality")
 
@@ -408,7 +408,7 @@ def render_macro_page(subcategory_key):
                                  f"{metrics['ppi_yoy'] - metrics['cpi_yoy']:.1f}%" if metrics['ppi_yoy'] is not None and metrics['cpi_yoy'] is not None else "N/A",
                                  delta=None, help="Positive = Upstream Inflation > Downstream Cost")
                     
-                    st.subheader("PPI 产业链传导 (Mining → Raw → Processing)")
+                    st.subheader("PPI Industry Chain Transmission (Mining → Raw → Processing)")
                     df_chain = prepare_ppi_chain_data(df_ppi_f)
                     fig_chain = plot_ppi_chain_trend(df_chain)
                     if fig_chain:
@@ -416,7 +416,7 @@ def render_macro_page(subcategory_key):
                     
                     st.markdown("---")
                     
-                    st.subheader("剪刀差分析 (PPI - CPI)")
+                    st.subheader("Scissors Gap Analysis (PPI - CPI)")
                     df_scissors = prepare_scissors_data(df_cpi_f, df_ppi_f)
                     fig_scissors = plot_scissors_difference(df_scissors)
                     if fig_scissors:

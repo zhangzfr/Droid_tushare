@@ -103,7 +103,7 @@ def plot_cpi_ppi_trend(df_cpi: pd.DataFrame, df_ppi: pd.DataFrame):
         fig.add_trace(go.Scatter(
             x=df_cpi['month'],
             y=df_cpi['nt_yoy'],
-            name='CPI 同比',
+            name='CPI YoY',
             mode='lines',
             line=dict(color=COLORS['cpi'], width=2),
             hovertemplate='%{x|%Y-%m}<br>CPI: %{y:.1f}%<extra></extra>'
@@ -114,7 +114,7 @@ def plot_cpi_ppi_trend(df_cpi: pd.DataFrame, df_ppi: pd.DataFrame):
         fig.add_trace(go.Scatter(
             x=df_ppi['month'],
             y=df_ppi['ppi_yoy'],
-            name='PPI 同比',
+            name='PPI YoY',
             mode='lines',
             line=dict(color=COLORS['ppi'], width=2),
             hovertemplate='%{x|%Y-%m}<br>PPI: %{y:.1f}%<extra></extra>'
@@ -123,10 +123,10 @@ def plot_cpi_ppi_trend(df_cpi: pd.DataFrame, df_ppi: pd.DataFrame):
     # Add zero line
     fig.add_hline(y=0, line_dash='dash', line_color=COLORS['neutral'], line_width=1)
     
-    fig = apply_chart_style(fig, title="CPI vs PPI 同比走势")
+    fig = apply_chart_style(fig, title="CPI vs PPI YoYTrend")
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="同比变化 (%)",
+        yaxis_title="YoYChange (%)",
         hovermode='x unified',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
@@ -144,9 +144,9 @@ def plot_cpi_components(df_cpi: pd.DataFrame):
     fig = go.Figure()
     
     components = [
-        ('nt_yoy', '全国', COLORS['cpi']),
-        ('town_yoy', '城市', COLORS['primary']),
-        ('cnt_yoy', '农村', COLORS['ppi'])
+        ('nt_yoy', 'National', COLORS['cpi']),
+        ('town_yoy', 'Urban', COLORS['primary']),
+        ('cnt_yoy', 'Rural', COLORS['ppi'])
     ]
     
     for col, name, color in components:
@@ -161,10 +161,10 @@ def plot_cpi_components(df_cpi: pd.DataFrame):
     
     fig.add_hline(y=0, line_dash='dash', line_color=COLORS['neutral'], line_width=1)
     
-    fig = apply_chart_style(fig, title="CPI 同比: 全国 vs 城市 vs 农村")
+    fig = apply_chart_style(fig, title="CPI YoY: National vs Urban vs Rural")
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="同比 (%)",
+        yaxis_title="YoY (%)",
         hovermode='x unified'
     )
     
@@ -181,9 +181,9 @@ def plot_ppi_sectors(df_ppi: pd.DataFrame):
     fig = go.Figure()
     
     sectors = [
-        ('ppi_yoy', 'PPI总指数', COLORS['cpi']),
-        ('ppi_mp_yoy', '生产资料', COLORS['primary']),
-        ('ppi_cg_yoy', '生活资料', COLORS['ppi'])
+        ('ppi_yoy', 'PPIOverall Index', COLORS['cpi']),
+        ('ppi_mp_yoy', 'Production Materials', COLORS['primary']),
+        ('ppi_cg_yoy', 'Consumer Goods', COLORS['ppi'])
     ]
     
     for col, name, color in sectors:
@@ -198,10 +198,10 @@ def plot_ppi_sectors(df_ppi: pd.DataFrame):
     
     fig.add_hline(y=0, line_dash='dash', line_color=COLORS['neutral'], line_width=1)
     
-    fig = apply_chart_style(fig, title="PPI 分类同比走势")
+    fig = apply_chart_style(fig, title="PPI CategoryYoYTrend")
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="同比 (%)",
+        yaxis_title="YoY (%)",
         hovermode='x unified'
     )
     
@@ -227,12 +227,12 @@ def plot_cpi_heatmap(df_cpi: pd.DataFrame, n_months: int = 12):
     
     # Build heatmap matrix
     items_map = {
-        'CPI 全国同比': 'nt_yoy',
-        'CPI 城市同比': 'town_yoy',
-        'CPI 农村同比': 'cnt_yoy',
-        'CPI 全国环比': 'nt_mom',
-        'CPI 城市环比': 'town_mom',
-        'CPI 农村环比': 'cnt_mom'
+        'CPI NationalYoY': 'nt_yoy',
+        'CPI UrbanYoY': 'town_yoy',
+        'CPI RuralYoY': 'cnt_yoy',
+        'CPI NationalMoM': 'nt_mom',
+        'CPI UrbanMoM': 'town_mom',
+        'CPI RuralMoM': 'cnt_mom'
     }
     
     # Create matrix
@@ -271,7 +271,7 @@ def plot_cpi_heatmap(df_cpi: pd.DataFrame, n_months: int = 12):
         hovertemplate='%{y}<br>%{x}: %{z:.2f}%<extra></extra>'
     ))
     
-    fig = apply_chart_style(fig, title="CPI 分项热力图")
+    fig = apply_chart_style(fig, title="CPI Category Heatmap")
     fig.update_layout(
         xaxis_title="",
         yaxis_title="",
@@ -295,16 +295,16 @@ def plot_ppi_heatmap(df_ppi: pd.DataFrame, n_months: int = 12):
     
     # PPI items mapping
     items_map = {
-        'PPI 总指数同比': 'ppi_yoy',
-        '生产资料同比': 'ppi_mp_yoy',
-        '  - 采掘业': 'ppi_mp_qm_yoy',
-        '  - 原料业': 'ppi_mp_rm_yoy',
-        '  - 加工业': 'ppi_mp_p_yoy',
-        '生活资料同比': 'ppi_cg_yoy',
-        '  - 食品类': 'ppi_cg_f_yoy',
-        '  - 衣着类': 'ppi_cg_c_yoy',
-        '  - 日用品': 'ppi_cg_adu_yoy',
-        '  - 耐用品': 'ppi_cg_dcg_yoy'
+        'PPI Overall IndexYoY': 'ppi_yoy',
+        'Production MaterialsYoY': 'ppi_mp_yoy',
+        '  - Mining': 'ppi_mp_qm_yoy',
+        '  - Raw Materials': 'ppi_mp_rm_yoy',
+        '  - Processing': 'ppi_mp_p_yoy',
+        'Consumer GoodsYoY': 'ppi_cg_yoy',
+        '  - Food': 'ppi_cg_f_yoy',
+        '  - Apparel': 'ppi_cg_c_yoy',
+        '  - Daily Essentials': 'ppi_cg_adu_yoy',
+        '  - Durable Goods': 'ppi_cg_dcg_yoy'
     }
     
     # Create matrix
@@ -342,7 +342,7 @@ def plot_ppi_heatmap(df_ppi: pd.DataFrame, n_months: int = 12):
         hovertemplate='%{y}<br>%{x}: %{z:.2f}%<extra></extra>'
     ))
     
-    fig = apply_chart_style(fig, title="PPI 分项热力图")
+    fig = apply_chart_style(fig, title="PPI Category Heatmap")
     fig.update_layout(
         xaxis_title="",
         yaxis_title="",
@@ -357,11 +357,11 @@ def plot_ppi_heatmap(df_ppi: pd.DataFrame, n_months: int = 12):
 # ============================================================================
 
 def plot_seasonality_chart(df: pd.DataFrame, metric_col: str = 'nt_mom', 
-                           title: str = "CPI 环比季节性", n_years: int = 3):
+                           title: str = "CPI MoM Seasonality", n_years: int = 3):
     """
     Create seasonality overlay chart showing month-over-month patterns.
     
-    Based on Image 4 from visualization guide: "CPI 环比季节"
+    Based on Image 4 from visualization guide: "CPI MoM Season"
     """
     if df.empty or metric_col not in df.columns:
         return None
@@ -375,8 +375,8 @@ def plot_seasonality_chart(df: pd.DataFrame, metric_col: str = 'nt_mom',
     
     fig = go.Figure()
     
-    month_names = ['1月', '2月', '3月', '4月', '5月', '6月',
-                   '7月', '8月', '9月', '10月', '11月', '12月']
+    month_names = ['1Month', '2Month', '3Month', '4Month', '5Month', '6Month',
+                   '7Month', '8Month', '9Month', '10Month', '11Month', '12Month']
     
     for i, year in enumerate(recent_years):
         year_data = df[df['year'] == year].sort_values('month_num')
@@ -403,7 +403,7 @@ def plot_seasonality_chart(df: pd.DataFrame, metric_col: str = 'nt_mom',
             ticktext=month_names
         ),
         xaxis_title="",
-        yaxis_title="环比 (%)",
+        yaxis_title="MoM (%)",
         hovermode='x unified'
     )
     
@@ -432,7 +432,7 @@ def plot_mom_trend(df: pd.DataFrame, col: str, title: str):
         x=df['month'],
         y=df[col],
         marker_color=colors,
-        hovertemplate='%{x|%Y-%m}<br>环比: %{y:.2f}%<extra></extra>'
+        hovertemplate='%{x|%Y-%m}<br>MoM: %{y:.2f}%<extra></extra>'
     ))
     
     fig.add_hline(y=0, line_width=1, line_color=COLORS['neutral'])
@@ -440,7 +440,7 @@ def plot_mom_trend(df: pd.DataFrame, col: str, title: str):
     fig = apply_chart_style(fig, title=title)
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="环比 (%)",
+        yaxis_title="MoM (%)",
         bargap=0.1
     )
     
@@ -506,10 +506,10 @@ def plot_ppi_chain_trend(df_chain: pd.DataFrame):
     fig = go.Figure()
     
     chain_config = [
-        ('采掘工业 (上游)', '#D97757'),  # Primary/Red
-        ('原材料工业 (中游)', '#E8A838'),  # Warning/Yellow
-        ('加工工业 (下游)', '#4A90A4'),  # CPI/Blue
-        ('生活资料 (终端)', '#5C5653')   # Secondary/Gray
+        ('Mining Industry (Upstream)', '#D97757'),  # Primary/Red
+        ('Raw Materials Industry (Midstream)', '#E8A838'),  # Warning/Yellow
+        ('Processing Industry (Downstream)', '#4A90A4'),  # CPI/Blue
+        ('Consumer Goods (Terminal)', '#5C5653')   # Secondary/Gray
     ]
     
     for col, color in chain_config:
@@ -525,10 +525,10 @@ def plot_ppi_chain_trend(df_chain: pd.DataFrame):
             
     fig.add_hline(y=0, line_dash='dash', line_color=COLORS['neutral'], line_width=1)
     
-    fig = apply_chart_style(fig, title="PPI 产业链传导分析 (上游 -> 下游)")
+    fig = apply_chart_style(fig, title="PPI Industry Chain Transmission Analysis (Upstream -> Downstream)")
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="同比 (%)",
+        yaxis_title="YoY (%)",
         hovermode='x unified',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
@@ -552,7 +552,7 @@ def plot_scissors_difference(df_scissors: pd.DataFrame):
     fig.add_trace(go.Scatter(
         x=df_scissors['month'],
         y=df_scissors['ppi_cpi_scissors'],
-        name='PPI - CPI 剪刀差',
+        name='PPI - CPI Price Scissors',
         mode='lines',
         line=dict(color=COLORS['primary'], width=2),
         fill='tozeroy',  # Fill to zero to show positive/negative clearly
@@ -563,7 +563,7 @@ def plot_scissors_difference(df_scissors: pd.DataFrame):
     fig.add_trace(go.Scatter(
         x=df_scissors['month'],
         y=df_scissors['ppi_internal_scissors'],
-        name='生产资料 - 生活资料 剪刀差',
+        name='Production Materials - Consumer Goods Price Scissors',
         mode='lines',
         line=dict(color=COLORS['cpi'], width=1.5, dash='dot'),
         visible='legendonly' # Hide by default to keep it clean, user can toggle
@@ -571,10 +571,10 @@ def plot_scissors_difference(df_scissors: pd.DataFrame):
     
     fig.add_hline(y=0, line_dash='dash', line_color=COLORS['neutral'], line_width=1)
     
-    fig = apply_chart_style(fig, title="价格剪刀差分析 (PPI - CPI)")
+    fig = apply_chart_style(fig, title="PricePrice ScissorsAnalysis (PPI - CPI)")
     fig.update_layout(
         xaxis_title="",
-        yaxis_title="差值 (百分点)",
+        yaxis_title="Gap (Percentage Points)",
         hovermode='x unified',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )

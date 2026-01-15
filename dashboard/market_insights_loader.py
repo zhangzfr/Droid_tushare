@@ -1,7 +1,7 @@
 """
-市场洞察数据加载模块
-===================
-加载市场交易统计和全球指数数据，用于专业级市场分析。
+Market Insights Data Loading Module
+====================================
+Loads market trading statistics and global index data for professional market analysis.
 """
 import duckdb
 import pandas as pd
@@ -9,14 +9,15 @@ import numpy as np
 import streamlit as st
 from datetime import datetime, timedelta
 
-# 数据库路径
+# Database paths
 INDEX_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_index.db'
 
-# 全球指数代码与名称映射 (完整版)
+# Global Index Code to Name Mapping (Complete Version)
+# Note: Index names are kept in Chinese as requested
 GLOBAL_INDICES = {
     'XIN9': '富时中国A50指数',
     'HSI': '恒生指数',
-    'HKTECH': '恒生科技指数',
+    'HKTECH': '恒生Technology指数',
     'HKAH': '恒生AH股H指数',
     'DJI': '道琼斯工业指数',
     'SPX': '标普500指数',
@@ -39,56 +40,56 @@ GLOBAL_INDICES = {
 
 
 def get_index_display_name(code: str) -> str:
-    """获取指数显示名称：代码 - 名称"""
+    """获取指数显示Name：Code - Name"""
     name = GLOBAL_INDICES.get(code, code)
     return f"{code} - {name}"
 
-# A股板块代码映射 - daily_info table (单位: 亿元)
+# A-Share Sector Code Mapping - daily_info table (Unit: 100M CNY)
 MARKET_CODES = {
-    'SH_A': '上海A股',
-    'SH_STAR': '科创板',
-    'SZ_A': '深圳A股',
-    'SZ_MAIN': '深市主板',
-    'SZ_GEM': '创业板',
-    'SZ_SME': '中小板',
-    'SH_MARKET': '上海市场',
-    'SZ_MARKET': '深圳市场',
-    'SH_FUND': '上海基金'
+    'SH_A': 'Shanghai A-Share',
+    'SH_STAR': 'STAR Market',
+    'SZ_A': 'Shenzhen A-Share',
+    'SZ_MAIN': 'Shenzhen Main Board',
+    'SZ_GEM': 'ChiNext',
+    'SZ_SME': 'SME Board',
+    'SH_MARKET': 'Shanghai Market',
+    'SZ_MARKET': 'Shenzhen Market',
+    'SH_FUND': 'Shanghai Fund'
 }
 
-# sz_daily_info table codes mapping (单位: 元, 需要转换为亿元)
+# sz_daily_info table codes mapping (Unit: CNY, need to convert to 100M CNY)
 SZ_DAILY_CODES = {
-    '股票': '深圳股票',
-    '创业板A股': '深圳创业板A股',
-    '主板A股': '深圳主板A股',
-    '债券': '深圳债券',
-    '基金': '深圳基金'
+    'Stock': 'Shenzhen Stock',
+    'GEM A-Share': 'Shenzhen GEM A-Share',
+    'Main Board A-Share': 'Shenzhen Main Board A-Share',
+    'Bond': 'Shenzhen Bond',
+    'Fund': 'Shenzhen Fund'
 }
 
 
 def get_index_db_connection():
-    """连接Index数据库"""
+    """Connect to Index database."""
     try:
         conn = duckdb.connect(INDEX_DB_PATH, read_only=True)
         return conn
     except Exception as e:
-        st.error(f"连接数据库失败: {e}")
+        st.error(f"Database connection failed: {e}")
         return None
 
 
 # ============================================================================
-# 市场统计数据 - daily_info
+# Market Statistics Data - daily_info
 # ============================================================================
 
 @st.cache_data(ttl=3600)
 def load_daily_info(start_date: str = None, end_date: str = None, ts_codes: list = None):
     """
-    加载市场交易统计数据。
+    Load market trading statistics data.
     
     Args:
-        start_date: 开始日期 'YYYYMMDD'
-        end_date: 结束日期 'YYYYMMDD'
-        ts_codes: 板块代码列表（如 ['SH_A', 'SZ_GEM']）
+        start_date: Start date 'YYYYMMDD'
+        end_date: End date 'YYYYMMDD'
+        ts_codes: Sector code list (e.g., ['SH_A', 'SZ_GEM'])
     
     Returns:
         DataFrame: trade_date, ts_code, ts_name, com_count, total_mv, float_mv, amount, pe, tr
@@ -124,14 +125,14 @@ def load_daily_info(start_date: str = None, end_date: str = None, ts_codes: list
         """
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 daily_info 失败: {e}")
+        st.error(f"Failed to load daily_info: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
     
     if not df.empty:
         df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
-        # 添加中文名称
+        # Add display name
         df['market_name'] = df['ts_code'].map(MARKET_CODES).fillna(df['ts_name'])
     
     return df
@@ -139,7 +140,7 @@ def load_daily_info(start_date: str = None, end_date: str = None, ts_codes: list
 
 @st.cache_data(ttl=3600)
 def get_available_market_codes():
-    """获取可用的板块代码列表"""
+    """Get available sector code list."""
     conn = get_index_db_connection()
     if not conn:
         return []
@@ -160,16 +161,16 @@ def get_available_market_codes():
 @st.cache_data(ttl=3600)
 def load_sz_daily_info(start_date: str = None, end_date: str = None, ts_codes: list = None):
     """
-    加载深圳市场统计数据 (sz_daily_info)。
-    注意：此表的amount单位是元，需要转换为亿元。
+    Load Shenzhen market statistics (sz_daily_info).
+    Note: The amount unit in this table is CNY, need to convert to 100M CNY.
     
     Args:
-        start_date: 开始日期 'YYYYMMDD'
-        end_date: 结束日期 'YYYYMMDD'
-        ts_codes: 板块代码列表（如 ['股票', '创业板A股']）
+        start_date: Start date 'YYYYMMDD'
+        end_date: End date 'YYYYMMDD'
+        ts_codes: Sector code list (e.g., ['Stock', 'GEM A-Share'])
     
     Returns:
-        DataFrame: trade_date, ts_code, count, amount (已转换为亿元)
+        DataFrame: trade_date, ts_code, count, amount (converted to 100M CNY)
     """
     conn = get_index_db_connection()
     if not conn:
@@ -200,16 +201,16 @@ def load_sz_daily_info(start_date: str = None, end_date: str = None, ts_codes: l
         """
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 sz_daily_info 失败: {e}")
+        st.error(f"Failed to load sz_daily_info: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
     
     if not df.empty:
         df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
-        # 转换单位：元 -> 亿元
+        # Convert unit: CNY -> 100M CNY
         df['amount'] = df['amount'] / 1e8
-        # 添加中文名称
+        # Add display name
         df['market_name'] = df['ts_code'].map(SZ_DAILY_CODES).fillna(df['ts_code'])
         df['source'] = 'sz_daily_info'
     
@@ -219,27 +220,27 @@ def load_sz_daily_info(start_date: str = None, end_date: str = None, ts_codes: l
 @st.cache_data(ttl=3600)
 def load_combined_amount_data(start_date: str, end_date: str):
     """
-    加载合并的成交额数据，包括:
-    - daily_info: SH_MARKET, SZ_MARKET, SH_A, SZ_GEM, SH_STAR, SH_FUND (亿元)
-    - sz_daily_info: 股票, 创业板A股, 主板A股, 债券, 基金 (转换后亿元)
+    Load combined trading amount data, including:
+    - daily_info: SH_MARKET, SZ_MARKET, SH_A, SZ_GEM, SH_STAR, SH_FUND (100M CNY)
+    - sz_daily_info: Stock, GEM A-Share, Main Board A-Share, Bond, Fund (converted to 100M CNY)
     
     Returns:
-        DataFrame: trade_date, ts_code, market_name, amount (亿元), source
+        DataFrame: trade_date, ts_code, market_name, amount (100M CNY), source
     """
-    # 从 daily_info 加载
+    # From daily_info load
     daily_codes = ['SH_MARKET', 'SZ_MARKET', 'SH_A', 'SZ_GEM', 'SH_STAR', 'SH_FUND']
     df_daily = load_daily_info(start_date, end_date, daily_codes)
     if not df_daily.empty:
         df_daily = df_daily[['trade_date', 'ts_code', 'market_name', 'amount']].copy()
         df_daily['source'] = 'daily_info'
     
-    # 从 sz_daily_info 加载
-    sz_codes = ['股票', '创业板A股', '主板A股', '债券', '基金']
+    # From sz_daily_info load
+    sz_codes = ['Stock', 'GEM A-Share', 'Main Board A-Share', 'Bond', 'Fund']
     df_sz = load_sz_daily_info(start_date, end_date, sz_codes)
     if not df_sz.empty:
         df_sz = df_sz[['trade_date', 'ts_code', 'market_name', 'amount', 'source']].copy()
     
-    # 合并
+    # Merge
     if not df_daily.empty and not df_sz.empty:
         df_combined = pd.concat([df_daily, df_sz], ignore_index=True)
     elif not df_daily.empty:
@@ -254,14 +255,14 @@ def load_combined_amount_data(start_date: str, end_date: str):
 
 def calculate_pe_percentile(df: pd.DataFrame, ts_code: str):
     """
-    计算PE历史分位数。
+    Calculate PE historical percentile.
     
     Args:
-        df: daily_info数据
-        ts_code: 板块代码
+        df: daily_info data
+        ts_code: Sector code
     
     Returns:
-        dict: 当前PE, 历史分位数, 最小/最大PE
+        dict: current_pe, historical_percentile, min/max PE
     """
     data = df[df['ts_code'] == ts_code].dropna(subset=['pe']).copy()
     if data.empty:
@@ -284,7 +285,7 @@ def calculate_pe_percentile(df: pd.DataFrame, ts_code: str):
 
 def calculate_market_stats(df: pd.DataFrame):
     """
-    计算市场汇总统计。
+    Calculate market summary statistics.
     """
     if df.empty:
         return {}
@@ -299,18 +300,18 @@ def calculate_market_stats(df: pd.DataFrame):
 
 
 # ============================================================================
-# 全球指数数据 - index_global
+# Global Index Data - index_global
 # ============================================================================
 
 @st.cache_data(ttl=3600)
 def load_index_global(start_date: str = None, end_date: str = None, ts_codes: list = None):
     """
-    加载全球指数行情数据。
+    Load global index market data.
     
     Args:
-        start_date: 开始日期 'YYYYMMDD'
-        end_date: 结束日期 'YYYYMMDD'
-        ts_codes: 指数代码列表
+        start_date: Start date 'YYYYMMDD'
+        end_date: End date 'YYYYMMDD'
+        ts_codes: Index code list
     
     Returns:
         DataFrame: ts_code, trade_date, open, close, high, low, pct_chg
@@ -345,14 +346,14 @@ def load_index_global(start_date: str = None, end_date: str = None, ts_codes: li
         """
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 index_global 失败: {e}")
+        st.error(f"Failed to load index_global: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
     
     if not df.empty:
         df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
-        # 添加统一格式的显示名称：代码 - 名称
+        # Add unified display name: code - name
         df['index_name'] = df['ts_code'].apply(get_index_display_name)
     
     return df
@@ -360,7 +361,7 @@ def load_index_global(start_date: str = None, end_date: str = None, ts_codes: li
 
 @st.cache_data(ttl=3600)
 def get_available_global_indices():
-    """获取可用的全球指数代码"""
+    """Get available global index codes."""
     conn = get_index_db_connection()
     if not conn:
         return []
@@ -379,12 +380,12 @@ def get_available_global_indices():
 
 def calculate_global_correlation(df: pd.DataFrame):
     """
-    计算全球指数收益率相关性矩阵。
+    Calculate global index return correlation matrix.
     """
     if df.empty or 'pct_chg' not in df.columns:
         return pd.DataFrame()
     
-    # 透视表
+    # Pivot table
     pivot = df.pivot_table(
         index='trade_date',
         columns='index_name',
@@ -397,27 +398,27 @@ def calculate_global_correlation(df: pd.DataFrame):
 
 def calculate_index_returns(df: pd.DataFrame):
     """
-    计算各指数的累计收益和年化统计。
+    Calculate cumulative returns and annualized statistics for each index.
     """
     if df.empty:
         return pd.DataFrame()
     
-    # 按指数分组计算
+    # Calculate by index group
     stats = []
     for code in df['ts_code'].unique():
         data = df[df['ts_code'] == code].sort_values('trade_date')
         if len(data) < 10:
             continue
         
-        # 累计收益
+        # Cumulative return
         first_close = data.iloc[0]['close']
         last_close = data.iloc[-1]['close']
         total_return = (last_close - first_close) / first_close
         
-        # 日收益率
+        # Daily returns
         daily_returns = data['pct_chg'].dropna() / 100
         
-        # 年化
+        # Annualized
         trading_days = len(data)
         ann_return = (1 + total_return) ** (252 / trading_days) - 1 if trading_days > 0 else 0
         ann_vol = daily_returns.std() * np.sqrt(252)
@@ -437,7 +438,7 @@ def calculate_index_returns(df: pd.DataFrame):
 
 
 def calculate_max_drawdown(prices):
-    """计算最大回撤"""
+    """Calculate maximum drawdown."""
     if len(prices) == 0:
         return 0
     peak = prices[0]
@@ -452,7 +453,7 @@ def calculate_max_drawdown(prices):
 
 
 def create_normalized_pivot(df: pd.DataFrame, value_col: str = 'close'):
-    """创建归一化价格透视表"""
+    """Create normalized price pivot table."""
     if df.empty:
         return pd.DataFrame()
     
@@ -463,19 +464,19 @@ def create_normalized_pivot(df: pd.DataFrame, value_col: str = 'close'):
         aggfunc='first'
     )
     
-    # 归一化到100
+    # Normalize to 100
     normalized = pivot / pivot.iloc[0] * 100
     
     return normalized.ffill()
 
 
 # ============================================================================
-# 市场情绪指标
+# Market Sentiment Indicators
 # ============================================================================
 
 def calculate_market_sentiment(df: pd.DataFrame, ts_code: str = 'SH_A'):
     """
-    基于成交额和换手率计算市场情绪。
+    Calculate market sentiment based on trading amount and turnover rate.
     """
     data = df[df['ts_code'] == ts_code].copy()
     if data.empty:
@@ -483,14 +484,14 @@ def calculate_market_sentiment(df: pd.DataFrame, ts_code: str = 'SH_A'):
     
     data = data.sort_values('trade_date')
     
-    # 成交额MA
+    # Amount MA
     data['amount_ma20'] = data['amount'].rolling(20).mean()
     data['amount_ma60'] = data['amount'].rolling(60).mean()
     
-    # 成交额相对强度
+    # Amount relative strength
     data['amount_ratio'] = data['amount'] / data['amount_ma20']
     
-    # 换手率MA
+    # Turnover rate MA
     if 'tr' in data.columns:
         data['tr_ma20'] = data['tr'].rolling(20).mean()
     
@@ -498,7 +499,7 @@ def calculate_market_sentiment(df: pd.DataFrame, ts_code: str = 'SH_A'):
 
 
 def aggregate_monthly_stats(df: pd.DataFrame, ts_code: str):
-    """按月聚合统计"""
+    """Aggregate statistics by month."""
     data = df[df['ts_code'] == ts_code].copy()
     if data.empty:
         return pd.DataFrame()
@@ -518,12 +519,12 @@ def aggregate_monthly_stats(df: pd.DataFrame, ts_code: str):
 
 
 # ============================================================================
-# 两市交易数据分析辅助函数
+# Two-Market Trading Data Analysis Helper Functions
 # ============================================================================
 
 def calculate_amount_turnover(df: pd.DataFrame):
     """
-    计算金额换手率 (amount / float_mv * 100)。
+    Calculate amount turnover rate (amount / float_mv * 100).
     """
     if df.empty or 'amount' not in df.columns or 'float_mv' not in df.columns:
         return df
@@ -536,16 +537,16 @@ def calculate_amount_turnover(df: pd.DataFrame):
 def load_combined_trading_data(start_date: str = None, end_date: str = None, 
                               daily_codes: list = None, sz_codes: list = None):
     """
-    加载合并的交易数据（daily_info + sz_daily_info）。
+    Load combined trading data (daily_info + sz_daily_info).
     
     Args:
-        start_date: 开始日期 'YYYYMMDD'
-        end_date: 结束日期 'YYYYMMDD'
-        daily_codes: daily_info板块代码列表
-        sz_codes: sz_daily_info板块代码列表
+        start_date: Start date 'YYYYMMDD'
+        end_date: End date 'YYYYMMDD'
+        daily_codes: daily_info sector code list
+        sz_codes: sz_daily_info sector code list
     
     Returns:
-        DataFrame: 合并后的交易数据
+        DataFrame: Combined trading data
     """
     df_daily = pd.DataFrame()
     df_sz = pd.DataFrame()
@@ -564,7 +565,7 @@ def load_combined_trading_data(start_date: str = None, end_date: str = None,
             df_sz['tr'] = None
             df_sz = calculate_amount_turnover(df_sz)
     
-    # 合并数据
+    # 
     if not df_daily.empty and not df_sz.empty:
         df_combined = pd.concat([df_daily, df_sz], ignore_index=True)
     elif not df_daily.empty:
@@ -579,13 +580,13 @@ def load_combined_trading_data(start_date: str = None, end_date: str = None,
 
 def calculate_liquidity_score(df: pd.DataFrame, ts_code: str):
     """
-    计算流动性评分。
+    Calculate liquidity score.
     
-    评分逻辑：
-    - amount_score: 成交额得分 (0-100)
-    - turnover_score: 换手率得分 (0-100)
-    - market_cap_score: 流通市值得分 (0-100)
-    - 综合得分 = amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2
+    Scoring logic:
+    - amount_score: Trading amount score (0-100)
+    - turnover_score: Turnover rate score (0-100)
+    - market_cap_score: Market cap score (0-100)
+    - Combined score = amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2
     """
     if df.empty:
         return None
@@ -596,24 +597,24 @@ def calculate_liquidity_score(df: pd.DataFrame, ts_code: str):
     
     latest = data.iloc[-1]
     
-    # 成交额得分 (假设1000亿为满分)
+    # Amount score (1000B CNY = full score)
     amount_score = min(latest['amount'] / 1000 * 100, 100) if 'amount' in latest and latest['amount'] > 0 else 50
     
-    # 换手率得分
+    # Turnover rate score
     if 'tr' in latest and not pd.isna(latest['tr']):
-        turnover_score = min(latest['tr'] * 50, 100)  # 2%换手率为满分
+        turnover_score = min(latest['tr'] * 50, 100)  # 2% turnover = full score
     elif 'amount_turnover' in latest and not pd.isna(latest['amount_turnover']):
         turnover_score = min(latest['amount_turnover'] * 50, 100)
     else:
         turnover_score = 50
     
-    # 流通市值得分 (假设5万亿为满分)
+    # Market cap score (50T CNY = full score)
     if 'float_mv' in latest and not pd.isna(latest['float_mv']) and latest['float_mv'] > 0:
         market_cap_score = min(latest['float_mv'] / 50000 * 100, 100)
     else:
         market_cap_score = 50
     
-    # 综合得分
+    # Combined score
     liquidity_score = (amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2)
     
     return {

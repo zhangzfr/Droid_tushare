@@ -1,8 +1,8 @@
 """
-A股市场教育数据加载模块
+AA-Share Market Education Data Loading Module
 ========================
-提供股票基本信息和行情数据的加载函数。
-连接 tushare_duck_basic.db 和 tushare_duck_stock.db。
+Provide data loading functions for stock basic info and market data。
+Connect tushare_duck_basic.db 和 tushare_duck_stock.db。
 """
 import duckdb
 import pandas as pd
@@ -10,65 +10,65 @@ import numpy as np
 import streamlit as st
 from datetime import datetime, timedelta
 
-# 数据库路径
+# Database Paths
 BASIC_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_stock.db'
 STOCK_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_stock.db'
 
-# 默认股票列表（热门标的）
+# Default stock list (popular targets)
 DEFAULT_STOCKS = [
-    '600460.SH',  # 士兰微
-    '000776.SZ',  # 广发证券
-    '300480.SZ',  # 光力科技
-    '300124.SZ',  # 汇川技术
-    '002129.SH',  # 中环
+    '600460.SH',  # 
+    '000776.SZ',  # 
+    '300480.SZ',  # 
+    '300124.SZ',  # 
+    '002129.SH',  # 
 ]
 
-# 板块映射
+# Board Mapping
 MARKET_NAMES = {
-    '主板': '主板',
-    '创业板': '创业板',
-    '科创板': '科创板',
+    'Main Board': 'Main Board',
+    'ChiNext': 'ChiNext',
+    'STAR Market': 'STAR Market',
     'CDR': 'CDR',
-    '北交所': '北交所'
+    'BES': 'BES'
 }
 
-# 上市状态映射
+# Listing Status Mapping
 STATUS_NAMES = {
-    'L': '正常上市',
-    'D': '已退市',
-    'P': '暂停上市'
+    'L': 'Normal',
+    'D': 'Delisted',
+    'P': 'Suspended'
 }
 
 
 def get_basic_db_connection():
-    """连接 basic 数据库"""
+    """Connect basic Database"""
     try:
         conn = duckdb.connect(BASIC_DB_PATH, read_only=True)
         return conn
     except Exception as e:
-        st.error(f"连接 basic 数据库失败: {e}")
+        st.error(f"Connect basic Database Connection Failed: {e}")
         return None
 
 
 def get_stock_db_connection():
-    """连接 stock 数据库"""
+    """Connect stock Database"""
     try:
         conn = duckdb.connect(STOCK_DB_PATH, read_only=True)
         return conn
     except Exception as e:
-        st.error(f"连接 stock 数据库失败: {e}")
+        st.error(f"Connect stock Database Connection Failed: {e}")
         return None
 
 
 # ============================================================================
-# 第1层：认识A股市场 - 基本信息加载
+# Level 1：Understanding A-Share - 
 # ============================================================================
 
 @st.cache_data
 def load_stock_basic():
     """
-    加载所有股票基本信息。
-    返回字段：ts_code, name, industry, market, exchange, list_status, list_date, area
+    Load all stock basic information。
+    Return fields：ts_code, name, industry, market, exchange, list_status, list_date, area
     """
     conn = get_basic_db_connection()
     if not conn:
@@ -82,13 +82,13 @@ def load_stock_basic():
             ORDER BY ts_code
         """).fetchdf()
     except Exception as e:
-        st.error(f"加载 stock_basic 失败: {e}")
+        st.error(f"Load stock_basic 失败: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
     
-    # 添加中文状态名称
-    df['status_name'] = df['list_status'].map(STATUS_NAMES).fillna('未知')
+    # Add status name in Chinese
+    df['status_name'] = df['list_status'].map(STATUS_NAMES).fillna('Unknown')
     
     return df
 
@@ -96,7 +96,7 @@ def load_stock_basic():
 @st.cache_data
 def load_stock_company():
     """
-    加载公司详细信息。
+    Load company detailed information。
     """
     conn = get_basic_db_connection()
     if not conn:
@@ -110,7 +110,7 @@ def load_stock_company():
             ORDER BY ts_code
         """).fetchdf()
     except Exception as e:
-        st.error(f"加载 stock_company 失败: {e}")
+        st.error(f"Load stock_company 失败: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
@@ -121,7 +121,7 @@ def load_stock_company():
 @st.cache_data
 def get_market_summary(df_basic: pd.DataFrame):
     """
-    计算市场汇总统计。
+    Calculate market summary statistics。
     """
     if df_basic.empty:
         return {}
@@ -129,13 +129,13 @@ def get_market_summary(df_basic: pd.DataFrame):
     total = len(df_basic)
     listed = len(df_basic[df_basic['list_status'] == 'L'])
     
-    # 按板块统计
+    # Statistics by sector
     market_counts = df_basic[df_basic['list_status'] == 'L']['market'].value_counts().to_dict()
     
-    # 按行业统计（TOP10）
+    # Statistics by industry（TOP10）
     industry_counts = df_basic[df_basic['list_status'] == 'L']['industry'].value_counts().head(20).to_dict()
     
-    # 按地域统计（TOP10）
+    # Statistics by region（TOP10）
     area_counts = df_basic[df_basic['list_status'] == 'L']['area'].value_counts().head(15).to_dict()
     
     return {
@@ -150,18 +150,18 @@ def get_market_summary(df_basic: pd.DataFrame):
 
 
 # ============================================================================
-# 第2层：理解股票价格 - 行情数据加载
+# 2： - 
 # ============================================================================
 
 @st.cache_data
 def load_stock_daily(ts_codes: list, start_date: str, end_date: str):
     """
-    加载日线行情数据。
+    Load daily market data。
     
     Args:
-        ts_codes: 股票代码列表
-        start_date: 开始日期 'YYYYMMDD'
-        end_date: 结束日期 'YYYYMMDD'
+        ts_codes: Stock code list
+        start_date: Start date 'YYYYMMDD'
+        end_date: End date 'YYYYMMDD'
     
     Returns:
         DataFrame: ts_code, trade_date, open, high, low, close, pct_chg, vol, amount
@@ -187,7 +187,7 @@ def load_stock_daily(ts_codes: list, start_date: str, end_date: str):
         params = ts_codes + [start_date, end_date]
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 daily 数据失败: {e}")
+        st.error(f"Load daily 数据失败: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
@@ -195,7 +195,7 @@ def load_stock_daily(ts_codes: list, start_date: str, end_date: str):
     if df.empty:
         return df
     
-    # 转换日期
+    # Convert dates
     df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
     
     return df.sort_values(['ts_code', 'trade_date'])
@@ -204,7 +204,7 @@ def load_stock_daily(ts_codes: list, start_date: str, end_date: str):
 @st.cache_data
 def load_adj_factor(ts_codes: list, start_date: str, end_date: str):
     """
-    加载复权因子。
+    Load adjustment factors。
     """
     if not ts_codes:
         return pd.DataFrame()
@@ -226,7 +226,7 @@ def load_adj_factor(ts_codes: list, start_date: str, end_date: str):
         params = ts_codes + [start_date, end_date]
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 adj_factor 失败: {e}")
+        st.error(f"Load adj_factor 失败: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
@@ -239,14 +239,14 @@ def load_adj_factor(ts_codes: list, start_date: str, end_date: str):
 
 def calculate_adjusted_price(df_daily: pd.DataFrame, df_adj: pd.DataFrame):
     """
-    计算后复权价格。
+    Calculate post-adjustment prices。
     """
     if df_daily.empty or df_adj.empty:
         return df_daily
     
     df = df_daily.merge(df_adj, on=['ts_code', 'trade_date'], how='left')
     
-    # 后复权：价格 * 复权因子
+    # ： * 
     if 'adj_factor' in df.columns:
         df['adj_close'] = df['close'] * df['adj_factor']
         df['adj_open'] = df['open'] * df['adj_factor']
@@ -258,12 +258,12 @@ def calculate_adjusted_price(df_daily: pd.DataFrame, df_adj: pd.DataFrame):
 
 def calculate_returns(df: pd.DataFrame, price_col: str = 'close', method: str = 'simple'):
     """
-    计算收益率。
+    Calculate returns。
     
     Args:
         df: 包含 ts_code, trade_date, price_col 的 DataFrame
-        price_col: 价格列名
-        method: 'simple' 简单收益率, 'log' 对数收益率
+        price_col: Price column name
+        method: 'simple' Simple Return, 'log' 对数Return率
     """
     if df.empty:
         return df
@@ -284,7 +284,7 @@ def calculate_returns(df: pd.DataFrame, price_col: str = 'close', method: str = 
 
 def calculate_volatility(df: pd.DataFrame, window: int = 20):
     """
-    计算滚动波动率。
+    Calculate rolling volatility。
     """
     if df.empty or 'return' not in df.columns:
         return df
@@ -294,22 +294,22 @@ def calculate_volatility(df: pd.DataFrame, window: int = 20):
         lambda x: x.rolling(window=window, min_periods=window//2).std()
     )
     
-    # 年化波动率
+    # Annualized volatility
     df['volatility_ann'] = df['volatility'] * np.sqrt(252)
     
     return df
 
 
 # ============================================================================
-# 第3层：分析估值指标 - daily_basic 数据
+# 3： - daily_basic 
 # ============================================================================
 
 @st.cache_data
 def load_daily_basic(ts_codes: list, start_date: str, end_date: str):
     """
-    加载每日估值指标。
+    Load daily valuation indicators。
     
-    返回字段：pe, pe_ttm, pb, turnover_rate, total_mv, circ_mv 等
+    Return fields：pe, pe_ttm, pb, turnover_rate, total_mv, circ_mv 等
     """
     if not ts_codes:
         return pd.DataFrame()
@@ -336,7 +336,7 @@ def load_daily_basic(ts_codes: list, start_date: str, end_date: str):
         params = ts_codes + [start_date, end_date]
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"加载 daily_basic 失败: {e}")
+        st.error(f"Load daily_basic 失败: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
@@ -346,7 +346,7 @@ def load_daily_basic(ts_codes: list, start_date: str, end_date: str):
     
     df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
     
-    # 市值单位转换（万元 -> 亿元）
+    # （ -> ）
     if 'total_mv' in df.columns:
         df['total_mv_yi'] = df['total_mv'] / 10000
     if 'circ_mv' in df.columns:
@@ -358,14 +358,14 @@ def load_daily_basic(ts_codes: list, start_date: str, end_date: str):
 @st.cache_data
 def get_latest_valuation(ts_codes: list = None):
     """
-    获取最新的估值数据（用于截面分析）。
+    Get Latest Valuation Data（用于截面Analysis）。
     """
     conn = get_stock_db_connection()
     if not conn:
         return pd.DataFrame()
     
     try:
-        # 获取最新交易日
+        # Get latest trading day
         latest = conn.execute("SELECT MAX(trade_date) FROM daily_basic").fetchone()[0]
         
         if ts_codes:
@@ -388,7 +388,7 @@ def get_latest_valuation(ts_codes: list = None):
         
         df = conn.execute(query, params).fetchdf()
     except Exception as e:
-        st.error(f"获取最新估值失败: {e}")
+        st.error(f"Failed to get latest valuation: {e}")
         return pd.DataFrame()
     finally:
         conn.close()
@@ -401,24 +401,24 @@ def get_latest_valuation(ts_codes: list = None):
 
 
 # ============================================================================
-# 第4层：行业分析 - 聚合计算
+# 4： - 
 # ============================================================================
 
 def aggregate_by_industry(df_basic: pd.DataFrame, df_valuation: pd.DataFrame):
     """
-    按行业聚合估值和收益数据。
+    Aggregate valuation and return data by industry。
     """
     if df_basic.empty or df_valuation.empty:
         return pd.DataFrame()
     
-    # 合并基本信息和估值
+    # Merge basic info and valuation
     df = df_valuation.merge(
         df_basic[['ts_code', 'industry', 'name']], 
         on='ts_code', 
         how='left'
     )
     
-    # 按行业聚合
+    # Aggregate by industry
     industry_stats = df.groupby('industry').agg({
         'ts_code': 'count',
         'pe': 'median',
@@ -427,25 +427,25 @@ def aggregate_by_industry(df_basic: pd.DataFrame, df_valuation: pd.DataFrame):
         'total_mv_yi': 'sum'
     }).reset_index()
     
-    industry_stats.columns = ['行业', '股票数量', 'PE中位数', 'PB中位数', '平均换手率', '总市值(亿)']
+    industry_stats.columns = ['行业', '股票数量', 'PE中位数', 'PB中位数', '平均换手率', 'Total Market Cap(亿)']
     
-    return industry_stats.sort_values('总市值(亿)', ascending=False)
+    return industry_stats.sort_values('Total Market Cap(亿)', ascending=False)
 
 
 def calculate_industry_returns(df_daily: pd.DataFrame, df_basic: pd.DataFrame):
     """
-    计算各行业的平均收益率。
+    Calculate average return for each industry。
     """
     if df_daily.empty or df_basic.empty:
         return pd.DataFrame()
     
-    # 合并
+    # Merge
     df = df_daily.merge(df_basic[['ts_code', 'industry']], on='ts_code', how='left')
     
     if 'pct_chg' not in df.columns:
         return pd.DataFrame()
     
-    # 按行业和日期聚合
+    # Aggregate by industry and date
     industry_daily = df.groupby(['industry', 'trade_date']).agg({
         'pct_chg': 'mean',
         'vol': 'sum',
@@ -459,12 +459,12 @@ def calculate_industry_returns(df_daily: pd.DataFrame, df_basic: pd.DataFrame):
 
 def calculate_industry_correlation(df_industry_daily: pd.DataFrame):
     """
-    计算行业间收益率相关性。
+    Calculate return correlation between industries。
     """
     if df_industry_daily.empty:
         return pd.DataFrame()
     
-    # 转换为透视表
+    # Convert to pivot table
     pivot = df_industry_daily.pivot_table(
         index='trade_date',
         columns='industry',
@@ -477,7 +477,7 @@ def calculate_industry_correlation(df_industry_daily: pd.DataFrame):
 
 def calculate_annualized_stats_by_stock(df_daily: pd.DataFrame):
     """
-    计算每只股票的年化收益和风险。
+    Calculate annualized return and risk for each stock。
     """
     if df_daily.empty or 'pct_chg' not in df_daily.columns:
         return pd.DataFrame()
@@ -488,7 +488,7 @@ def calculate_annualized_stats_by_stock(df_daily: pd.DataFrame):
     
     stats.columns = ['ts_code', 'daily_return', 'daily_std', 'count']
     
-    # 年化
+    # Annualized
     stats['ann_return'] = stats['daily_return'] * 252
     stats['ann_volatility'] = stats['daily_std'] * np.sqrt(252)
     stats['sharpe'] = stats['ann_return'] / stats['ann_volatility']
@@ -497,12 +497,12 @@ def calculate_annualized_stats_by_stock(df_daily: pd.DataFrame):
 
 
 # ============================================================================
-# 辅助函数
+# Helper functions
 # ============================================================================
 
 def create_price_pivot(df: pd.DataFrame, price_col: str = 'close'):
     """
-    创建价格透视表（日期 x 股票）。
+    CreatePricePivot Table（日期 x 股票）。
     """
     if df.empty:
         return pd.DataFrame()
@@ -519,7 +519,7 @@ def create_price_pivot(df: pd.DataFrame, price_col: str = 'close'):
 
 def normalize_prices(df_pivot: pd.DataFrame):
     """
-    归一化价格（首日 = 100）。
+    Normalized Price（First Day = 100）。
     """
     if df_pivot.empty:
         return df_pivot
@@ -529,7 +529,7 @@ def normalize_prices(df_pivot: pd.DataFrame):
 
 def get_stock_name_map(df_basic: pd.DataFrame):
     """
-    获取代码到名称的映射。
+    Get code-to-name mapping。
     """
     if df_basic.empty:
         return {}

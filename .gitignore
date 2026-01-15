@@ -6,6 +6,7 @@
 .vscode/settings.json
 .crush
 .talkcody
+.idea
 
 # 2. Exclude all logs (root and subdirectories)
 logs/

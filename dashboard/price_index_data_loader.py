@@ -113,19 +113,19 @@ def prepare_cpi_breakdown(df_cpi: pd.DataFrame) -> pd.DataFrame:
     for _, row in df_cpi.iterrows():
         result.append({
             'month': row['month'],
-            'region': '全国',
+            'region': 'National',
             'yoy': row.get('nt_yoy'),
             'mom': row.get('nt_mom')
         })
         result.append({
             'month': row['month'],
-            'region': '城市',
+            'region': 'Urban',
             'yoy': row.get('town_yoy'),
             'mom': row.get('town_mom')
         })
         result.append({
             'month': row['month'],
-            'region': '农村',
+            'region': 'Rural',
             'yoy': row.get('cnt_yoy'),
             'mom': row.get('cnt_mom')
         })
@@ -150,20 +150,20 @@ def prepare_ppi_breakdown(df_ppi: pd.DataFrame) -> pd.DataFrame:
         month = row['month']
         
         # Main categories
-        result.append({'month': month, 'category': 'PPI总指数', 'yoy': row.get('ppi_yoy'), 'mom': row.get('ppi_mom')})
-        result.append({'month': month, 'category': '生产资料', 'yoy': row.get('ppi_mp_yoy'), 'mom': row.get('ppi_mp_mom')})
-        result.append({'month': month, 'category': '生活资料', 'yoy': row.get('ppi_cg_yoy'), 'mom': row.get('ppi_cg_mom')})
+        result.append({'month': month, 'category': 'PPIOverall Index', 'yoy': row.get('ppi_yoy'), 'mom': row.get('ppi_mom')})
+        result.append({'month': month, 'category': 'Production Materials', 'yoy': row.get('ppi_mp_yoy'), 'mom': row.get('ppi_mp_mom')})
+        result.append({'month': month, 'category': 'Consumer Goods', 'yoy': row.get('ppi_cg_yoy'), 'mom': row.get('ppi_cg_mom')})
         
         # Sub-categories - Production materials
-        result.append({'month': month, 'category': '采掘业', 'yoy': row.get('ppi_mp_qm_yoy'), 'mom': row.get('ppi_mp_qm_mom')})
-        result.append({'month': month, 'category': '原料业', 'yoy': row.get('ppi_mp_rm_yoy'), 'mom': row.get('ppi_mp_rm_mom')})
-        result.append({'month': month, 'category': '加工业', 'yoy': row.get('ppi_mp_p_yoy'), 'mom': row.get('ppi_mp_p_mom')})
+        result.append({'month': month, 'category': 'Mining', 'yoy': row.get('ppi_mp_qm_yoy'), 'mom': row.get('ppi_mp_qm_mom')})
+        result.append({'month': month, 'category': 'Raw Materials', 'yoy': row.get('ppi_mp_rm_yoy'), 'mom': row.get('ppi_mp_rm_mom')})
+        result.append({'month': month, 'category': 'Processing', 'yoy': row.get('ppi_mp_p_yoy'), 'mom': row.get('ppi_mp_p_mom')})
         
         # Sub-categories - Consumer goods
-        result.append({'month': month, 'category': '食品类', 'yoy': row.get('ppi_cg_f_yoy'), 'mom': row.get('ppi_cg_f_mom')})
-        result.append({'month': month, 'category': '衣着类', 'yoy': row.get('ppi_cg_c_yoy'), 'mom': row.get('ppi_cg_c_mom')})
-        result.append({'month': month, 'category': '一般日用品', 'yoy': row.get('ppi_cg_adu_yoy'), 'mom': row.get('ppi_cg_adu_mom')})
-        result.append({'month': month, 'category': '耐用消费品', 'yoy': row.get('ppi_cg_dcg_yoy'), 'mom': row.get('ppi_cg_dcg_mom')})
+        result.append({'month': month, 'category': 'Food', 'yoy': row.get('ppi_cg_f_yoy'), 'mom': row.get('ppi_cg_f_mom')})
+        result.append({'month': month, 'category': 'Apparel', 'yoy': row.get('ppi_cg_c_yoy'), 'mom': row.get('ppi_cg_c_mom')})
+        result.append({'month': month, 'category': 'General Daily Goods', 'yoy': row.get('ppi_cg_adu_yoy'), 'mom': row.get('ppi_cg_adu_mom')})
+        result.append({'month': month, 'category': 'Durable Consumer Goods', 'yoy': row.get('ppi_cg_dcg_yoy'), 'mom': row.get('ppi_cg_dcg_mom')})
     
     return pd.DataFrame(result)
 
@@ -242,13 +242,13 @@ def prepare_ppi_chain_data(df_ppi: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
     
     # Select relevant columns for the chain
-    # 采掘业 -> 原料业 -> 加工业
+    # Mining -> Raw Materials -> Processing
     chain_cols = {
         'month': 'month',
-        'ppi_mp_qm_yoy': '采掘工业 (上游)',
-        'ppi_mp_rm_yoy': '原材料工业 (中游)',
-        'ppi_mp_p_yoy': '加工工业 (下游)',
-        'ppi_cg_yoy': '生活资料 (终端)'
+        'ppi_mp_qm_yoy': 'Mining Industry (Upstream)',
+        'ppi_mp_rm_yoy': 'Raw Materials Industry (Midstream)',
+        'ppi_mp_p_yoy': 'Processing Industry (Downstream)',
+        'ppi_cg_yoy': 'Consumer Goods (Terminal)'
     }
     
     df_chain = df_ppi[list(chain_cols.keys())].copy()

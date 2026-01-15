@@ -1,8 +1,8 @@
 """
-A股市场教育图表模块
+AA-Share Market Education Chart Module
 ==================
-中文界面的Plotly交互式图表函数。
-按四个学习层次组织。
+For English UIPlotly交互式图表函数。
+Organized by four learning levels。
 """
 import plotly.express as px
 import plotly.graph_objects as go
@@ -12,7 +12,7 @@ import numpy as np
 
 
 # ============================================================================
-# 颜色方案
+# Color Scheme
 # ============================================================================
 COLORS = {
     'primary': '#D97757',
@@ -25,19 +25,19 @@ COLORS = {
     'text': '#1A1A1A',
 }
 
-# 多资产颜色序列
+# Multi-asset Color Sequence
 STOCK_COLORS = [
     '#D97757', '#4A90A4', '#6BBF59', '#E8A838', '#8B7355',
     '#C75B5B', '#7B68EE', '#20B2AA', '#FF6B6B', '#4ECDC4',
     '#9B59B6', '#3498DB', '#E74C3C', '#2ECC71', '#F39C12'
 ]
 
-# 行业颜色（申万一级）
+# IndustryColors (Shenwan Level 1)
 INDUSTRY_COLORS = px.colors.qualitative.Set3
 
 
 def apply_chart_style(fig, title=None):
-    """应用统一的图表样式。"""
+    """Apply unified chart style。"""
     fig.update_layout(
         font_family="Inter, -apple-system, PingFang SC, Microsoft YaHei, sans-serif",
         font_color=COLORS['text'],
@@ -77,22 +77,22 @@ def apply_chart_style(fig, title=None):
 
 
 # ============================================================================
-# 第1层：认识A股市场
+# Level 1：Understanding A-Share
 # ============================================================================
 
 def plot_market_pie(market_counts: dict):
     """
-    板块分布饼图。
+    Sector Distribution Pie Chart。
     """
     if not market_counts:
         return None
     
-    df = pd.DataFrame(list(market_counts.items()), columns=['板块', '数量'])
+    df = pd.DataFrame(list(market_counts.items()), columns=['Sector', 'Count'])
     
     fig = px.pie(
         df,
-        values='数量',
-        names='板块',
+        values='Count',
+        names='Sector',
         color_discrete_sequence=STOCK_COLORS,
         hole=0.4
     )
@@ -100,10 +100,10 @@ def plot_market_pie(market_counts: dict):
     fig.update_traces(
         textposition='outside',
         textinfo='label+percent',
-        hovertemplate='<b>%{label}</b><br>数量: %{value}<br>占比: %{percent}<extra></extra>'
+        hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
     )
     
-    fig = apply_chart_style(fig, title="A股板块分布")
+    fig = apply_chart_style(fig, title="A-ShareSector分布")
     fig.update_layout(legend=dict(orientation='h', yanchor='bottom', y=-0.15))
     
     return fig
@@ -111,52 +111,52 @@ def plot_market_pie(market_counts: dict):
 
 def plot_status_pie(df_basic: pd.DataFrame):
     """
-    上市状态分布饼图。
+    Listing Status Distribution Pie Chart。
     """
     if df_basic.empty:
         return None
     
     counts = df_basic['status_name'].value_counts().reset_index()
-    counts.columns = ['状态', '数量']
+    counts.columns = ['Status', 'Count']
     
     fig = px.pie(
         counts,
-        values='数量',
-        names='状态',
+        values='Count',
+        names='Status',
         color_discrete_sequence=[COLORS['success'], COLORS['danger'], COLORS['warning']],
         hole=0.4
     )
     
     fig.update_traces(textposition='outside', textinfo='label+percent')
-    fig = apply_chart_style(fig, title="上市状态分布")
+    fig = apply_chart_style(fig, title="上市Status分布")
     
     return fig
 
 
 def plot_industry_bar(industry_counts: dict, top_n: int = 20):
     """
-    行业分布柱状图。
+    Industry Distribution Bar Chart。
     """
     if not industry_counts:
         return None
     
-    df = pd.DataFrame(list(industry_counts.items()), columns=['行业', '数量'])
-    df = df.sort_values('数量', ascending=True).tail(top_n)
+    df = pd.DataFrame(list(industry_counts.items()), columns=['Industry', 'Count'])
+    df = df.sort_values('Count', ascending=True).tail(top_n)
     
     fig = px.bar(
         df,
-        x='数量',
-        y='行业',
+        x='Count',
+        y='Industry',
         orientation='h',
-        color='数量',
+        color='Count',
         color_continuous_scale=[[0, COLORS['accent']], [1, COLORS['primary']]]
     )
     
-    fig = apply_chart_style(fig, title=f"行业分布 TOP{top_n}")
+    fig = apply_chart_style(fig, title=f"Industry分布 TOP{top_n}")
     fig.update_layout(
         coloraxis_showscale=False,
         yaxis_title='',
-        xaxis_title='上市公司数量'
+        xaxis_title='Listed CompaniesCount'
     )
     
     return fig
@@ -164,36 +164,36 @@ def plot_industry_bar(industry_counts: dict, top_n: int = 20):
 
 def plot_area_bar(area_counts: dict, top_n: int = 15):
     """
-    地域分布柱状图。
+    Region Distribution Bar Chart。
     """
     if not area_counts:
         return None
     
-    df = pd.DataFrame(list(area_counts.items()), columns=['省份', '数量'])
-    df = df.sort_values('数量', ascending=True).tail(top_n)
+    df = pd.DataFrame(list(area_counts.items()), columns=['Province', 'Count'])
+    df = df.sort_values('Count', ascending=True).tail(top_n)
     
     fig = px.bar(
         df,
-        x='数量',
-        y='省份',
+        x='Count',
+        y='Province',
         orientation='h',
-        color='数量',
+        color='Count',
         color_continuous_scale=[[0, '#4A90A4'], [1, '#D97757']]
     )
     
-    fig = apply_chart_style(fig, title=f"地域分布 TOP{top_n}")
-    fig.update_layout(coloraxis_showscale=False, yaxis_title='', xaxis_title='上市公司数量')
+    fig = apply_chart_style(fig, title=f"Region Distribution TOP{top_n}")
+    fig.update_layout(coloraxis_showscale=False, yaxis_title='', xaxis_title='Listed CompaniesCount')
     
     return fig
 
 
 # ============================================================================
-# 第2层：理解股票价格
+# 2：Stock
 # ============================================================================
 
 def plot_candlestick(df: pd.DataFrame, ts_code: str, name_map: dict = None):
     """
-    K线图。
+    KLine Chart。
     """
     if df.empty:
         return None
@@ -210,12 +210,12 @@ def plot_candlestick(df: pd.DataFrame, ts_code: str, name_map: dict = None):
         high=data['high'],
         low=data['low'],
         close=data['close'],
-        increasing_line_color=COLORS['danger'],  # 中国股市红涨
-        decreasing_line_color=COLORS['success'],  # 绿跌
+        increasing_line_color=COLORS['danger'],  # 
+        decreasing_line_color=COLORS['success'],  # 
         name=stock_name
     )])
     
-    fig = apply_chart_style(fig, title=f"{stock_name} K线图")
+    fig = apply_chart_style(fig, title=f"{stock_name} KLine Chart")
     fig.update_layout(xaxis_rangeslider_visible=False)
     
     return fig
@@ -223,19 +223,19 @@ def plot_candlestick(df: pd.DataFrame, ts_code: str, name_map: dict = None):
 
 def plot_price_lines(df_pivot: pd.DataFrame, normalize: bool = True, name_map: dict = None):
     """
-    多股票价格走势对比。
+    Multi-Stock Price Trend Comparison。
     """
     if df_pivot.empty:
         return None
     
     if normalize:
         df_plot = df_pivot / df_pivot.iloc[0] * 100
-        y_title = '归一化价格 (首日=100)'
+        y_title = 'Normalized Price (First Day=100)'
     else:
         df_plot = df_pivot
-        y_title = '收盘价'
+        y_title = 'Closing Price'
     
-    # 重命名列
+    # Rename columns
     if name_map:
         df_plot.columns = [name_map.get(c, c) for c in df_plot.columns]
     
@@ -246,11 +246,11 @@ def plot_price_lines(df_pivot: pd.DataFrame, normalize: bool = True, name_map: d
         color_discrete_sequence=STOCK_COLORS
     )
     
-    fig = apply_chart_style(fig, title="股票价格走势对比")
+    fig = apply_chart_style(fig, title="Stock Price Trend Comparison")
     fig.update_layout(
-        xaxis_title='日期',
+        xaxis_title='Date',
         yaxis_title=y_title,
-        legend_title='股票',
+        legend_title='Stock',
         hovermode='x unified'
     )
     
@@ -259,7 +259,7 @@ def plot_price_lines(df_pivot: pd.DataFrame, normalize: bool = True, name_map: d
 
 def plot_return_distribution(df: pd.DataFrame, ts_code: str = None, name_map: dict = None):
     """
-    收益率分布直方图。
+    Return Distribution Histogram。
     """
     if df.empty or 'return' not in df.columns:
         return None
@@ -271,7 +271,7 @@ def plot_return_distribution(df: pd.DataFrame, ts_code: str = None, name_map: di
     if data.empty:
         return None
     
-    # 映射名称
+    # Map names
     if name_map:
         data['stock_name'] = data['ts_code'].map(name_map)
     else:
@@ -287,10 +287,10 @@ def plot_return_distribution(df: pd.DataFrame, ts_code: str = None, name_map: di
         opacity=0.7
     )
     
-    fig = apply_chart_style(fig, title="日收益率分布")
+    fig = apply_chart_style(fig, title="Daily Return Distribution")
     fig.update_layout(
-        xaxis_title='日收益率',
-        yaxis_title='频数',
+        xaxis_title='Daily Return',
+        yaxis_title='Frequency',
         xaxis_tickformat='.1%',
         barmode='overlay'
     )
@@ -300,7 +300,7 @@ def plot_return_distribution(df: pd.DataFrame, ts_code: str = None, name_map: di
 
 def plot_volatility_comparison(df_stats: pd.DataFrame, name_map: dict = None):
     """
-    波动率对比柱状图。
+    Volatility Comparison Bar Chart。
     """
     if df_stats.empty or 'ann_volatility' not in df_stats.columns:
         return None
@@ -322,9 +322,9 @@ def plot_volatility_comparison(df_stats: pd.DataFrame, name_map: dict = None):
         color_continuous_scale=[[0, '#6BBF59'], [0.5, '#E8A838'], [1, '#C75B5B']]
     )
     
-    fig = apply_chart_style(fig, title="年化波动率对比")
+    fig = apply_chart_style(fig, title="Annualized Volatility Comparison")
     fig.update_layout(
-        xaxis_title='年化波动率',
+        xaxis_title='Annualized Volatility',
         yaxis_title='',
         xaxis_tickformat='.0%',
         coloraxis_showscale=False
@@ -334,12 +334,12 @@ def plot_volatility_comparison(df_stats: pd.DataFrame, name_map: dict = None):
 
 
 # ============================================================================
-# 第3层：分析估值指标
+# 3：
 # ============================================================================
 
 def plot_pe_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict = None):
     """
-    PE时序图。
+    PETime Series Chart。
     """
     if df.empty or 'pe_ttm' not in df.columns:
         return None
@@ -364,11 +364,11 @@ def plot_pe_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict =
         color_discrete_sequence=STOCK_COLORS
     )
     
-    fig = apply_chart_style(fig, title="市盈率(PE-TTM)走势")
+    fig = apply_chart_style(fig, title="P/E Ratio(PE-TTM)Trend")
     fig.update_layout(
-        xaxis_title='日期',
+        xaxis_title='Date',
         yaxis_title='PE-TTM',
-        legend_title='股票',
+        legend_title='Stock',
         hovermode='x unified'
     )
     
@@ -377,7 +377,7 @@ def plot_pe_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict =
 
 def plot_pb_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict = None):
     """
-    PB时序图。
+    PBTime Series Chart。
     """
     if df.empty or 'pb' not in df.columns:
         return None
@@ -402,11 +402,11 @@ def plot_pb_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict =
         color_discrete_sequence=STOCK_COLORS
     )
     
-    fig = apply_chart_style(fig, title="市净率(PB)走势")
+    fig = apply_chart_style(fig, title="P/B Ratio(PB)Trend")
     fig.update_layout(
-        xaxis_title='日期',
+        xaxis_title='Date',
         yaxis_title='PB',
-        legend_title='股票',
+        legend_title='Stock',
         hovermode='x unified'
     )
     
@@ -415,7 +415,7 @@ def plot_pb_timeseries(df: pd.DataFrame, ts_codes: list = None, name_map: dict =
 
 def plot_valuation_boxplot(df: pd.DataFrame, metric: str = 'pe_ttm', name_map: dict = None):
     """
-    估值指标箱线图对比。
+    估值指标箱Line Chart对比。
     """
     if df.empty or metric not in df.columns:
         return None
@@ -430,9 +430,9 @@ def plot_valuation_boxplot(df: pd.DataFrame, metric: str = 'pe_ttm', name_map: d
         data['stock_name'] = data['ts_code']
     
     metric_names = {
-        'pe_ttm': '市盈率(PE-TTM)',
-        'pb': '市净率(PB)',
-        'turnover_rate': '换手率(%)'
+        'pe_ttm': 'P/E Ratio(PE-TTM)',
+        'pb': 'P/B Ratio(PB)',
+        'turnover_rate': 'Turnover Rate(%)'
     }
     
     fig = px.box(
@@ -443,7 +443,7 @@ def plot_valuation_boxplot(df: pd.DataFrame, metric: str = 'pe_ttm', name_map: d
         color_discrete_sequence=STOCK_COLORS
     )
     
-    fig = apply_chart_style(fig, title=f"{metric_names.get(metric, metric)}分布对比")
+    fig = apply_chart_style(fig, title=f"{metric_names.get(metric, metric)}Distribution Comparison")
     fig.update_layout(
         xaxis_title='',
         yaxis_title=metric_names.get(metric, metric),
@@ -455,7 +455,7 @@ def plot_valuation_boxplot(df: pd.DataFrame, metric: str = 'pe_ttm', name_map: d
 
 def plot_turnover_scatter(df: pd.DataFrame, ts_code: str, name_map: dict = None):
     """
-    换手率与成交量散点图。
+    Turnover Rate与成交量散点图。
     """
     if df.empty:
         return None
@@ -475,11 +475,11 @@ def plot_turnover_scatter(df: pd.DataFrame, ts_code: str, name_map: dict = None)
         opacity=0.6
     )
     
-    fig = apply_chart_style(fig, title=f"{stock_name} 换手率与价格关系")
+    fig = apply_chart_style(fig, title=f"{stock_name} Turnover Ratevs Price")
     fig.update_layout(
-        xaxis_title='换手率(%)',
-        yaxis_title='收盘价',
-        coloraxis_colorbar_title='日期'
+        xaxis_title='Turnover Rate(%)',
+        yaxis_title='Closing Price',
+        coloraxis_colorbar_title='Date'
     )
     
     return fig
@@ -487,14 +487,14 @@ def plot_turnover_scatter(df: pd.DataFrame, ts_code: str, name_map: dict = None)
 
 def plot_market_cap_distribution(df: pd.DataFrame):
     """
-    市值分布直方图。
+    Market Cap Distribution Histogram。
     """
     if df.empty or 'total_mv_yi' not in df.columns:
         return None
     
     data = df.dropna(subset=['total_mv_yi']).copy()
     
-    # 对数变换更好展示
+    # Log transformation for better display
     data['log_mv'] = np.log10(data['total_mv_yi'] + 1)
     
     fig = px.histogram(
@@ -504,41 +504,41 @@ def plot_market_cap_distribution(df: pd.DataFrame):
         color_discrete_sequence=[COLORS['primary']]
     )
     
-    fig = apply_chart_style(fig, title="市值分布 (对数刻度)")
+    fig = apply_chart_style(fig, title="Market Cap Distribution (Log Scale)")
     fig.update_layout(
-        xaxis_title='log10(总市值/亿元)',
-        yaxis_title='股票数量'
+        xaxis_title='log10(Total Market Cap/100M CNY)',
+        yaxis_title='StockCount'
     )
     
     return fig
 
 
 # ============================================================================
-# 第4层：行业分析与选股
+# 4：Industry
 # ============================================================================
 
 def plot_industry_valuation(df_industry: pd.DataFrame):
     """
-    行业估值对比柱状图。
+    IndustryValuation Comparison Bar Chart。
     """
     if df_industry.empty:
         return None
     
-    # 取PE中位数TOP20行业
-    df = df_industry.dropna(subset=['PE中位数']).sort_values('PE中位数', ascending=True).head(25)
+    # PEMedianTOP20Industry
+    df = df_industry.dropna(subset=['PEMedian']).sort_values('PEMedian', ascending=True).head(25)
     
     fig = px.bar(
         df,
-        x='PE中位数',
-        y='行业',
+        x='PEMedian',
+        y='Industry',
         orientation='h',
-        color='PE中位数',
+        color='PEMedian',
         color_continuous_scale=[[0, '#4A90A4'], [1, '#D97757']]
     )
     
-    fig = apply_chart_style(fig, title="行业PE中位数对比")
+    fig = apply_chart_style(fig, title="IndustryPEMedian对比")
     fig.update_layout(
-        xaxis_title='PE中位数',
+        xaxis_title='PEMedian',
         yaxis_title='',
         coloraxis_showscale=False
     )
@@ -548,12 +548,12 @@ def plot_industry_valuation(df_industry: pd.DataFrame):
 
 def plot_industry_correlation_heatmap(df_corr: pd.DataFrame):
     """
-    行业相关性热力图。
+    IndustryCorrelation Heatmap。
     """
     if df_corr.empty:
         return None
     
-    # 限制显示的行业数量
+    # IndustryCount
     if len(df_corr.columns) > 20:
         top_industries = df_corr.columns[:20]
         df_corr = df_corr.loc[top_industries, top_industries]
@@ -567,15 +567,15 @@ def plot_industry_correlation_heatmap(df_corr: pd.DataFrame):
         text_auto='.2f'
     )
     
-    fig = apply_chart_style(fig, title="行业收益率相关性矩阵")
-    fig.update_layout(coloraxis_colorbar_title='相关系数')
+    fig = apply_chart_style(fig, title="IndustryReturnCorrelation Matrix")
+    fig.update_layout(coloraxis_colorbar_title='Correlation Coefficient')
     
     return fig
 
 
 def plot_risk_return_scatter(df_stats: pd.DataFrame, name_map: dict = None, color_by: str = None):
     """
-    风险-收益散点图。
+    风险-Return Scatter Plot。
     """
     if df_stats.empty:
         return None
@@ -600,19 +600,19 @@ def plot_risk_return_scatter(df_stats: pd.DataFrame, name_map: dict = None, colo
         hover_data=['ts_code', 'sharpe'] if 'sharpe' in df.columns else ['ts_code']
     )
     
-    # 添加参考线
+    # Add reference line
     fig.add_hline(y=0, line_dash='dash', line_color='#888888', line_width=1)
     fig.add_vline(x=0, line_dash='dash', line_color='#888888', line_width=1)
     
     fig.update_traces(textposition='top center', textfont_size=9)
     
-    fig = apply_chart_style(fig, title="风险-收益分析")
+    fig = apply_chart_style(fig, title="风险-ReturnAnalysis")
     fig.update_layout(
-        xaxis_title='年化波动率 (风险)',
-        yaxis_title='年化收益率',
+        xaxis_title='Annualized Volatility (风险)',
+        yaxis_title='Annualized Return',
         xaxis_tickformat='.0%',
         yaxis_tickformat='.0%',
-        coloraxis_colorbar_title='夏普比率'
+        coloraxis_colorbar_title='Sharpe Ratio'
     )
     
     return fig
@@ -620,7 +620,7 @@ def plot_risk_return_scatter(df_stats: pd.DataFrame, name_map: dict = None, colo
 
 def plot_industry_returns_heatmap(df_industry_daily: pd.DataFrame):
     """
-    行业月度收益热力图。
+    IndustryMonthly Return Heatmap。
     """
     if df_industry_daily.empty:
         return None
@@ -628,14 +628,14 @@ def plot_industry_returns_heatmap(df_industry_daily: pd.DataFrame):
     df = df_industry_daily.copy()
     df['year_month'] = df['trade_date'].dt.to_period('M')
     
-    # 按行业和月份聚合
+    # Industry
     monthly = df.groupby(['industry', 'year_month'])['avg_return'].sum().reset_index()
     monthly['month'] = monthly['year_month'].astype(str)
     
-    # 透视
+    # Pivot
     pivot = monthly.pivot_table(index='industry', columns='month', values='avg_return', aggfunc='first')
     
-    # 限制行业数量
+    # IndustryCount
     if len(pivot) > 20:
         pivot = pivot.head(20)
     
@@ -646,7 +646,7 @@ def plot_industry_returns_heatmap(df_industry_daily: pd.DataFrame):
         text_auto='.1f'
     )
     
-    fig = apply_chart_style(fig, title="行业月度收益率(%)")
-    fig.update_layout(coloraxis_colorbar_title='收益率%')
+    fig = apply_chart_style(fig, title="Industry月度Return(%)")
+    fig.update_layout(coloraxis_colorbar_title='Return%')
     
     return fig

@@ -36,8 +36,8 @@ from dashboard.pages.macro_page import render_macro_page
 from dashboard.pages.index_page import render_index_page
 from dashboard.pages.market_page import render_market_page
 from dashboard.pages.vix_page import render_vix_page
-from dashboard.pages.fx_edu_page import render_fx_edu_page
-from dashboard.pages.stock_edu_page import render_stock_edu_page
+from dashboard.pages.fx_page import render_fx_edu_page
+from dashboard.pages.stock_page import render_stock_edu_page
 from dashboard.pages.market_insights_page import render_market_insights_page
 
 # Apply Custom CSS
@@ -102,7 +102,7 @@ NAVIGATION = {
             "Market Valuation": {"key": "mkt_valuation", "icon": "gauge"},
             "Market Sentiment": {"key": "mkt_sentiment", "icon": "pulse"},
             "Global Markets": {"key": "mkt_global", "icon": "globe"},
-            "两市交易数据": {"key": "mkt_trading", "icon": "exchange"}
+            "Market Trading Data": {"key": "mkt_trading", "icon": "exchange"}
         }
     },
     "VIX Calculator": {

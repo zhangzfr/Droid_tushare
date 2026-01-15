@@ -1,7 +1,7 @@
 """
-市场洞察图表模块
+Market Insights Chart Module
 ===============
-中文界面的Plotly可视化函数，用于市场估值、情绪和全球比较分析。
+Plotly visualization functions for market valuation, sentiment, and global comparison analysis.
 """
 import plotly.express as px
 import plotly.graph_objects as go
@@ -11,7 +11,7 @@ import numpy as np
 
 
 # ============================================================================
-# 颜色方案
+# Color Scheme
 # ============================================================================
 COLORS = {
     'primary': '#D97757',
@@ -32,7 +32,7 @@ PALETTE = [
 
 
 def apply_chart_style(fig, title=None):
-    """应用统一图表样式"""
+    """Apply unified chart style"""
     fig.update_layout(
         font_family="Inter, -apple-system, PingFang SC, Microsoft YaHei, sans-serif",
         font_color=COLORS['text'],
@@ -54,12 +54,12 @@ def apply_chart_style(fig, title=None):
 
 
 # ============================================================================
-# 市场估值分析
+# Market Valuation Analysis
 # ============================================================================
 
 def plot_pe_trend(df: pd.DataFrame, ts_codes: list = None):
     """
-    各板块PE走势对比图。
+    PE Trend Comparison by Sector。
     """
     if df.empty:
         return None
@@ -71,7 +71,7 @@ def plot_pe_trend(df: pd.DataFrame, ts_codes: list = None):
     if data.empty:
         return None
     
-    # 使用中文名称
+    # Use display name
     name_col = 'market_name' if 'market_name' in data.columns else 'ts_name'
     
     fig = px.line(
@@ -82,36 +82,36 @@ def plot_pe_trend(df: pd.DataFrame, ts_codes: list = None):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="A股各板块PE走势")
+    fig = apply_chart_style(fig, title="A-Share Sector PE Trend")
     fig.update_layout(
-        xaxis_title='日期',
-        yaxis_title='市盈率 (PE)',
-        legend_title='板块',
+        xaxis_title='Date',
+        yaxis_title='P/E Ratio',
+        legend_title='Sector',
         hovermode='x unified'
     )
     
     return fig
 
 
-def plot_pe_percentile_gauge(percentile: float, current_pe: float, title: str = "PE历史分位"):
+def plot_pe_percentile_gauge(percentile: float, current_pe: float, title: str = "PE Historical Percentile"):
     """
-    PE分位数仪表盘。
+    PE Percentile Dashboard。
     """
-    # 根据分位数决定颜色
+    # Determine color based on percentile
     if percentile < 30:
         color = COLORS['success']
-        level = "低估"
+        level = "Undervalued"
     elif percentile < 70:
         color = COLORS['warning']
-        level = "适中"
+        level = "Fair Value"
     else:
         color = COLORS['danger']
-        level = "高估"
+        level = "Overvalued"
     
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=percentile,
-        title={'text': f"{title}<br><span style='font-size:0.8em;color:gray'>当前PE: {current_pe:.1f}</span>"},
+        title={'text': f"{title}<br><span style='font-size:0.8em;color:gray'>CurrentPE: {current_pe:.1f}</span>"},
         number={'suffix': '%', 'font': {'size': 40}},
         gauge={
             'axis': {'range': [0, 100], 'tickwidth': 1},
@@ -140,7 +140,7 @@ def plot_pe_percentile_gauge(percentile: float, current_pe: float, title: str = 
 
 def plot_pe_comparison_bar(df: pd.DataFrame, date: str = None):
     """
-    各板块PE对比柱状图。
+    各SectorPEComparison Bar Chart。
     """
     if df.empty:
         return None
@@ -166,9 +166,9 @@ def plot_pe_comparison_bar(df: pd.DataFrame, date: str = None):
         color_continuous_scale=[[0, '#6BBF59'], [0.5, '#E8A838'], [1, '#C75B5B']]
     )
     
-    fig = apply_chart_style(fig, title="各板块PE对比")
+    fig = apply_chart_style(fig, title="各SectorPE对比")
     fig.update_layout(
-        xaxis_title='市盈率 (PE)',
+        xaxis_title='P/E Ratio',
         yaxis_title='',
         coloraxis_showscale=False
     )
@@ -177,12 +177,12 @@ def plot_pe_comparison_bar(df: pd.DataFrame, date: str = None):
 
 
 # ============================================================================
-# 市场情绪分析
+# Market Sentiment Analysis
 # ============================================================================
 
 def plot_amount_trend(df: pd.DataFrame, ts_code: str):
     """
-    成交额走势图（带均线）。
+    Trading AmountTrend图（带Moving Average）。
     """
     data = df[df['ts_code'] == ts_code].copy()
     if data.empty:
@@ -194,33 +194,33 @@ def plot_amount_trend(df: pd.DataFrame, ts_code: str):
     
     fig = go.Figure()
     
-    # 成交额柱状图
+    # Trading Amount Bar Chart
     fig.add_trace(go.Bar(
         x=data['trade_date'],
         y=data['amount'],
-        name='成交额',
+        name='Trading Amount',
         marker_color='rgba(74, 144, 164, 0.5)'
     ))
     
-    # 均线
+    # Moving Average
     fig.add_trace(go.Scatter(
         x=data['trade_date'],
         y=data['amount_ma20'],
-        name='20日均值',
+        name='20Daily Average',
         line=dict(color=COLORS['primary'], width=2)
     ))
     
     fig.add_trace(go.Scatter(
         x=data['trade_date'],
         y=data['amount_ma60'],
-        name='60日均值',
+        name='60Daily Average',
         line=dict(color=COLORS['warning'], width=2)
     ))
     
-    fig = apply_chart_style(fig, title="成交额走势 (亿元)")
+    fig = apply_chart_style(fig, title="Trading AmountTrend (100M CNY)")
     fig.update_layout(
-        xaxis_title='日期',
-        yaxis_title='成交额 (亿元)',
+        xaxis_title='Date',
+        yaxis_title='Trading Amount (100M CNY)',
         barmode='overlay',
         hovermode='x unified'
     )
@@ -230,7 +230,7 @@ def plot_amount_trend(df: pd.DataFrame, ts_code: str):
 
 def plot_turnover_heatmap(df: pd.DataFrame, ts_code: str):
     """
-    换手率月度热力图。
+    Monthly Turnover Heatmap。
     """
     data = df[df['ts_code'] == ts_code].dropna(subset=['tr']).copy()
     if data.empty:
@@ -239,13 +239,13 @@ def plot_turnover_heatmap(df: pd.DataFrame, ts_code: str):
     data['year'] = data['trade_date'].dt.year
     data['month'] = data['trade_date'].dt.month
     
-    # 按年月聚合
+    # Aggregate by year-month
     monthly = data.groupby(['year', 'month'])['tr'].mean().reset_index()
     pivot = monthly.pivot(index='year', columns='month', values='tr')
     
-    # 月份名称
-    month_names = ['1月', '2月', '3月', '4月', '5月', '6月', 
-                   '7月', '8月', '9月', '10月', '11月', '12月']
+    # Month Name
+    month_names = ['1Month', '2Month', '3Month', '4Month', '5Month', '6Month', 
+                   '7Month', '8Month', '9Month', '10Month', '11Month', '12Month']
     pivot.columns = [month_names[i-1] for i in pivot.columns]
     
     fig = px.imshow(
@@ -255,21 +255,21 @@ def plot_turnover_heatmap(df: pd.DataFrame, ts_code: str):
         text_auto='.1f'
     )
     
-    fig = apply_chart_style(fig, title="换手率月度热力图 (%)")
-    fig.update_layout(coloraxis_colorbar_title='换手率%')
+    fig = apply_chart_style(fig, title="Monthly Turnover Heatmap (%)")
+    fig.update_layout(coloraxis_colorbar_title='Turnover Rate%')
     
     return fig
 
 
 def plot_volume_price_scatter(df: pd.DataFrame, ts_code: str):
     """
-    量价关系散点图。
+    Volume-Price Scatter Plot。
     """
     data = df[df['ts_code'] == ts_code].dropna(subset=['amount', 'pe']).copy()
     if data.empty or len(data) < 10:
         return None
     
-    # 计算PE变化
+    # PEChange
     data['pe_change'] = data['pe'].pct_change()
     data = data.dropna(subset=['pe_change'])
     
@@ -282,7 +282,7 @@ def plot_volume_price_scatter(df: pd.DataFrame, ts_code: str):
         opacity=0.6
     )
     
-    # 添加趋势线
+    # Add trend line
     fig.add_trace(go.Scatter(
         x=[data['amount'].min(), data['amount'].max()],
         y=[0, 0],
@@ -291,24 +291,24 @@ def plot_volume_price_scatter(df: pd.DataFrame, ts_code: str):
         showlegend=False
     ))
     
-    fig = apply_chart_style(fig, title="成交额与PE变化关系")
+    fig = apply_chart_style(fig, title="Trading Amount与PEChange关系")
     fig.update_layout(
-        xaxis_title='成交额 (亿元)',
-        yaxis_title='PE变化率',
+        xaxis_title='Trading Amount (100M CNY)',
+        yaxis_title='PEChange Rate',
         yaxis_tickformat='.1%',
-        coloraxis_colorbar_title='日期'
+        coloraxis_colorbar_title='Date'
     )
     
     return fig
 
 
 # ============================================================================
-# 全球市场比较
+# Global Market Comparison
 # ============================================================================
 
 def plot_global_indices_comparison(df_pivot: pd.DataFrame):
     """
-    全球指数走势对比（归一化）。
+    全球IndexTrend对比（Normalized）。
     """
     if df_pivot.empty:
         return None
@@ -320,11 +320,11 @@ def plot_global_indices_comparison(df_pivot: pd.DataFrame):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="全球主要指数走势对比 (归一化)")
+    fig = apply_chart_style(fig, title="Major GlobalIndexTrend对比 (Normalized)")
     fig.update_layout(
-        xaxis_title='日期',
-        yaxis_title='指数 (起点=100)',
-        legend_title='指数',
+        xaxis_title='Date',
+        yaxis_title='Index (Starting Point=100)',
+        legend_title='Index',
         hovermode='x unified'
     )
     
@@ -333,20 +333,20 @@ def plot_global_indices_comparison(df_pivot: pd.DataFrame):
 
 def plot_global_indices_raw(df: pd.DataFrame):
     """
-    全球指数原始价格走势（不归一化）。
-    使用子图展示不同量级的指数。
+    全球Index原始PriceTrend（不Normalized）。
+    Use Subplots for Different ScalesIndex。
     """
     if df.empty:
         return None
     
-    # 按指数分组
+    # Indexpoints
     indices = df['index_name'].unique()
     n_indices = len(indices)
     
     if n_indices == 0:
         return None
     
-    # 创建子图
+    # Create subplot
     rows = (n_indices + 1) // 2
     fig = make_subplots(
         rows=rows, cols=2,
@@ -373,7 +373,7 @@ def plot_global_indices_raw(df: pd.DataFrame):
         )
     
     fig.update_layout(
-        title=dict(text="全球指数原始价格走势", font=dict(size=18)),
+        title=dict(text="全球Index原始PriceTrend", font=dict(size=18)),
         font_family="Inter, PingFang SC",
         height=max(400, rows * 200),
         showlegend=False,
@@ -385,17 +385,17 @@ def plot_global_indices_raw(df: pd.DataFrame):
 
 def plot_global_volume(df: pd.DataFrame):
     """
-    全球指数成交量对比。
+    全球IndexVolume对比。
     """
     if df.empty or 'vol' not in df.columns:
         return None
     
-    # 筛选有成交量数据的指数
+    # VolumeIndex
     vol_data = df.dropna(subset=['vol'])
     if vol_data.empty:
         return None
     
-    # 获取每个指数最新一段时间的平均成交量用于柱状图
+    # IndexTimeAverage Volume
     latest = vol_data.groupby('index_name').agg({
         'vol': 'mean',
         'ts_code': 'first'
@@ -411,9 +411,9 @@ def plot_global_volume(df: pd.DataFrame):
         color_continuous_scale='Blues'
     )
     
-    fig = apply_chart_style(fig, title="全球指数平均成交量对比")
+    fig = apply_chart_style(fig, title="全球IndexAverage Volume对比")
     fig.update_layout(
-        xaxis_title='平均成交量',
+        xaxis_title='Average Volume',
         yaxis_title='',
         coloraxis_showscale=False
     )
@@ -423,12 +423,12 @@ def plot_global_volume(df: pd.DataFrame):
 
 def plot_global_volume_trend(df: pd.DataFrame):
     """
-    全球指数成交量走势。
+    全球IndexVolumeTrend。
     """
     if df.empty or 'vol' not in df.columns:
         return None
     
-    # 筛选有成交量数据的指数
+    # VolumeIndex
     vol_data = df.dropna(subset=['vol']).copy()
     if vol_data.empty:
         return None
@@ -441,11 +441,11 @@ def plot_global_volume_trend(df: pd.DataFrame):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="全球指数成交量走势")
+    fig = apply_chart_style(fig, title="全球IndexVolumeTrend")
     fig.update_layout(
-        xaxis_title='日期',
-        yaxis_title='成交量',
-        legend_title='指数',
+        xaxis_title='Date',
+        yaxis_title='Volume',
+        legend_title='Index',
         hovermode='x unified'
     )
     
@@ -454,7 +454,7 @@ def plot_global_volume_trend(df: pd.DataFrame):
 
 def plot_global_correlation_heatmap(df_corr: pd.DataFrame):
     """
-    全球指数相关性热力图。
+    全球IndexCorrelation Heatmap。
     """
     if df_corr.empty:
         return None
@@ -468,22 +468,22 @@ def plot_global_correlation_heatmap(df_corr: pd.DataFrame):
         text_auto='.2f'
     )
     
-    fig = apply_chart_style(fig, title="全球指数收益率相关性矩阵")
-    fig.update_layout(coloraxis_colorbar_title='相关系数')
+    fig = apply_chart_style(fig, title="全球IndexReturn率Correlation Matrix")
+    fig.update_layout(coloraxis_colorbar_title='Correlation Coefficient')
     
     return fig
 
 
 def plot_index_returns_bar(df_stats: pd.DataFrame):
     """
-    全球指数收益对比柱状图。
+    全球IndexReturnComparison Bar Chart。
     """
     if df_stats.empty:
         return None
     
     df = df_stats.sort_values('total_return', ascending=True).copy()
     
-    # 颜色：正收益绿，负收益红
+    # Color: Green for positive, Red for negative returns
     colors = [COLORS['success'] if x >= 0 else COLORS['danger'] for x in df['total_return']]
     
     fig = px.bar(
@@ -495,9 +495,9 @@ def plot_index_returns_bar(df_stats: pd.DataFrame):
         color_continuous_scale=[[0, '#C75B5B'], [0.5, '#FFFFFF'], [1, '#6BBF59']]
     )
     
-    fig = apply_chart_style(fig, title="全球指数区间收益对比")
+    fig = apply_chart_style(fig, title="全球IndexPeriod Return Comparison")
     fig.update_layout(
-        xaxis_title='累计收益率',
+        xaxis_title='Cumulative Return',
         yaxis_title='',
         xaxis_tickformat='.1%',
         coloraxis_showscale=False
@@ -508,14 +508,14 @@ def plot_index_returns_bar(df_stats: pd.DataFrame):
 
 def plot_risk_return_global(df_stats: pd.DataFrame):
     """
-    全球指数风险收益散点图。
+    全球Index风险Return Scatter Plot。
     """
     if df_stats.empty:
         return None
     
-    # 创建副本，计算用于显示的size列（必须为正数）
+    # ，size（）
     df = df_stats.copy()
-    # 使用绝对值+偏移确保size为正且有意义
+    # +size
     df['size_value'] = df['sharpe_ratio'].abs() + 0.5
     
     fig = px.scatter(
@@ -529,18 +529,18 @@ def plot_risk_return_global(df_stats: pd.DataFrame):
         color_continuous_scale=[[0, '#C75B5B'], [0.5, '#E8A838'], [1, '#6BBF59']]
     )
     
-    # 添加参考线
+    # Add reference line
     fig.add_hline(y=0, line_dash='dash', line_color='gray', line_width=1)
     
     fig.update_traces(textposition='top center', textfont_size=10)
     
-    fig = apply_chart_style(fig, title="全球指数风险-收益分析")
+    fig = apply_chart_style(fig, title="全球Index风险-Returnpoints析")
     fig.update_layout(
-        xaxis_title='年化波动率 (风险)',
-        yaxis_title='年化收益率',
+        xaxis_title='Year化波动率 (风险)',
+        yaxis_title='Annualized Return',
         xaxis_tickformat='.0%',
         yaxis_tickformat='.0%',
-        coloraxis_colorbar_title='夏普比率'
+        coloraxis_colorbar_title='Sharpe Ratio'
     )
     
     return fig
@@ -548,7 +548,7 @@ def plot_risk_return_global(df_stats: pd.DataFrame):
 
 def plot_market_mv_trend(df: pd.DataFrame, ts_codes: list = None):
     """
-    市场总市值走势。
+    Total Market Cap Trend。
     """
     if df.empty:
         return None
@@ -570,11 +570,11 @@ def plot_market_mv_trend(df: pd.DataFrame, ts_codes: list = None):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="各板块总市值走势 (亿元)")
+    fig = apply_chart_style(fig, title="各SectorTotal Market CapTrend (100M CNY)")
     fig.update_layout(
-        xaxis_title='日期',
-        yaxis_title='总市值 (亿元)',
-        legend_title='板块',
+        xaxis_title='Date',
+        yaxis_title='Total Market Cap (100M CNY)',
+        legend_title='Sector',
         hovermode='x unified'
     )
     
@@ -582,12 +582,12 @@ def plot_market_mv_trend(df: pd.DataFrame, ts_codes: list = None):
 
 
 # ============================================================================
-# 两市交易数据分析
+# Two-Market Trading Data Analysis
 # ============================================================================
 
 def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
     """
-    成交金额与换手率双Y轴趋势图。
+    Trading Amount与Turnover Rate双Y轴趋势图。
     """
     if df.empty:
         return None
@@ -599,28 +599,28 @@ def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
     if data.empty:
         return None
     
-    # 确保有必要的列
+    # Ensure required columns exist
     if 'amount' not in data.columns or ('tr' not in data.columns and 'amount_turnover' not in data.columns):
         return None
     
     name_col = 'market_name' if 'market_name' in data.columns else 'ts_name'
     
-    # 创建带次坐标轴的图表
+    # Create chart with secondary axis
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # 为每个选中的板块添加成交金额（柱状图）和换手率（折线图）
+    # SectorTrading Amount（）Turnover Rate（）
     colors = PALETTE
     
     for i, code in enumerate(data['ts_code'].unique()):
         code_data = data[data['ts_code'] == code].sort_values('trade_date')
         market_name = code_data[name_col].iloc[0] if not code_data[name_col].empty else code
         
-        # 成交金额柱状图（主Y轴）
+        # Trading Amount（Y）
         fig.add_trace(
             go.Bar(
                 x=code_data['trade_date'],
                 y=code_data['amount'],
-                name=f"{market_name} 成交额",
+                name=f"{market_name} Trading Amount",
                 marker_color=colors[i % len(colors)],
                 opacity=0.6,
                 showlegend=True
@@ -628,13 +628,13 @@ def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
             secondary_y=False
         )
         
-        # 换手率折线图（次Y轴）
+        # Turnover Rate（Y）
         if 'tr' in code_data.columns and not code_data['tr'].isna().all():
             fig.add_trace(
                 go.Scatter(
                     x=code_data['trade_date'],
                     y=code_data['tr'],
-                    name=f"{market_name} 换手率",
+                    name=f"{market_name} Turnover Rate",
                     line=dict(color=colors[i % len(colors)], width=2, dash='dash'),
                     showlegend=True
                 ),
@@ -645,20 +645,20 @@ def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
                 go.Scatter(
                     x=code_data['trade_date'],
                     y=code_data['amount_turnover'],
-                    name=f"{market_name} 金额换手率",
+                    name=f"{market_name} AmountTurnover Rate",
                     line=dict(color=colors[i % len(colors)], width=2, dash='dash'),
                     showlegend=True
                 ),
                 secondary_y=True
             )
     
-    # 设置坐标轴标签
-    fig.update_xaxes(title_text='日期')
-    fig.update_yaxes(title_text='成交金额 (亿元)', secondary_y=False)
-    fig.update_yaxes(title_text='换手率 (%)', secondary_y=True)
+    # Set axis labels
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='Trading Amount (100M CNY)', secondary_y=False)
+    fig.update_yaxes(title_text='Turnover Rate (%)', secondary_y=True)
     
-    # 应用样式
-    fig = apply_chart_style(fig, title="成交金额与换手率趋势")
+    # Apply style
+    fig = apply_chart_style(fig, title="Trading Amount与Turnover Rate趋势")
     fig.update_layout(
         barmode='group',
         hovermode='x unified',
@@ -670,12 +670,12 @@ def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
 
 def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
     """
-    上海 vs 深圳对比柱状图。
+    Shanghai vs ShenzhenComparison Bar Chart。
     """
     if df.empty:
         return None
     
-    # 按日期筛选
+    # Date
     if date:
         data = df[df['trade_date'] == pd.to_datetime(date)]
     else:
@@ -684,10 +684,20 @@ def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
     if data.empty:
         return None
     
-    # 区分上海和深圳
-    data['exchange'] = data['ts_code'].apply(lambda x: '上海' if 'SH' in x else ('深圳' if 'SZ' in x else '其他'))
+    # pointsShanghaiShenzhen（sz_daily_info  ts_code points， source ）
+    if 'source' in data.columns:
+        data['exchange'] = data.apply(
+            lambda r: 'Shenzhen' if r.get('source') == 'sz_daily_info' else (
+                'Shanghai' if 'SH' in str(r.get('ts_code', '')) else (
+                    'Shenzhen' if 'SZ' in str(r.get('ts_code', '')) else '其他'
+                )
+            ),
+            axis=1
+        )
+    else:
+        data['exchange'] = data['ts_code'].apply(lambda x: 'Shanghai' if 'SH' in x else ('Shenzhen' if 'SZ' in x else '其他'))
     
-    # 按交易所分组聚合
+    # Group by exchange
     exchange_data = data.groupby('exchange').agg({
         'amount': 'sum',
         'total_mv': 'sum',
@@ -697,14 +707,14 @@ def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
     if exchange_data.empty:
         return None
     
-    # 计算金额换手率
+    # Turnover Rate
     exchange_data['amount_turnover'] = exchange_data['amount'] / exchange_data['float_mv'] * 100
     
-    # 创建分组柱状图
+    # Create grouped bar chart
     fig = go.Figure()
     
     metrics = ['amount', 'total_mv', 'amount_turnover']
-    metric_names = ['成交金额 (亿元)', '总市值 (亿元)', '金额换手率 (%)']
+    metric_names = ['Trading Amount (100M CNY)', 'Total Market Cap (100M CNY)', 'AmountTurnover Rate (%)']
     colors = [COLORS['primary'], COLORS['accent'], COLORS['warning']]
     
     for i, (metric, name, color) in enumerate(zip(metrics, metric_names, colors)):
@@ -717,10 +727,10 @@ def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
             textposition='auto'
         ))
     
-    fig = apply_chart_style(fig, title="上海 vs 深圳市场对比")
+    fig = apply_chart_style(fig, title="Shanghai vs Shenzhen市场对比")
     fig.update_layout(
-        xaxis_title='交易所',
-        yaxis_title='数值',
+        xaxis_title='Exchange',
+        yaxis_title='Value',
         barmode='group',
         hovermode='x unified'
     )
@@ -730,18 +740,18 @@ def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
 
 def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
     """
-    板块热力图，显示不同板块在不同时间的热度。
+    Sector热力图，Show DifferentSectorAcross DifferentTime的热度。
     """
     if df.empty:
         return None
     
     data = df.copy()
     
-    # 提取年份和月份
+    # YearMonth
     data['year'] = data['trade_date'].dt.year
     data['month'] = data['trade_date'].dt.month
     
-    # 按板块、年月聚合
+    # Sector、YearMonth
     pivot = data.pivot_table(
         index='market_name',
         columns=['year', 'month'],
@@ -752,12 +762,12 @@ def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
     if pivot.empty:
         return None
     
-    # 重命名列
+    # Rename columns
     col_names = []
     for year, month in pivot.columns:
-        col_names.append(f"{year}年{month}月")
+        col_names.append(f"{year}Year{month}Month")
     
-    # 创建热力图
+    # Create heatmap
     fig = px.imshow(
         pivot,
         color_continuous_scale='YlOrRd',
@@ -765,10 +775,10 @@ def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
         text_auto='.1f'
     )
     
-    fig = apply_chart_style(fig, title=f"板块{metric}热力图")
+    fig = apply_chart_style(fig, title=f"Sector{metric}热力图")
     fig.update_layout(
-        xaxis_title='时间',
-        yaxis_title='板块'
+        xaxis_title='Time',
+        yaxis_title='Sector'
     )
     
     return fig
@@ -776,19 +786,19 @@ def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
 
 def plot_risk_warning_box(df: pd.DataFrame, metric: str = 'tr'):
     """
-    风险预警箱线图，显示换手率分布。
+    风险预警箱线图，显示Turnover Ratepoints布。
     """
     if df.empty:
         return None
     
     data = df.copy()
     
-    # 提取月份
+    # Month
     data['month'] = data['trade_date'].dt.month
     
-    # 月份名称
-    month_names = ['1月', '2月', '3月', '4月', '5月', '6月', 
-                   '7月', '8月', '9月', '10月', '11月', '12月']
+    # Month Name
+    month_names = ['1Month', '2Month', '3Month', '4Month', '5Month', '6Month', 
+                   '7Month', '8Month', '9Month', '10Month', '11Month', '12Month']
     
     fig = px.box(
         data,
@@ -799,9 +809,9 @@ def plot_risk_warning_box(df: pd.DataFrame, metric: str = 'tr'):
         category_orders={'month': list(range(1, 13))}
     )
     
-    fig = apply_chart_style(fig, title=f"{metric}月度分布箱线图")
+    fig = apply_chart_style(fig, title=f"{metric}Month度pointsBox Plot")
     fig.update_layout(
-        xaxis_title='月份',
+        xaxis_title='Month份',
         yaxis_title=metric,
         xaxis=dict(
             tickmode='array',
@@ -810,17 +820,17 @@ def plot_risk_warning_box(df: pd.DataFrame, metric: str = 'tr'):
         )
     )
     
-    # 添加阈值线
+    # Add threshold line
     if metric == 'tr':
-        fig.add_hline(y=2, line_dash='dash', line_color='red', annotation_text='高风险阈值 (2%)')
-        fig.add_hline(y=0.5, line_dash='dash', line_color='green', annotation_text='低风险阈值 (0.5%)')
+        fig.add_hline(y=2, line_dash='dash', line_color='red', annotation_text='High Risk Threshold (2%)')
+        fig.add_hline(y=0.5, line_dash='dash', line_color='green', annotation_text='Low Risk Threshold (0.5%)')
     
     return fig
 
 
 def plot_liquidity_score_gauge(df: pd.DataFrame, ts_code: str):
     """
-    流动性评分仪表盘。
+    Liquidity Score Dashboard。
     """
     if df.empty:
         return None
@@ -829,43 +839,43 @@ def plot_liquidity_score_gauge(df: pd.DataFrame, ts_code: str):
     if data.empty:
         return None
     
-    # 计算流动性评分（简单示例）
+    # Calculate Liquidity Score (Simple Example)
     latest = data.iloc[-1]
     
-    # 评分逻辑：基于成交额、换手率、市值
-    amount_score = min(latest['amount'] / 1000 * 100, 100) if 'amount' in latest else 50  # 假设1000亿为满分
+    # points：Trading Amount、Turnover Rate、
+    amount_score = min(latest['amount'] / 1000 * 100, 100) if 'amount' in latest else 50  # Assume 100B CNY = full score
     
     if 'tr' in latest and not pd.isna(latest['tr']):
-        turnover_score = min(latest['tr'] * 50, 100)  # 2%换手率为满分
+        turnover_score = min(latest['tr'] * 50, 100)  # 2%Turnover Ratepoints
     elif 'amount_turnover' in latest and not pd.isna(latest['amount_turnover']):
         turnover_score = min(latest['amount_turnover'] * 50, 100)
     else:
         turnover_score = 50
     
     if 'float_mv' in latest and not pd.isna(latest['float_mv']):
-        market_cap_score = min(latest['float_mv'] / 50000 * 100, 100)  # 5万亿流通市值为满分
+        market_cap_score = min(latest['float_mv'] / 50000 * 100, 100)  # 510T Circulating Market Cap = full score
     else:
         market_cap_score = 50
     
-    # 综合评分
+    # Combined Score
     liquidity_score = (amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2)
     
-    # 决定颜色
+    # Determine color
     if liquidity_score >= 70:
         color = COLORS['success']
-        level = "优秀"
+        level = "Excellent"
     elif liquidity_score >= 40:
         color = COLORS['warning']
-        level = "良好"
+        level = "Good"
     else:
         color = COLORS['danger']
-        level = "一般"
+        level = "Fair"
     
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=liquidity_score,
-        title={'text': f"流动性评分<br><span style='font-size:0.8em;color:gray'>{level}</span>"},
-        number={'suffix': '分', 'font': {'size': 40}},
+        title={'text': f"Liquidity Score<br><span style='font-size:0.8em;color:gray'>{level}</span>"},
+        number={'suffix': 'points', 'font': {'size': 40}},
         gauge={
             'axis': {'range': [0, 100], 'tickwidth': 1},
             'bar': {'color': color},
@@ -893,23 +903,33 @@ def plot_liquidity_score_gauge(df: pd.DataFrame, ts_code: str):
 
 def plot_market_turnover_scatter(df: pd.DataFrame):
     """
-    市值与换手率散点图。
+    Market Cap vsTurnover Rate散点图。
     """
     if df.empty:
         return None
     
     data = df.copy()
     
-    # 使用最新数据
+    # Use latest data
     latest = data.groupby('ts_code').last().reset_index()
     
     if latest.empty:
         return None
     
-    # 区分上海和深圳
-    latest['exchange'] = latest['ts_code'].apply(lambda x: '上海' if 'SH' in x else ('深圳' if 'SZ' in x else '其他'))
+    # pointsShanghaiShenzhen（sz_daily_info  ts_code points， source ）
+    if 'source' in latest.columns:
+        latest['exchange'] = latest.apply(
+            lambda r: 'Shenzhen' if r.get('source') == 'sz_daily_info' else (
+                'Shanghai' if 'SH' in str(r.get('ts_code', '')) else (
+                    'Shenzhen' if 'SZ' in str(r.get('ts_code', '')) else '其他'
+                )
+            ),
+            axis=1
+        )
+    else:
+        latest['exchange'] = latest['ts_code'].apply(lambda x: 'Shanghai' if 'SH' in x else ('Shenzhen' if 'SZ' in x else '其他'))
     
-    # 确定换手率列
+    # Turnover Rate
     if 'tr' in latest.columns and not latest['tr'].isna().all():
         turnover_col = 'tr'
     elif 'amount_turnover' in latest.columns and not latest['amount_turnover'].isna().all():
@@ -924,13 +944,13 @@ def plot_market_turnover_scatter(df: pd.DataFrame):
         color='exchange',
         size='amount',
         hover_name='market_name',
-        color_discrete_map={'上海': COLORS['primary'], '深圳': COLORS['accent']}
+        color_discrete_map={'Shanghai': COLORS['primary'], 'Shenzhen': COLORS['accent']}
     )
     
-    fig = apply_chart_style(fig, title="市值与换手率关系")
+    fig = apply_chart_style(fig, title="Market Cap vsTurnover Rate关系")
     fig.update_layout(
-        xaxis_title='流通市值 (亿元)',
-        yaxis_title='换手率 (%)',
+        xaxis_title='Circulating Market Cap (100M CNY)',
+        yaxis_title='Turnover Rate (%)',
         hovermode='closest'
     )
     

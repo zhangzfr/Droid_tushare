@@ -34,7 +34,7 @@ def render_vix_page(subcategory_key):
         
         with left_col:
             # ETF Options group
-            st.markdown("<small>*ETF期权*</small>", unsafe_allow_html=True)
+            st.markdown("<small>*ETF Options*</small>", unsafe_allow_html=True)
             etf_codes = ['510050.SH', '510300.SH', '510500.SH', '159919.SZ', '159915.SZ', '159922.SZ']
             sel_etf = []
             for code in etf_codes:
@@ -42,7 +42,7 @@ def render_vix_page(subcategory_key):
                     if st.checkbox(underlyings.get(code, code), value=code == '510050.SH', key=f"vix_cb_{code}"):
                         sel_etf.append(code)
             
-            st.markdown("<small>*指数期权*</small>", unsafe_allow_html=True)
+            st.markdown("<small>*Index Options*</small>", unsafe_allow_html=True)
             index_codes = ['000300.SH', '000016.SH', '000852.SH', '000905.SH', '000510.SH']
             sel_index = []
             for code in index_codes:

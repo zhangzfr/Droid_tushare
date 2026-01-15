@@ -72,7 +72,7 @@ def render_index_page(subcategory_key):
                         sel_publisher.append(pub)
             
             if other_publishers:
-                st.markdown("<small>*其他*</small>", unsafe_allow_html=True)
+                st.markdown("<small>*Others*</small>", unsafe_allow_html=True)
                 for pub in other_publishers:
                     if st.checkbox(pub, value=False, key=f"idx_pub_cb_{pub}"):
                         sel_publisher.append(pub)
@@ -220,19 +220,19 @@ def render_index_page(subcategory_key):
                     # Grouping same as before
                     # Consumer, Manufacturing, Finance, Tech, Resources, Services
                     consumer = [c for c in l1_codes if l1_dict.get(c, '') in ['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理']]
-                    mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', '轻工制造', '建筑材料', '建筑装饰']]
-                    finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', '非银金融', '房地产']]
-                    tech = [c for c in l1_codes if l1_dict.get(c, '') in ['计算机', '传媒', '通信']]
+                    mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', 'Light IndustryManufacturing', '建筑材料', '建筑装饰']]
+                    finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', 'Non-bankFinance', '房地产']]
+                    tech = [c for c in l1_codes if l1_dict.get(c, '') in ['Calculate机', '传媒', '通信']]
                     resources = [c for c in l1_codes if l1_dict.get(c, '') in ['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']]
-                    health = [c for c in l1_codes if l1_dict.get(c, '') in ['医药生物']]
+                    health = [c for c in l1_codes if l1_dict.get(c, '') in ['Pharmaceuticals & Biotechnology']]
                     others = [c for c in l1_codes if c not in consumer + mfg + finance + tech + resources + health]
                     
                     # All option
-                    all_selected = st.checkbox("全选所有", value=True, key="l1_cb_all")
+                    all_selected = st.checkbox("Select All", value=True, key="l1_cb_all")
                     if all_selected:
                         selected_l1_drill = ['All']
                     else:
-                        cat_map = {'消费': consumer, '制造': mfg, '金融': finance, '科技': tech, '资源': resources, '医药': health, '其他': others}
+                        cat_map = {'Consumption': consumer, 'Manufacturing': mfg, 'Finance': finance, 'Technology': tech, 'Resources': resources, 'Medical': health, 'Others': others}
                         for cat_name, cat_codes in cat_map.items():
                             if cat_codes:
                                 st.markdown(f"<small>*{cat_name}*</small>", unsafe_allow_html=True)
@@ -374,11 +374,11 @@ def render_index_page(subcategory_key):
                 
                 # Grouping Logic (Same as above)
                 consumer = [c for c in l1_codes if l1_dict.get(c, '') in ['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理']]
-                mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', '轻工制造', '建筑材料', '建筑装饰']]
-                finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', '非银金融', '房地产']]
-                tech = [c for c in l1_codes if l1_dict.get(c, '') in ['计算机', '传媒', '通信']]
+                mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', 'Light IndustryManufacturing', '建筑材料', '建筑装饰']]
+                finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', 'Non-bankFinance', '房地产']]
+                tech = [c for c in l1_codes if l1_dict.get(c, '') in ['Calculate机', '传媒', '通信']]
                 resources = [c for c in l1_codes if l1_dict.get(c, '') in ['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']]
-                health = [c for c in l1_codes if l1_dict.get(c, '') in ['医药生物']]
+                health = [c for c in l1_codes if l1_dict.get(c, '') in ['Pharmaceuticals & Biotechnology']]
                 others = [c for c in l1_codes if c not in consumer + mfg + finance + tech + resources + health]
                 
                 selected_l1_codes = []
@@ -390,7 +390,7 @@ def render_index_page(subcategory_key):
                 # Actually, user wants checkboxes. Let's make expanders for tidiness?
                 # Or just headers since it's in a column.
                 
-                cat_map = {'消费': consumer, '制造': mfg, '金融': finance, '科技': tech, '资源': resources, '医药': health, '其他': others}
+                cat_map = {'Consumption': consumer, 'Manufacturing': mfg, 'Finance': finance, 'Technology': tech, 'Resources': resources, 'Medical': health, 'Others': others}
                 
                 with st.expander("Industry Selection", expanded=True):
                     # Add "Select All" logic if needed, but per group is better or just manual.
