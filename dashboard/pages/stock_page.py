@@ -31,72 +31,72 @@ def render_stock_edu_page(subcategory_key):
     """
     Render the Stock Education page based on the selected subcategory.
     """
-    # 加载基本信息
-    with st.spinner('正在加载A股数据...'):
+    # Loading basic information
+    with st.spinner('Loading A-Share data...'):
         df_basic = load_stock_basic()
     
     if df_basic.empty:
-        st.error("无法加载股票基本信息，请检查数据库连接。")
+        st.error("Unable to load stock basic information, please check database connection。")
         st.stop()
     
-    # 获取名称映射
+    # Get name mapping
     name_map = get_stock_name_map(df_basic)
     
-    # 只保留正常上市的股票供选择
+    # Keep only normally listed stocks for selection
     listed_stocks = df_basic[df_basic['list_status'] == 'L']['ts_code'].tolist()
     
-    # 计算日期默认值
+    # Calculate date defaults
     default_end = datetime.now()
     default_start = default_end - timedelta(days=365)
     
-    # --- 第1层：认识A股 ---
+    # --- Level 1：Understanding A-Share ---
     if subcategory_key == "stock_overview":
-        render_header("第1层：认识A股市场", "market")
+        render_header("Level 1：Understanding A-Share市场", "market")
         
-        # 教育内容
-        with st.expander("📘 相关知识：什么是A股市场？"):
+        # Educational Content
+        with st.expander("📘 Related Knowledge：What is A-Share Market？"):
             st.markdown(textwrap.dedent("""
-            ### 📚 什么是A股市场？
+            ### 📚 What is A-Share Market？
             
-            **A股**是指在中国境内上市、以人民币计价交易的股票。主要交易场所：
+            **A-Share**refers to在中国境内上市、traded in RMB,Stock。main trading venues：
             
-            - **上海证券交易所 (SSE)**：主板、科创板
-            - **深圳证券交易所 (SZSE)**：主板、创业板
+            - **Shanghai Stock Exchange (SSE)**：主板、科创板
+            - **Shenzhen Stock Exchange (SZSE)**：主板、创业板
             - **北京证券交易所 (BSE)**：北交所
             
-            **板块分类**：
+            **Sector Classification**：
             - **主板**：成熟大型企业，盈利要求较高
             - **创业板**：成长型创新企业
-            - **科创板**：科技创新企业，注册制
+            - **科创板**：Technology创新企业，注册制
             """))
         
         st.divider()
         
-        # 获取市场统计
+        # Get market statistics
         summary = get_market_summary(df_basic)
         
-        # 指标卡
+        # Metrics Card
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("上市公司总数", f"{summary.get('total', 0):,}")
-        col2.metric("正常上市", f"{summary.get('listed', 0):,}")
-        col3.metric("已退市", f"{summary.get('delisted', 0):,}")
-        col4.metric("暂停上市", f"{summary.get('suspended', 0):,}")
+        col1.metric("Total Listed Companies", f"{summary.get('total', 0):,}")
+        col2.metric("Normal Listing", f"{summary.get('listed', 0):,}")
+        col3.metric("Delisted", f"{summary.get('delisted', 0):,}")
+        col4.metric("Suspended", f"{summary.get('suspended', 0):,}")
         
         st.divider()
         
-        # 布局
+        # Layout
         left_col, right_col = st.columns([1, 5])
         
         with left_col:
-            st.markdown("**筛选**")
-            show_listed_only = st.checkbox("仅显示上市中", value=True)
+            st.markdown("**Filter**")
+            show_listed_only = st.checkbox("Show only listed", value=True)
         
         df_display = df_basic.copy()
         if show_listed_only:
             df_display = df_display[df_display['list_status'] == 'L']
         
         with right_col:
-            tab1, tab2, tab3, tab4 = st.tabs(["📊 板块分布", "🏭 行业分布", "🗺️ 地域分布", "📋 股票列表"])
+            tab1, tab2, tab3, tab4 = st.tabs(["📊 Sector分布", "🏭 行业分布", "🗺️ Region分布", "📋 Stock列表"])
             
             with tab1:
                 col1, col2 = st.columns(2)
@@ -129,60 +129,60 @@ def render_stock_edu_page(subcategory_key):
                     use_container_width=True,
                     height=500,
                     column_config={
-                        "ts_code": "股票代码",
-                        "name": "股票名称",
-                        "industry": "所属行业",
-                        "market": "板块",
-                        "area": "地域",
-                        "list_date": "上市日期"
+                        "ts_code": "Stock Code",
+                        "name": "Stock Name",
+                        "industry": "Industry",
+                        "market": "Sector",
+                        "area": "Region",
+                        "list_date": "Listing Date"
                     }
                 )
         
-        # 思考题
-        with st.expander("🤔 思考题"):
+        # Discussion Questions
+        with st.expander("🤔 Discussion Questions"):
             st.markdown(textwrap.dedent("""
-            1. 为什么中国要设立多个不同的股票板块（主板、创业板、科创板）？
-            2. 从行业分布来看，A股市场的结构有什么特点？
-            3. 地域分布与经济发展水平有什么关系？
+            1. 为什么中国要设立多个不同的StockSector（主板、创业板、科创板）？
+            2. 从行业分布来看，A-Share市场的结构有什么特点？
+            3. Region分布与经济发展水平有什么关系？
             """))
     
-    # --- 第2层：理解价格 ---
+    # --- 2： ---
     elif subcategory_key == "stock_price":
-        render_header("第2层：理解股票价格", "chart")
+        render_header("第2层：理解StockPrice", "chart")
         
-        # 教育内容
-        with st.expander("📘 相关知识：股票价格概念"):
+        # Educational Content
+        with st.expander("📘 Related Knowledge：StockPrice概念"):
             st.markdown(textwrap.dedent("""
-            ### 📈 股票价格的基本概念
+            ### 📈 Basic Concepts of Stock Prices
             
-            **K线图（蜡烛图）**是展示价格走势的经典方式：
-            - **开盘价 (Open)**：当日第一笔交易价格
-            - **收盘价 (Close)**：当日最后一笔交易价格
+            **K线图（蜡烛图）**是展示PriceTrend的经典方式：
+            - **开盘价 (Open)**：当日第一笔交易Price
+            - **Closing Price (Close)**：Last Trade of the DayPrice
             - **最高价 (High)**：当日最高成交价
             - **最低价 (Low)**：当日最低成交价
             
-            **收益率**衡量投资回报：
-            - 简单收益率：(P_t - P_{t-1}) / P_{t-1}
-            - 对数收益率：ln(P_t / P_{t-1})
+            **Return率**衡量投资回报：
+            - Simple Return：(P_t - P_{t-1}) / P_{t-1}
+            - Log Return：ln(P_t / P_{t-1})
             
-            **波动率**反映价格变化的剧烈程度，是衡量风险的重要指标。
+            **波动率**反映PriceChangeIntensity of，是衡量风险的重要指标。
             """))
         
         st.divider()
         
-        # 筛选器
+        # Filter
         left_col, right_col = st.columns([1, 5])
         
         with left_col:
-            st.markdown("**日期范围**")
-            start_date = st.date_input("开始", default_start.date(), key="stock_price_start")
-            end_date = st.date_input("结束", default_end.date(), key="stock_price_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start", default_start.date(), key="stock_price_start")
+            end_date = st.date_input("End", default_end.date(), key="stock_price_end")
             
-            st.markdown("**选择股票**")
-            # 筛选行业 - checkboxes
+            st.markdown("**Select Stock**")
+            # Filter - checkboxes
             industries = sorted(df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist())
             
-            st.markdown("*行业筛选*")
+            st.markdown("*行业Filter*")
             sel_industry = []
             # Group by first character for organization
             for ind in industries[:20]:  # Limit display
@@ -194,37 +194,37 @@ def render_stock_edu_page(subcategory_key):
             else:
                 available = listed_stocks
             
-            # 默认选择
+            # Default Selection
             defaults = [c for c in DEFAULT_STOCKS if c in available][:4]
-            sel_codes = st.multiselect("股票", available, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_price_codes")
+            sel_codes = st.multiselect("Stock", available, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_price_codes")
         
         if not sel_codes:
-            st.info("请选择至少一只股票进行分析。")
+            st.info("请选择至少一只Stock进行Analysis。")
         else:
-            with st.spinner('正在加载行情数据...'):
+            with st.spinner('Loading market data...'):
                 start_str = start_date.strftime('%Y%m%d')
                 end_str = end_date.strftime('%Y%m%d')
                 df_daily = load_stock_daily(sel_codes, start_str, end_str)
             
             if df_daily.empty:
-                st.warning("所选股票在该日期范围内无行情数据。")
+                st.warning("SelectedStock在该Date Range内无行情数据。")
             else:
-                # 计算收益率
+                # Calculate returns
                 df_returns = calculate_returns(df_daily, 'close', 'simple')
                 df_stats = calculate_annualized_stats_by_stock(df_daily)
                 
                 with right_col:
-                    tab1, tab2, tab3, tab4 = st.tabs(["📊 K线图", "📈 价格走势", "📉 收益分布", "📋 原始数据"])
+                    tab1, tab2, tab3, tab4 = st.tabs(["📊 K线图", "📈 PriceTrend", "📉 Return分布", "📋 原始数据"])
                     
                     with tab1:
-                        sel_kline = st.selectbox("选择股票查看K线", sel_codes, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_kline_select")
+                        sel_kline = st.selectbox("Select Stock查看K线", sel_codes, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_kline_select")
                         fig_kline = plot_candlestick(df_daily, sel_kline, name_map)
                         if fig_kline:
                             st.plotly_chart(fig_kline, use_container_width=True, key="stock_kline")
                             st.caption("Source: stock_daily")
                     
                     with tab2:
-                        normalize = st.toggle("归一化价格 (首日=100)", value=True, key="stock_normalize")
+                        normalize = st.toggle("Normalized Price (First Day=100)", value=True, key="stock_normalize")
                         df_pivot = create_price_pivot(df_daily, 'close')
                         fig_lines = plot_price_lines(df_pivot, normalize=normalize, name_map=name_map)
                         if fig_lines:
@@ -250,73 +250,73 @@ def render_stock_edu_page(subcategory_key):
                             use_container_width=True,
                             height=500,
                             column_config={
-                                "ts_code": "代码",
+                                "ts_code": "Code",
                                 "trade_date": "日期",
-                                "pct_chg": st.column_config.NumberColumn("涨跌幅%", format="%.2f"),
-                                "vol": st.column_config.NumberColumn("成交量", format="%.0f"),
-                                "amount": st.column_config.NumberColumn("成交额", format="%.0f")
+                                "pct_chg": st.column_config.NumberColumn("Change %%", format="%.2f"),
+                                "vol": st.column_config.NumberColumn("Volume", format="%.0f"),
+                                "amount": st.column_config.NumberColumn("Trading Amount", format="%.0f")
                             }
                         )
                 
-                # 思考题
-                with st.expander("🤔 思考题"):
+                # Discussion Questions
+                with st.expander("🤔 Discussion Questions"):
                     st.markdown(textwrap.dedent("""
-                    1. 为什么A股市场中红色代表上涨、绿色代表下跌？与西方市场有何不同？
-                    2. 高波动率的股票一定是不好的投资吗？
-                    3. 为什么要用归一化价格来比较不同股票的走势？
+                    1. 为什么A-Share市场中红色代表上涨、绿色代表下跌？与西方市场有何不同？
+                    2. 高波动率的Stock一定是不好的投资吗？
+                    3. 为什么要用Normalized Price来比较不同Stock的Trend？
                     """))
     
-    # --- 第3层：分析估值 ---
+    # --- 3： ---
     elif subcategory_key == "stock_valuation":
-        render_header("第3层：分析估值指标", "valuation")
+        render_header("第3层：Analysis估值指标", "valuation")
         
-        # 教育内容
-        with st.expander("📘 相关知识：核心估值指标"):
+        # Educational Content
+        with st.expander("📘 Related Knowledge：Core Valuation Metrics"):
             st.markdown(textwrap.dedent("""
-            ### 💰 核心估值指标
+            ### 💰 Core Valuation Metrics
             
-            **市盈率 (PE - Price to Earnings)**
-            - 公式：股价 / 每股收益 = 总市值 / 净利润
-            - 含义：投资者愿意为每1元利润支付多少钱
-            - PE高可能意味着高成长预期，也可能是高估
+            **P/E Ratio (PE - Price to Earnings)**
+            - 公式：股价 / 每股Return = Total Market Cap / 净利润
+            - Meaning：投资者愿意为每1元利润支付多少钱
+            - PEHigh may indicate high growth expectations，也可能是高估
             
-            **市净率 (PB - Price to Book)**
-            - 公式：股价 / 每股净资产 = 总市值 / 净资产
+            **P/B Ratio (PB - Price to Book)**
+            - 公式：股价 / 每股净资产 = Total Market Cap / 净资产
             - 适用于重资产行业（银行、地产）
-            - PB<1 可能意味着被低估
+            - PB<1 May indicate undervaluation
             
-            **换手率 (Turnover Rate)**
-            - 公式：成交量 / 流通股本 × 100%
-            - 反映股票活跃度和市场情绪
+            **Turnover Rate (Turnover Rate)**
+            - 公式：Volume / 流通股本 × 100%
+            - 反映Stock活跃度和市场情绪
             """))
         
         st.divider()
         
-        # 筛选器
+        # Filter
         left_col, right_col = st.columns([1, 5])
         
         with left_col:
-            st.markdown("**日期范围**")
-            start_date = st.date_input("开始", default_start.date(), key="stock_val_start")
-            end_date = st.date_input("结束", default_end.date(), key="stock_val_end")
+            st.markdown("**Date Range**")
+            start_date = st.date_input("Start", default_start.date(), key="stock_val_start")
+            end_date = st.date_input("End", default_end.date(), key="stock_val_end")
             
-            st.markdown("**选择股票**")
+            st.markdown("**Select Stock**")
             defaults = [c for c in DEFAULT_STOCKS if c in listed_stocks][:5]
-            sel_codes = st.multiselect("股票", listed_stocks, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_val_codes")
+            sel_codes = st.multiselect("Stock", listed_stocks, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_val_codes")
         
         if not sel_codes:
-            st.info("请选择至少一只股票进行估值分析。")
+            st.info("请选择至少一只StockPerform ValuationAnalysis。")
         else:
-            with st.spinner('正在加载估值数据...'):
+            with st.spinner('Loading valuation data...'):
                 start_str = start_date.strftime('%Y%m%d')
                 end_str = end_date.strftime('%Y%m%d')
                 df_valuation = load_daily_basic(sel_codes, start_str, end_str)
             
             if df_valuation.empty:
-                st.warning("所选股票在该日期范围内无估值数据。")
+                st.warning("SelectedStock在该Date RangeNo Valuation Data Within。")
             else:
                 with right_col:
-                    tab1, tab2, tab3, tab4 = st.tabs(["📈 PE走势", "📊 PB走势", "📉 估值分布", "📋 数据表"])
+                    tab1, tab2, tab3, tab4 = st.tabs(["📈 PETrend", "📊 PBTrend", "📉 估值分布", "📋 数据表"])
                     
                     with tab1:
                         fig_pe = plot_pe_timeseries(df_valuation, sel_codes, name_map)
@@ -324,7 +324,7 @@ def render_stock_edu_page(subcategory_key):
                             st.plotly_chart(fig_pe, use_container_width=True, key="stock_pe_line")
                             st.caption("Source: daily_basic")
                         
-                        st.caption("PE-TTM：滚动12个月净利润计算的市盈率，更能反映最新盈利状况。")
+                        st.caption("PE-TTM：滚动12个月净利润Calculate的P/E Ratio，更能反映最新盈利状况。")
                     
                     with tab2:
                         fig_pb = plot_pb_timeseries(df_valuation, sel_codes, name_map)
@@ -351,60 +351,60 @@ def render_stock_edu_page(subcategory_key):
                             use_container_width=True,
                             height=500,
                             column_config={
-                                "ts_code": "代码",
+                                "ts_code": "Code",
                                 "trade_date": "日期",
-                                "close": st.column_config.NumberColumn("收盘价", format="%.2f"),
+                                "close": st.column_config.NumberColumn("Closing Price", format="%.2f"),
                                 "pe_ttm": st.column_config.NumberColumn("PE-TTM", format="%.2f"),
                                 "pb": st.column_config.NumberColumn("PB", format="%.2f"),
-                                "turnover_rate": st.column_config.NumberColumn("换手率%", format="%.2f"),
-                                "total_mv_yi": st.column_config.NumberColumn("总市值(亿)", format="%.2f")
+                                "turnover_rate": st.column_config.NumberColumn("Turnover Rate%", format="%.2f"),
+                                "total_mv_yi": st.column_config.NumberColumn("Total Market Cap(亿)", format="%.2f")
                             }
                         )
                 
-                # 思考题
-                with st.expander("🤔 思考题"):
+                # Discussion Questions
+                with st.expander("🤔 Discussion Questions"):
                     st.markdown(textwrap.dedent("""
                     1. 茅台的PE为什么可以长期高于银行股？这合理吗？
                     2. 为什么银行股的PB经常低于1？
-                    3. 高换手率是好事还是坏事？对于不同类型投资者意义不同吗？
+                    3. 高Turnover Rate是好事还是坏事？对于不同类型投资者意义不同吗？
                     """))
     
-    # --- 第4层：行业选股 ---
+    # --- 4： ---
     elif subcategory_key == "stock_industry":
-        render_header("第4层：行业分析与选股", "industry")
+        render_header("第4层：行业Analysis与选股", "industry")
         
-        # 教育内容
-        with st.expander("📘 相关知识：行业分析框架"):
+        # Educational Content
+        with st.expander("📘 Related Knowledge：Industry Analysis Framework"):
             st.markdown(textwrap.dedent("""
-            ### 🏭 行业分析框架
+            ### 🏭 Industry Analysis Framework
             
-            **为什么要分析行业？**
-            - 不同行业有不同的商业周期和估值逻辑
-            - 行业轮动是重要的投资策略
-            - 分散投资于低相关行业可以降低组合风险
+            **Why Analyze Industries？**
+            - Different industries have different business cycles and valuation logic
+            - Industry rotation is an important investment strategy
+            - Diversification into low-correlation industries can reduce portfolio risk
             
-            **关键指标**：
+            **Key Indicators**：
             - **行业PE中位数**：反映行业整体估值水平
-            - **行业收益率**：衡量行业表现
+            - **Industry Return**：衡量行业表现
             - **行业相关性**：用于构建分散组合
             
-            **风险-收益分析**：
-            - 高收益伴随高风险是普遍规律
-            - 夏普比率 = (收益率 - 无风险收益率) / 波动率
+            **风险-ReturnAnalysis**：
+            - High return comes with high risk is a general rule
+            - 夏普比率 = (Return率 - 无风险Return率) / 波动率
             """))
         
         st.divider()
         
-        # 筛选
+        # Filter
         left_col, right_col = st.columns([1, 5])
         
         with left_col:
-            st.markdown("**日期范围**")
-            adv_start = default_end - timedelta(days=180)  # 半年
-            start_date = st.date_input("开始", adv_start.date(), key="stock_ind_start")
-            end_date = st.date_input("结束", default_end.date(), key="stock_ind_end")
+            st.markdown("**Date Range**")
+            adv_start = default_end - timedelta(days=180)  # Half Year
+            start_date = st.date_input("Start", adv_start.date(), key="stock_ind_start")
+            end_date = st.date_input("End", default_end.date(), key="stock_ind_end")
             
-            st.markdown("**行业筛选**")
+            st.markdown("**行业Filter**")
             all_industries = sorted(df_basic[df_basic['list_status'] == 'L']['industry'].dropna().unique().tolist())
             
             # Checkboxes with defaults
@@ -416,13 +416,13 @@ def render_stock_edu_page(subcategory_key):
                     sel_industries.append(ind)
         
         if not sel_industries:
-            st.info("请选择至少一个行业进行分析。")
+            st.info("Please select at least one industry for analysis。")
         else:
-            with st.spinner('正在加载行业数据...'):
-                # 获取行业内股票
+            with st.spinner('Loading industry data...'):
+                # Stock
                 industry_stocks = df_basic[(df_basic['list_status'] == 'L') & (df_basic['industry'].isin(sel_industries))]['ts_code'].tolist()
                 
-                # 限制数量
+                # Limit quantity
                 if len(industry_stocks) > 200:
                     industry_stocks = industry_stocks[:200]
                 
@@ -433,7 +433,7 @@ def render_stock_edu_page(subcategory_key):
                 df_valuation = get_latest_valuation(industry_stocks)
             
             with right_col:
-                tab1, tab2, tab3, tab4 = st.tabs(["📊 行业估值", "🔥 收益分析", "🔗 相关性", "⚖️ 风险收益"])
+                tab1, tab2, tab3, tab4 = st.tabs(["📊 行业估值", "🔥 ReturnAnalysis", "🔗 相关性", "⚖️ 风险Return"])
                 
                 with tab1:
                     if not df_valuation.empty:
@@ -444,10 +444,10 @@ def render_stock_edu_page(subcategory_key):
                                 st.plotly_chart(fig_ind_val, use_container_width=True, key="stock_ind_val")
                                 st.caption("Source: daily_basic, stock_basic")
                             
-                            st.subheader("行业估值一览")
+                            st.subheader("Industry Valuation Overview")
                             st.dataframe(df_industry_val, use_container_width=True, hide_index=True)
                     else:
-                        st.warning("无法获取估值数据。")
+                        st.warning("Unable to fetch valuation data。")
                 
                 with tab2:
                     if not df_daily.empty:
@@ -458,7 +458,7 @@ def render_stock_edu_page(subcategory_key):
                                 st.plotly_chart(fig_heatmap, use_container_width=True, key="stock_ind_ret")
                                 st.caption("Source: stock_daily")
                     else:
-                        st.warning("无法获取行情数据。")
+                        st.warning("Unable to fetch market data。")
                 
                 with tab3:
                     if not df_daily.empty:
@@ -471,13 +471,13 @@ def render_stock_edu_page(subcategory_key):
                                     st.plotly_chart(fig_corr, use_container_width=True, key="stock_ind_corr")
                                     st.caption("Source: stock_daily")
                                 
-                                st.caption("低相关性的行业组合可以有效分散风险。")
+                                st.caption("Low-correlation industry combinations can effectively diversify risk。")
                 
                 with tab4:
                     if not df_daily.empty:
                         df_stats = calculate_annualized_stats_by_stock(df_daily)
                         if not df_stats.empty:
-                            # 合并名称
+                            # Merge names
                             df_stats = df_stats.merge(df_basic[['ts_code', 'name', 'industry']], on='ts_code', how='left')
                             
                             fig_rr = plot_risk_return_scatter(df_stats, name_map)
@@ -486,18 +486,18 @@ def render_stock_edu_page(subcategory_key):
                                 st.caption("Source: stock_daily")
                             
                             st.markdown(textwrap.dedent("""
-                            **如何解读风险-收益图：**
-                            - **X轴（波动率）**：越靠右风险越高
-                            - **Y轴（收益率）**：越靠上收益越高
-                            - **理想位置**：左上角（高收益低风险）
-                            - **颜色（夏普比率）**：绿色代表更好的风险调整后收益
+                            **How to Interpret Risk-Return图：**
+                            - **X轴（波动率）**：Higher Risk to the Right
+                            - **Y轴（Return率）**：越靠上Return越高
+                            - **理想位置**：Upper Left（高Return低风险）
+                            - **颜色（夏普比率）**：Green Means Better Risk-adjusted Return
                             """))
             
-            # 思考题
-            with st.expander("🤔 思考题"):
+            # Discussion Questions
+            with st.expander("🤔 Discussion Questions"):
                 st.markdown(textwrap.dedent("""
-                1. 为什么有些行业的PE长期高于其他行业？这与行业特性有何关系？
-                2. 如何利用行业相关性构建一个分散化的投资组合？
-                3. 高夏普比率的股票一定是好的投资标的吗？有什么局限性？
-                4. 宏观经济周期如何影响不同行业的轮动？
+                1. Why Some IndustriesPE长期高于其他行业？这与行业特性有何关系？
+                2. How to use industry correlation to build diversified portfolio？
+                3. High Sharpe RatioStock一定是好的投资标的吗？有什么局限性？
+                4. How economic cycles affect different industry rotations？
                 """))
