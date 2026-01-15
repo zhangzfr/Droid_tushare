@@ -58,7 +58,7 @@ def render_stock_edu_page(subcategory_key):
             st.markdown(textwrap.dedent("""
             ### 📚 What is A-Share Market？
             
-            **A-Share**refers to在中国境内上市、traded in RMB,Stock。main trading venues：
+            **A-Share**refers to Listed in Mainland、traded in RMB,Stock。main trading venues：
             
             - **Shanghai Stock Exchange (SSE)**：主板、科创板
             - **Shenzhen Stock Exchange (SZSE)**：主板、创业板
@@ -148,10 +148,10 @@ def render_stock_edu_page(subcategory_key):
     
     # --- 2： ---
     elif subcategory_key == "stock_price":
-        render_header("第2层：理解StockPrice", "chart")
+        render_header("Stage 2：Uuderstand StockPrice", "chart")
         
         # Educational Content
-        with st.expander("📘 Related Knowledge：StockPrice概念"):
+        with st.expander("📘 Related Knowledge：Stock Price Concept"):
             st.markdown(textwrap.dedent("""
             ### 📈 Basic Concepts of Stock Prices
             
@@ -199,7 +199,7 @@ def render_stock_edu_page(subcategory_key):
             sel_codes = st.multiselect("Stock", available, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_price_codes")
         
         if not sel_codes:
-            st.info("请选择至少一只Stock进行Analysis。")
+            st.info("Select at least ONE Stock to Analysis。")
         else:
             with st.spinner('Loading market data...'):
                 start_str = start_date.strftime('%Y%m%d')
@@ -207,7 +207,7 @@ def render_stock_edu_page(subcategory_key):
                 df_daily = load_stock_daily(sel_codes, start_str, end_str)
             
             if df_daily.empty:
-                st.warning("SelectedStock在该Date Range内无行情数据。")
+                st.warning("Selected Stock in the Date Range NO Data")
             else:
                 # Calculate returns
                 df_returns = calculate_returns(df_daily, 'close', 'simple')
@@ -268,7 +268,7 @@ def render_stock_edu_page(subcategory_key):
     
     # --- 3： ---
     elif subcategory_key == "stock_valuation":
-        render_header("第3层：Analysis估值指标", "valuation")
+        render_header("Stage 3：Analysis Valuation", "valuation")
         
         # Educational Content
         with st.expander("📘 Related Knowledge：Core Valuation Metrics"):
@@ -305,7 +305,7 @@ def render_stock_edu_page(subcategory_key):
             sel_codes = st.multiselect("Stock", listed_stocks, default=defaults, format_func=lambda x: f"{x} {name_map.get(x, '')}", key="stock_val_codes")
         
         if not sel_codes:
-            st.info("请选择至少一只StockPerform ValuationAnalysis。")
+            st.info("Select at least ONE Stock Perform Valuation Analysis。")
         else:
             with st.spinner('Loading valuation data...'):
                 start_str = start_date.strftime('%Y%m%d')
@@ -313,10 +313,10 @@ def render_stock_edu_page(subcategory_key):
                 df_valuation = load_daily_basic(sel_codes, start_str, end_str)
             
             if df_valuation.empty:
-                st.warning("SelectedStock在该Date RangeNo Valuation Data Within。")
+                st.warning("No Valuation Data Within the Date Range by Selected Stock")
             else:
                 with right_col:
-                    tab1, tab2, tab3, tab4 = st.tabs(["📈 PETrend", "📊 PBTrend", "📉 估值分布", "📋 数据表"])
+                    tab1, tab2, tab3, tab4 = st.tabs(["📈 PE Trend", "📊 PB Trend", "📉 Valuation", "📋 Raw Data"])
                     
                     with tab1:
                         fig_pe = plot_pe_timeseries(df_valuation, sel_codes, name_map)
@@ -371,7 +371,7 @@ def render_stock_edu_page(subcategory_key):
     
     # --- 4： ---
     elif subcategory_key == "stock_industry":
-        render_header("第4层：行业Analysis与选股", "industry")
+        render_header("Stage 4：Industry Analysis", "industry")
         
         # Educational Content
         with st.expander("📘 Related Knowledge：Industry Analysis Framework"):
@@ -433,7 +433,7 @@ def render_stock_edu_page(subcategory_key):
                 df_valuation = get_latest_valuation(industry_stocks)
             
             with right_col:
-                tab1, tab2, tab3, tab4 = st.tabs(["📊 行业估值", "🔥 ReturnAnalysis", "🔗 相关性", "⚖️ 风险Return"])
+                tab1, tab2, tab3, tab4 = st.tabs(["📊 Industry Valuation", "🔥 ReturnA nalysis", "🔗 Correlative", "⚖️ Risk Return"])
                 
                 with tab1:
                     if not df_valuation.empty:
@@ -486,9 +486,9 @@ def render_stock_edu_page(subcategory_key):
                                 st.caption("Source: stock_daily")
                             
                             st.markdown(textwrap.dedent("""
-                            **How to Interpret Risk-Return图：**
-                            - **X轴（波动率）**：Higher Risk to the Right
-                            - **Y轴（Return率）**：越靠上Return越高
+                            **How to Interpret Risk-Return Chart：**
+                            - **X Axis（波动率）**：Higher Risk to the Right
+                            - **Y Axis（Return率）**：越靠上Return越高
                             - **理想位置**：Upper Left（高Return低风险）
                             - **颜色（夏普比率）**：Green Means Better Risk-adjusted Return
                             """))

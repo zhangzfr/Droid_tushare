@@ -90,7 +90,6 @@ NAVIGATION = {
         "icon": "market",
         "subcategories": {
             "Listing Stats": {"key": "listing_stats", "icon": "stats"},
-            "Uplift Detection": {"key": "uplift_detect", "icon": "trend"},
             "Equity Pledge": {"key": "pledge_data", "icon": "pulse"},
             "Block Trade": {"key": "block_trade", "icon": "chart"},
             "Risk Radar": {"key": "risk_radar", "icon": "alert"}
@@ -117,7 +116,8 @@ NAVIGATION = {
         "key": "vix",
         "icon": "volatility",
         "subcategories": {
-            "VIX Calculator": {"key": "vix_calc", "icon": "calc"}
+            "VIX Calculator": {"key": "vix_calc", "icon": "calc"},
+            "Uplift Detection": {"key": "uplift_detect", "icon": "trend"}
         }
     },
     "A-Share Education": {

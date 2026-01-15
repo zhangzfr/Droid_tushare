@@ -48,20 +48,22 @@ def render_fx_edu_page(subcategory_key):
     # --- Level 1: Asset Overview ---
     if subcategory_key == "fx_assets":
         render_header("Level 1: Asset Overview", "asset")
-        
-        # Educational intro
-        st.markdown(textwrap.dedent("""
-        ### 📚 What Are Financial Assets?
-        
-        Financial markets trade different types of assets, each representing a different form of value:
-        
-        - **FX (Foreign Exchange)**: Currency pairs like EUR/USD represent the exchange rate between two currencies
-        - **Commodities**: Physical goods like Gold (XAUUSD) and Oil (USOIL) that are traded on global markets  
-        - **Indices**: Stock market benchmarks like the Dow Jones (US30) and NASDAQ (NAS100)
-        
-        Understanding these asset classes is the first step to learning about global financial markets!
-        """))
-        
+
+        # Educational Content
+        with st.expander("📚 What Are Financial Assets?"):
+            st.markdown(textwrap.dedent("""
+            ### 📚 What Are Financial Assets?
+            
+            Financial markets trade different types of assets, each representing a different form of value:
+            
+            - **FX (Foreign Exchange)**: Currency pairs like EUR/USD represent the exchange rate between two currencies
+            - **Commodities**: Physical goods like Gold (XAUUSD) and Oil (USOIL) that are traded on global markets  
+            - **Indices**: Stock market benchmarks like the Dow Jones (US30) and NASDAQ (NAS100)
+            
+            Understanding these asset classes is the first step to learning about global financial markets!
+            """))
+
+
         st.divider()
         
         # Layout
@@ -134,20 +136,21 @@ def render_fx_edu_page(subcategory_key):
     # --- Level 2: Price Dynamics ---
     elif subcategory_key == "fx_price":
         render_header("Level 2: Price Dynamics", "chart")
-        
-        # Educational intro
-        st.markdown(textwrap.dedent("""
-        ### 📈 Understanding Price Movements
-        
-        Prices of financial assets constantly fluctuate based on supply and demand, economic news, and market sentiment.
-        
-        **Key Concepts:**
-        - **Time Series**: A sequence of prices over time
-        - **Returns**: The percentage change in price (how much you gain or lose)
-        - **Log Returns**: ln(P_t / P_{t-1}) - mathematically preferred for analysis
-        - **Volatility**: How much prices fluctuate - higher volatility means higher risk AND potential reward
-        """))
-        
+
+        # Educational Content
+        with st.expander("📈 Understanding Price Movements"):
+            st.markdown(textwrap.dedent("""
+            ### 📈 Understanding Price Movements
+
+            Prices of financial assets constantly fluctuate based on supply and demand, economic news, and market sentiment.
+            
+            **Key Concepts:**
+            - **Time Series**: A sequence of prices over time
+            - **Returns**: The percentage change in price (how much you gain or lose)
+            - **Log Returns**: ln(P_t / P_{t-1}) - mathematically preferred for analysis
+            - **Volatility**: How much prices fluctuate - higher volatility means higher risk AND potential reward
+            """))
+
         st.divider()
         
         # Sidebar filters
@@ -279,6 +282,23 @@ def render_fx_edu_page(subcategory_key):
         
         Example: Gold (XAUUSD) often moves opposite to the US Dollar - investors buy gold as a "safe haven" when USD weakens.
         """))
+        # Educational Content
+        with st.expander("🔗 Understanding Asset Correlations"):
+            st.markdown(textwrap.dedent("""
+            ### 🔗 Understanding Asset Correlations
+            
+            **Correlation** measures how two assets move together:
+            - **+1.0**: Perfect positive correlation (move together)
+            - **0.0**: No correlation (move independently)
+            - **-1.0**: Perfect negative correlation (move opposite)
+            
+            **Why It Matters:**
+            - **Portfolio Diversification**: Combining negatively correlated assets reduces overall risk
+            - **Hedging**: Using one asset to offset risk in another
+            - **Trading Signals**: Strong correlations can break down during market stress
+            
+            Example: Gold (XAUUSD) often moves opposite to the US Dollar - investors buy gold as a "safe haven" when USD weakens.
+            """))
         
         st.divider()
         
@@ -381,21 +401,22 @@ def render_fx_edu_page(subcategory_key):
     # --- Level 4: Advanced Analysis ---
     elif subcategory_key == "fx_advanced":
         render_header("Level 4: Advanced Analysis", "analysis")
-        
-        # Educational intro
-        st.markdown(textwrap.dedent("""
-        ### 🎓 Advanced Financial Analysis
-        
-        This section covers more sophisticated concepts used by professional traders and analysts:
-        
-        - **Seasonality**: Recurring patterns at specific times of year (e.g., energy prices in winter)
-        - **Volatility Clustering**: High volatility tends to follow high volatility
-        - **Risk-Return Tradeoff**: Higher expected returns usually come with higher risk
-        - **Monthly/Annual Patterns**: Identifying trends over longer time horizons
-        
-        These tools help analysts predict future behavior and make informed investment decisions.
-        """))
-        
+
+        # Educational Content
+        with st.expander("🎓 Advanced Financial Analysis"):
+            st.markdown(textwrap.dedent("""
+            ### 🎓 Advanced Financial Analysis
+
+            This section covers more sophisticated concepts used by professional traders and analysts:
+            
+            - **Seasonality**: Recurring patterns at specific times of year (e.g., energy prices in winter)
+            - **Volatility Clustering**: High volatility tends to follow high volatility
+            - **Risk-Return Tradeoff**: Higher expected returns usually come with higher risk
+            - **Monthly/Annual Patterns**: Identifying trends over longer time horizons
+            
+            These tools help analysts predict future behavior and make informed investment decisions.
+            """))
+
         st.divider()
         
         # Sidebar filters
