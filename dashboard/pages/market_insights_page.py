@@ -18,7 +18,9 @@ from dashboard.market_insights_charts import (
     plot_amount_trend, plot_turnover_heatmap, plot_volume_price_scatter,
     plot_global_indices_comparison, plot_global_indices_raw, plot_global_volume, plot_global_volume_trend,
     plot_global_correlation_heatmap,
-    plot_index_returns_bar, plot_risk_return_global, plot_market_mv_trend
+    plot_index_returns_bar, plot_risk_return_global, plot_market_mv_trend,
+    plot_trading_amount_trend, plot_sh_sz_comparison, plot_sector_heatmap,
+    plot_risk_warning_box, plot_liquidity_score_gauge, plot_market_turnover_scatter
 )
 
 def render_market_insights_page(subcategory_key):
@@ -478,4 +480,222 @@ def render_market_insights_page(subcategory_key):
                         - 右上角：高风险高收益（如新兴市场）
                         - 左上角：低风险高收益（理想区域）
                         - 夏普比率越高说明单位风险获得的收益越高
+                        """))
+
+    # --- 两市交易数据 ---
+    elif subcategory_key == "mkt_trading":
+        render_header("两市交易数据分析", "exchange")
+        
+        with st.expander("📘 相关知识：两市交易数据"):
+            st.markdown(textwrap.dedent("""
+            ### 📊 两市交易数据
+            
+            **市场交易统计** (daily_info) 提供上海和深圳交易所的总体数据：
+            - amount（成交金额，亿元）
+            - tr（换手率，%）
+            - total_mv（总市值，亿元）
+            - float_mv（流通市值，亿元）
+            
+            **深圳市场每日概况** (sz_daily_info) 深化深圳细分板块：
+            - amount（成交金额，需要从元转换为亿元）
+            - total_mv（总市值）
+            - float_mv（流通市值）
+            
+            **关键指标**：
+            - 金额换手率 = amount / float_mv （衡量交易热度）
+            - 上海 vs 深圳对比（交易所异同）
+            - 板块细分与热点追踪
+            """))
+        
+        st.divider()
+        
+        # 筛选器
+        left_col, right_col = st.columns([1, 5])
+        
+        with left_col:
+            st.markdown("**日期范围**")
+            trading_years = st.radio("时间跨度", [1, 2, 3, 5], index=1, format_func=lambda x: f"{x}年", key="mkt_trading_years", horizontal=True)
+            trading_start = default_end - timedelta(days=365*trading_years)
+            
+            st.markdown("**板块选择**")
+            
+            # daily_info 板块
+            st.markdown("<small>*上海/深交所数据*</small>", unsafe_allow_html=True)
+            daily_codes = ['SH_MARKET', 'SZ_MARKET', 'SH_A', 'SZ_GEM', 'SH_STAR', 'SZ_MAIN', 'SH_FUND']
+            sel_daily_codes = []
+            for code in daily_codes:
+                if st.checkbox(MARKET_CODES.get(code, code), value=code in ['SH_A', 'SZ_GEM'], key=f"mkt_trading_daily_{code}"):
+                    sel_daily_codes.append(code)
+            
+            # sz_daily_info 板块
+            st.markdown("<small>*深交所分类*</small>", unsafe_allow_html=True)
+            sz_codes = ['股票', '创业板A股', '主板A股', '债券', '基金']
+            sel_sz_codes = []
+            for code in sz_codes:
+                if st.checkbox(SZ_DAILY_CODES.get(code, code), value=False, key=f"mkt_trading_sz_{code}"):
+                    sel_sz_codes.append(code)
+        
+        if not sel_daily_codes and not sel_sz_codes:
+            st.info("请选择至少一个板块进行分析。")
+        else:
+            with st.spinner('正在加载交易数据...'):
+                start_str = trading_start.strftime('%Y%m%d')
+                end_str = default_end.strftime('%Y%m%d')
+                
+                # 加载数据
+                df_daily = pd.DataFrame()
+                if sel_daily_codes:
+                    df_daily = load_daily_info(start_str, end_str, sel_daily_codes)
+                    if not df_daily.empty:
+                        df_daily = df_daily[['trade_date', 'ts_code', 'market_name', 'amount', 'tr', 'total_mv', 'float_mv']].copy()
+                        df_daily['source'] = 'daily_info'
+                        # 计算金额换手率
+                        df_daily['amount_turnover'] = df_daily['amount'] / df_daily['float_mv'] * 100  # 百分比
+                
+                # 加载 sz_daily_info 数据
+                df_sz = pd.DataFrame()
+                if sel_sz_codes:
+                    df_sz = load_sz_daily_info(start_str, end_str, sel_sz_codes)
+                    if not df_sz.empty:
+                        df_sz = df_sz[['trade_date', 'ts_code', 'market_name', 'amount', 'total_mv', 'float_mv', 'source']].copy()
+                        # 计算金额换手率
+                        df_sz['amount_turnover'] = df_sz['amount'] / df_sz['float_mv'] * 100  # 百分比
+                        df_sz['tr'] = None
+                
+                # 合并数据
+                if not df_daily.empty and not df_sz.empty:
+                    df_info = pd.concat([df_daily, df_sz], ignore_index=True)
+                elif not df_daily.empty:
+                    df_info = df_daily
+                elif not df_sz.empty:
+                    df_info = df_sz
+                else:
+                    df_info = pd.DataFrame()
+            
+            if df_info.empty:
+                st.warning("无法获取交易统计数据。")
+            else:
+                with right_col:
+                    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 整体活跃度", "🔄 沪深对比", "🔥 板块热点", "⚠️ 风险预警", "📊 综合框架"])
+                    
+                    with tab1:
+                        st.subheader("成交金额与换手率动态监测")
+                        
+                        # 成交金额与换手率趋势图
+                        fig_trend = plot_trading_amount_trend(df_info, sel_daily_codes + sel_sz_codes)
+                        if fig_trend:
+                            st.plotly_chart(fig_trend, use_container_width=True, key="mkt_trading_trend")
+                            st.caption("Source: daily_info, sz_daily_info")
+                        else:
+                            st.info("无法生成趋势图，请确保选择了有效的板块。")
+                        
+                        st.markdown(textwrap.dedent("""
+                        **洞察：**
+                        - 成交额放大且换手率上升：市场情绪高涨
+                        - 成交额萎缩但换手率上升：可能为出货信号
+                        - 成交额与换手率同向变化反映市场一致性
+                        """))
+                        
+                    with tab2:
+                        st.subheader("上海 vs 深圳对比分析")
+                        
+                        # 上海深圳对比图
+                        fig_comparison = plot_sh_sz_comparison(df_info)
+                        if fig_comparison:
+                            st.plotly_chart(fig_comparison, use_container_width=True, key="mkt_trading_comparison")
+                            st.caption("Source: daily_info, sz_daily_info")
+                        else:
+                            st.info("无法生成对比图。")
+                        
+                        # 市值与换手率散点图
+                        fig_scatter = plot_market_turnover_scatter(df_info)
+                        if fig_scatter:
+                            st.plotly_chart(fig_scatter, use_container_width=True, key="mkt_trading_scatter")
+                            st.caption("Source: daily_info, sz_daily_info")
+                        
+                        st.markdown(textwrap.dedent("""
+                        **洞察：**
+                        - 上海市场通常市值更大、换手率较低（机构主导）
+                        - 深圳市场尤其是创业板，换手率较高（散户活跃）
+                        - 小市值高换手率板块可能存在短期机会
+                        """))
+                        
+                    with tab3:
+                        st.subheader("板块细分与热点追踪")
+                        
+                        # 选择指标
+                        metric = st.selectbox(
+                            "选择热力图指标",
+                            options=['amount', 'amount_turnover', 'total_mv'],
+                            format_func=lambda x: {'amount': '成交金额', 'amount_turnover': '金额换手率', 'total_mv': '总市值'}[x],
+                            key="mkt_trading_heatmap_metric"
+                        )
+                        
+                        # 板块热力图
+                        fig_heatmap = plot_sector_heatmap(df_info, metric)
+                        if fig_heatmap:
+                            st.plotly_chart(fig_heatmap, use_container_width=True, key="mkt_trading_heatmap")
+                            st.caption("Source: daily_info, sz_daily_info")
+                        else:
+                            st.info("无法生成热力图。")
+                        
+                        st.markdown(textwrap.dedent("""
+                        **洞察：**
+                        - 热力图颜色深浅反映板块热度
+                        - 横向对比可发现板块轮动规律
+                        - 纵向对比可观察季节性规律
+                        """))
+                        
+                    with tab4:
+                        st.subheader("风险预警与择时决策")
+                        
+                        # 选择风险指标
+                        risk_metric = st.selectbox(
+                            "选择风险指标",
+                            options=['tr', 'amount_turnover'],
+                            format_func=lambda x: {'tr': '换手率', 'amount_turnover': '金额换手率'}[x],
+                            key="mkt_trading_risk_metric"
+                        )
+                        
+                        # 风险预警箱线图
+                        fig_box = plot_risk_warning_box(df_info, risk_metric)
+                        if fig_box:
+                            st.plotly_chart(fig_box, use_container_width=True, key="mkt_trading_box")
+                            st.caption("Source: daily_info, sz_daily_info")
+                        else:
+                            st.info("无法生成风险预警图。")
+                        
+                        st.markdown(textwrap.dedent("""
+                        **风险阈值参考：**
+                        - 换手率 > 2%：高风险区域，警惕回调
+                        - 换手率 < 0.5%：低风险区域，可能见底
+                        - 金额换手率异常高：警惕资金过度炒作
+                        """))
+                        
+                    with tab5:
+                        st.subheader("综合市场框架")
+                        
+                        # 流动性评分
+                        st.markdown("#### 流动性评分")
+                        
+                        # 选择板块计算流动性评分
+                        score_codes = sel_daily_codes + sel_sz_codes
+                        if score_codes:
+                            cols = st.columns(min(len(score_codes), 3))
+                            for i, code in enumerate(score_codes):
+                                with cols[i % len(cols)]:
+                                    fig_gauge = plot_liquidity_score_gauge(df_info, code)
+                                    if fig_gauge:
+                                        st.plotly_chart(fig_gauge, use_container_width=True, key=f"mkt_trading_gauge_{i}_{code}")
+                                    else:
+                                        st.info(f"无法计算{code}的流动性评分。")
+                        else:
+                            st.info("请选择至少一个板块计算流动性评分。")
+                        
+                        st.markdown(textwrap.dedent("""
+                        **流动性评分说明：**
+                        - 综合成交额、换手率、市值等因素
+                        - 高分(>70)：流动性优秀，适合大资金进出
+                        - 中分(40-70)：流动性良好，平衡区域
+                        - 低分(<40)：流动性一般，注意冲击成本
                         """))

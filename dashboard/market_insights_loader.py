@@ -515,3 +515,116 @@ def aggregate_monthly_stats(df: pd.DataFrame, ts_code: str):
     monthly['month'] = monthly['year_month'].dt.to_timestamp()
     
     return monthly
+
+
+# ============================================================================
+# 两市交易数据分析辅助函数
+# ============================================================================
+
+def calculate_amount_turnover(df: pd.DataFrame):
+    """
+    计算金额换手率 (amount / float_mv * 100)。
+    """
+    if df.empty or 'amount' not in df.columns or 'float_mv' not in df.columns:
+        return df
+    
+    df = df.copy()
+    df['amount_turnover'] = df['amount'] / df['float_mv'] * 100
+    return df
+
+
+def load_combined_trading_data(start_date: str = None, end_date: str = None, 
+                              daily_codes: list = None, sz_codes: list = None):
+    """
+    加载合并的交易数据（daily_info + sz_daily_info）。
+    
+    Args:
+        start_date: 开始日期 'YYYYMMDD'
+        end_date: 结束日期 'YYYYMMDD'
+        daily_codes: daily_info板块代码列表
+        sz_codes: sz_daily_info板块代码列表
+    
+    Returns:
+        DataFrame: 合并后的交易数据
+    """
+    df_daily = pd.DataFrame()
+    df_sz = pd.DataFrame()
+    
+    if daily_codes:
+        df_daily = load_daily_info(start_date, end_date, daily_codes)
+        if not df_daily.empty:
+            df_daily = df_daily[['trade_date', 'ts_code', 'market_name', 'amount', 'tr', 'total_mv', 'float_mv']].copy()
+            df_daily['source'] = 'daily_info'
+            df_daily = calculate_amount_turnover(df_daily)
+    
+    if sz_codes:
+        df_sz = load_sz_daily_info(start_date, end_date, sz_codes)
+        if not df_sz.empty:
+            df_sz = df_sz[['trade_date', 'ts_code', 'market_name', 'amount', 'total_mv', 'float_mv', 'source']].copy()
+            df_sz['tr'] = None
+            df_sz = calculate_amount_turnover(df_sz)
+    
+    # 合并数据
+    if not df_daily.empty and not df_sz.empty:
+        df_combined = pd.concat([df_daily, df_sz], ignore_index=True)
+    elif not df_daily.empty:
+        df_combined = df_daily
+    elif not df_sz.empty:
+        df_combined = df_sz
+    else:
+        df_combined = pd.DataFrame()
+    
+    return df_combined
+
+
+def calculate_liquidity_score(df: pd.DataFrame, ts_code: str):
+    """
+    计算流动性评分。
+    
+    评分逻辑：
+    - amount_score: 成交额得分 (0-100)
+    - turnover_score: 换手率得分 (0-100)
+    - market_cap_score: 流通市值得分 (0-100)
+    - 综合得分 = amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2
+    """
+    if df.empty:
+        return None
+    
+    data = df[df['ts_code'] == ts_code].copy()
+    if data.empty:
+        return None
+    
+    latest = data.iloc[-1]
+    
+    # 成交额得分 (假设1000亿为满分)
+    amount_score = min(latest['amount'] / 1000 * 100, 100) if 'amount' in latest and latest['amount'] > 0 else 50
+    
+    # 换手率得分
+    if 'tr' in latest and not pd.isna(latest['tr']):
+        turnover_score = min(latest['tr'] * 50, 100)  # 2%换手率为满分
+    elif 'amount_turnover' in latest and not pd.isna(latest['amount_turnover']):
+        turnover_score = min(latest['amount_turnover'] * 50, 100)
+    else:
+        turnover_score = 50
+    
+    # 流通市值得分 (假设5万亿为满分)
+    if 'float_mv' in latest and not pd.isna(latest['float_mv']) and latest['float_mv'] > 0:
+        market_cap_score = min(latest['float_mv'] / 50000 * 100, 100)
+    else:
+        market_cap_score = 50
+    
+    # 综合得分
+    liquidity_score = (amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2)
+    
+    return {
+        'ts_code': ts_code,
+        'market_name': latest.get('market_name', ts_code),
+        'liquidity_score': liquidity_score,
+        'amount_score': amount_score,
+        'turnover_score': turnover_score,
+        'market_cap_score': market_cap_score,
+        'amount': latest.get('amount', 0),
+        'turnover': latest.get('tr', latest.get('amount_turnover', 0)),
+        'float_mv': latest.get('float_mv', 0)
+    }
+

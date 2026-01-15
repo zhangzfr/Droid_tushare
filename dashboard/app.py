@@ -101,7 +101,8 @@ NAVIGATION = {
         "subcategories": {
             "Market Valuation": {"key": "mkt_valuation", "icon": "gauge"},
             "Market Sentiment": {"key": "mkt_sentiment", "icon": "pulse"},
-            "Global Markets": {"key": "mkt_global", "icon": "globe"}
+            "Global Markets": {"key": "mkt_global", "icon": "globe"},
+            "两市交易数据": {"key": "mkt_trading", "icon": "exchange"}
         }
     },
     "VIX Calculator": {

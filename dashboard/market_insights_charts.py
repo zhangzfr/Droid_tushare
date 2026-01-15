@@ -579,3 +579,359 @@ def plot_market_mv_trend(df: pd.DataFrame, ts_codes: list = None):
     )
     
     return fig
+
+
+# ============================================================================
+# 两市交易数据分析
+# ============================================================================
+
+def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
+    """
+    成交金额与换手率双Y轴趋势图。
+    """
+    if df.empty:
+        return None
+    
+    data = df.copy()
+    if ts_codes:
+        data = data[data['ts_code'].isin(ts_codes)]
+    
+    if data.empty:
+        return None
+    
+    # 确保有必要的列
+    if 'amount' not in data.columns or ('tr' not in data.columns and 'amount_turnover' not in data.columns):
+        return None
+    
+    name_col = 'market_name' if 'market_name' in data.columns else 'ts_name'
+    
+    # 创建带次坐标轴的图表
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # 为每个选中的板块添加成交金额（柱状图）和换手率（折线图）
+    colors = PALETTE
+    
+    for i, code in enumerate(data['ts_code'].unique()):
+        code_data = data[data['ts_code'] == code].sort_values('trade_date')
+        market_name = code_data[name_col].iloc[0] if not code_data[name_col].empty else code
+        
+        # 成交金额柱状图（主Y轴）
+        fig.add_trace(
+            go.Bar(
+                x=code_data['trade_date'],
+                y=code_data['amount'],
+                name=f"{market_name} 成交额",
+                marker_color=colors[i % len(colors)],
+                opacity=0.6,
+                showlegend=True
+            ),
+            secondary_y=False
+        )
+        
+        # 换手率折线图（次Y轴）
+        if 'tr' in code_data.columns and not code_data['tr'].isna().all():
+            fig.add_trace(
+                go.Scatter(
+                    x=code_data['trade_date'],
+                    y=code_data['tr'],
+                    name=f"{market_name} 换手率",
+                    line=dict(color=colors[i % len(colors)], width=2, dash='dash'),
+                    showlegend=True
+                ),
+                secondary_y=True
+            )
+        elif 'amount_turnover' in code_data.columns and not code_data['amount_turnover'].isna().all():
+            fig.add_trace(
+                go.Scatter(
+                    x=code_data['trade_date'],
+                    y=code_data['amount_turnover'],
+                    name=f"{market_name} 金额换手率",
+                    line=dict(color=colors[i % len(colors)], width=2, dash='dash'),
+                    showlegend=True
+                ),
+                secondary_y=True
+            )
+    
+    # 设置坐标轴标签
+    fig.update_xaxes(title_text='日期')
+    fig.update_yaxes(title_text='成交金额 (亿元)', secondary_y=False)
+    fig.update_yaxes(title_text='换手率 (%)', secondary_y=True)
+    
+    # 应用样式
+    fig = apply_chart_style(fig, title="成交金额与换手率趋势")
+    fig.update_layout(
+        barmode='group',
+        hovermode='x unified',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+    
+    return fig
+
+
+def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
+    """
+    上海 vs 深圳对比柱状图。
+    """
+    if df.empty:
+        return None
+    
+    # 按日期筛选
+    if date:
+        data = df[df['trade_date'] == pd.to_datetime(date)]
+    else:
+        data = df.groupby('ts_code').last().reset_index()
+    
+    if data.empty:
+        return None
+    
+    # 区分上海和深圳
+    data['exchange'] = data['ts_code'].apply(lambda x: '上海' if 'SH' in x else ('深圳' if 'SZ' in x else '其他'))
+    
+    # 按交易所分组聚合
+    exchange_data = data.groupby('exchange').agg({
+        'amount': 'sum',
+        'total_mv': 'sum',
+        'float_mv': 'sum'
+    }).reset_index()
+    
+    if exchange_data.empty:
+        return None
+    
+    # 计算金额换手率
+    exchange_data['amount_turnover'] = exchange_data['amount'] / exchange_data['float_mv'] * 100
+    
+    # 创建分组柱状图
+    fig = go.Figure()
+    
+    metrics = ['amount', 'total_mv', 'amount_turnover']
+    metric_names = ['成交金额 (亿元)', '总市值 (亿元)', '金额换手率 (%)']
+    colors = [COLORS['primary'], COLORS['accent'], COLORS['warning']]
+    
+    for i, (metric, name, color) in enumerate(zip(metrics, metric_names, colors)):
+        fig.add_trace(go.Bar(
+            x=exchange_data['exchange'],
+            y=exchange_data[metric],
+            name=name,
+            marker_color=color,
+            text=exchange_data[metric].apply(lambda x: f'{x:,.1f}'),
+            textposition='auto'
+        ))
+    
+    fig = apply_chart_style(fig, title="上海 vs 深圳市场对比")
+    fig.update_layout(
+        xaxis_title='交易所',
+        yaxis_title='数值',
+        barmode='group',
+        hovermode='x unified'
+    )
+    
+    return fig
+
+
+def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
+    """
+    板块热力图，显示不同板块在不同时间的热度。
+    """
+    if df.empty:
+        return None
+    
+    data = df.copy()
+    
+    # 提取年份和月份
+    data['year'] = data['trade_date'].dt.year
+    data['month'] = data['trade_date'].dt.month
+    
+    # 按板块、年月聚合
+    pivot = data.pivot_table(
+        index='market_name',
+        columns=['year', 'month'],
+        values=metric,
+        aggfunc='mean'
+    )
+    
+    if pivot.empty:
+        return None
+    
+    # 重命名列
+    col_names = []
+    for year, month in pivot.columns:
+        col_names.append(f"{year}年{month}月")
+    
+    # 创建热力图
+    fig = px.imshow(
+        pivot,
+        color_continuous_scale='YlOrRd',
+        aspect='auto',
+        text_auto='.1f'
+    )
+    
+    fig = apply_chart_style(fig, title=f"板块{metric}热力图")
+    fig.update_layout(
+        xaxis_title='时间',
+        yaxis_title='板块'
+    )
+    
+    return fig
+
+
+def plot_risk_warning_box(df: pd.DataFrame, metric: str = 'tr'):
+    """
+    风险预警箱线图，显示换手率分布。
+    """
+    if df.empty:
+        return None
+    
+    data = df.copy()
+    
+    # 提取月份
+    data['month'] = data['trade_date'].dt.month
+    
+    # 月份名称
+    month_names = ['1月', '2月', '3月', '4月', '5月', '6月', 
+                   '7月', '8月', '9月', '10月', '11月', '12月']
+    
+    fig = px.box(
+        data,
+        x='month',
+        y=metric,
+        color='ts_code',
+        points='outliers',
+        category_orders={'month': list(range(1, 13))}
+    )
+    
+    fig = apply_chart_style(fig, title=f"{metric}月度分布箱线图")
+    fig.update_layout(
+        xaxis_title='月份',
+        yaxis_title=metric,
+        xaxis=dict(
+            tickmode='array',
+            tickvals=list(range(1, 13)),
+            ticktext=month_names
+        )
+    )
+    
+    # 添加阈值线
+    if metric == 'tr':
+        fig.add_hline(y=2, line_dash='dash', line_color='red', annotation_text='高风险阈值 (2%)')
+        fig.add_hline(y=0.5, line_dash='dash', line_color='green', annotation_text='低风险阈值 (0.5%)')
+    
+    return fig
+
+
+def plot_liquidity_score_gauge(df: pd.DataFrame, ts_code: str):
+    """
+    流动性评分仪表盘。
+    """
+    if df.empty:
+        return None
+    
+    data = df[df['ts_code'] == ts_code].copy()
+    if data.empty:
+        return None
+    
+    # 计算流动性评分（简单示例）
+    latest = data.iloc[-1]
+    
+    # 评分逻辑：基于成交额、换手率、市值
+    amount_score = min(latest['amount'] / 1000 * 100, 100) if 'amount' in latest else 50  # 假设1000亿为满分
+    
+    if 'tr' in latest and not pd.isna(latest['tr']):
+        turnover_score = min(latest['tr'] * 50, 100)  # 2%换手率为满分
+    elif 'amount_turnover' in latest and not pd.isna(latest['amount_turnover']):
+        turnover_score = min(latest['amount_turnover'] * 50, 100)
+    else:
+        turnover_score = 50
+    
+    if 'float_mv' in latest and not pd.isna(latest['float_mv']):
+        market_cap_score = min(latest['float_mv'] / 50000 * 100, 100)  # 5万亿流通市值为满分
+    else:
+        market_cap_score = 50
+    
+    # 综合评分
+    liquidity_score = (amount_score * 0.5 + turnover_score * 0.3 + market_cap_score * 0.2)
+    
+    # 决定颜色
+    if liquidity_score >= 70:
+        color = COLORS['success']
+        level = "优秀"
+    elif liquidity_score >= 40:
+        color = COLORS['warning']
+        level = "良好"
+    else:
+        color = COLORS['danger']
+        level = "一般"
+    
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number+delta",
+        value=liquidity_score,
+        title={'text': f"流动性评分<br><span style='font-size:0.8em;color:gray'>{level}</span>"},
+        number={'suffix': '分', 'font': {'size': 40}},
+        gauge={
+            'axis': {'range': [0, 100], 'tickwidth': 1},
+            'bar': {'color': color},
+            'steps': [
+                {'range': [0, 40], 'color': '#FFEBEE'},
+                {'range': [40, 70], 'color': '#FFF8E1'},
+                {'range': [70, 100], 'color': '#E8F5E9'}
+            ],
+            'threshold': {
+                'line': {'color': 'black', 'width': 2},
+                'thickness': 0.75,
+                'value': liquidity_score
+            }
+        }
+    ))
+    
+    fig.update_layout(
+        font_family="Inter, PingFang SC",
+        height=280,
+        margin=dict(l=30, r=30, t=80, b=30)
+    )
+    
+    return fig
+
+
+def plot_market_turnover_scatter(df: pd.DataFrame):
+    """
+    市值与换手率散点图。
+    """
+    if df.empty:
+        return None
+    
+    data = df.copy()
+    
+    # 使用最新数据
+    latest = data.groupby('ts_code').last().reset_index()
+    
+    if latest.empty:
+        return None
+    
+    # 区分上海和深圳
+    latest['exchange'] = latest['ts_code'].apply(lambda x: '上海' if 'SH' in x else ('深圳' if 'SZ' in x else '其他'))
+    
+    # 确定换手率列
+    if 'tr' in latest.columns and not latest['tr'].isna().all():
+        turnover_col = 'tr'
+    elif 'amount_turnover' in latest.columns and not latest['amount_turnover'].isna().all():
+        turnover_col = 'amount_turnover'
+    else:
+        return None
+    
+    fig = px.scatter(
+        latest,
+        x='float_mv',
+        y=turnover_col,
+        color='exchange',
+        size='amount',
+        hover_name='market_name',
+        color_discrete_map={'上海': COLORS['primary'], '深圳': COLORS['accent']}
+    )
+    
+    fig = apply_chart_style(fig, title="市值与换手率关系")
+    fig.update_layout(
+        xaxis_title='流通市值 (亿元)',
+        yaxis_title='换手率 (%)',
+        hovermode='closest'
+    )
+    
+    return fig
