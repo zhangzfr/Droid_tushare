@@ -4,6 +4,8 @@
 .agent/
 .vscode/
 .vscode/settings.json
+.crush
+.talkcody
 
 # 2. Exclude all logs (root and subdirectories)
 logs/
