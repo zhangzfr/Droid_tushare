@@ -18,11 +18,13 @@ from dashboard.index_charts import plot_constituent_count_over_time, plot_index_
 
 # Import SW Index modules
 from dashboard.sw_index_data_loader import (
-    get_sw_hierarchy, load_sw_daily_data, load_stocks_by_l3,
-    load_top_stocks, load_stocks_by_l2, get_sw_members, load_stock_daily_data,
-    load_stocks_by_l1, calculate_market_width, load_sw_l1_daily_history
+    get_sw_hierarchy, get_sw_members, calculate_market_width, load_sw_l1_daily_history,
+    get_top_l1_gainers, get_latest_sw_trade_date
 )
-from dashboard.sw_index_charts import plot_sw_treemap, plot_sw_stock_treemap, plot_l1_stock_treemap, plot_sw_l1_price_volume, plot_sw_l1_valuation
+from dashboard.sw_index_charts import (
+    plot_multi_index_price_normalized, plot_multi_index_amount_normalized,
+    plot_sw_l1_price_volume, plot_sw_l1_valuation_quantiles, plot_corr_heatmap, plot_rank_trend, plot_rank_sankey
+)
 from dashboard.sw_market_width_chart import plot_market_width_heatmap
 
 
@@ -165,360 +167,315 @@ def render_index_page(subcategory_key):
                     pivot_display = df_heatmap.pivot(index='trade_date', columns='ts_code', values='pct_chg').sort_index(ascending=False)
                     st.dataframe(pivot_display, use_container_width=True)
 
-    # --- Shenwan Index Heatmap Sub-category ---
+    # --- Shenwan Industry + Market Width (combined) ---
     elif subcategory_key == "sw_index":
-        render_header("Shenwan Industry Analysis", "treemap")
-        
-        # Load Hierarchy and Members for Name Mapping
+        render_header("Shenwan Industry Dashboard", "treemap")
+
         df_hier = get_sw_hierarchy()
         df_members = get_sw_members()
-        
+        latest_trade_date = get_latest_sw_trade_date()
+
         if df_hier.empty or df_members.empty:
-            st.error("Failed to load Shenwan hierarchy data.")
+            st.error("申万行业数据加载失败，请检查数据库连接。")
             st.stop()
-            
-        # Create mapping dictionary for L1 Code -> Name
+
         l1_options = df_hier[['l1_code', 'l1_name']].drop_duplicates().sort_values('l1_code')
         l1_dict = dict(zip(l1_options['l1_code'], l1_options['l1_name']))
-        
-        # Tabs for Separation
-        tab_heat, tab_trend = st.tabs(["Industry Heatmap", "Industry Trends"])
-        
-        # ==================== Tab 1: Industry Heatmap ====================
-        with tab_heat:
-            # Left-right layout for Heatmap Controls
-            left_col, right_col = st.columns([1, 4])
-            
-            with left_col:
-                st.markdown("**Trading Date**")
-                today = datetime.now()
-                if today.weekday() >= 5:
-                    today = today - timedelta(days=today.weekday() - 4)
-                selected_date = st.date_input("Select Date", today, key="sw_heat_date")
-                date_str = selected_date.strftime('%Y%m%d')
-                
-                st.markdown("---")
-                st.markdown("**View Mode**")
-                view_mode = st.radio(
-                    "Select View",
-                    ["L1 Drill-down", "Full View", "Top 100 Hot Stocks"],
-                    index=0,
-                    key="sw_heat_view_mode" # Changed key to avoid conflict or confusion
-                )
-                
-                st.markdown("---")
-                
-                # Dynamic Controls for Heatmap
-                selected_l1_drill = []
-                level = 'L1'
-                top_n = 100
-                
-                if view_mode == "L1 Drill-down":
-                    st.markdown("**Drill-down Options**")
-                    l1_codes = l1_options['l1_code'].tolist()
-                    
-                    # Grouping same as before
-                    # Consumer, Manufacturing, Finance, Tech, Resources, Services
-                    consumer = [c for c in l1_codes if l1_dict.get(c, '') in ['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理']]
-                    mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', 'Light IndustryManufacturing', '建筑材料', '建筑装饰']]
-                    finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', 'Non-bankFinance', '房地产']]
-                    tech = [c for c in l1_codes if l1_dict.get(c, '') in ['Calculate机', '传媒', '通信']]
-                    resources = [c for c in l1_codes if l1_dict.get(c, '') in ['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']]
-                    health = [c for c in l1_codes if l1_dict.get(c, '') in ['Pharmaceuticals & Biotechnology']]
-                    others = [c for c in l1_codes if c not in consumer + mfg + finance + tech + resources + health]
-                    
-                    # All option
-                    all_selected = st.checkbox("Select All", value=True, key="l1_cb_all")
-                    if all_selected:
-                        selected_l1_drill = ['All']
-                    else:
-                        cat_map = {'Consumption': consumer, 'Manufacturing': mfg, 'Finance': finance, 'Technology': tech, 'Resources': resources, 'Medical': health, 'Others': others}
-                        for cat_name, cat_codes in cat_map.items():
-                            if cat_codes:
-                                st.markdown(f"<small>*{cat_name}*</small>", unsafe_allow_html=True)
-                                for code in cat_codes:
-                                    if st.checkbox(f"{code} - {l1_dict.get(code, code)}", value=False, key=f"l1_cb_{code}"):
-                                        selected_l1_drill.append(code)
-                                        
-                elif view_mode == "Full View":
-                    st.markdown("**View Options**")
-                    level = st.radio("Select Level", ["L1", "L2", "L3", "Stock"], index=0, key="opt_a_level")
-                    if level == 'Stock':
-                        st.caption("Stock level might be slow to load.")
-                        
-                elif view_mode == "Top 100 Hot Stocks":
-                    st.markdown("**Filter Options**")
-                    top_n = st.slider("Display Count", 50, 300, 100, step=50, key="top_n_slider")
+        l1_all_codes = list(l1_dict.keys())
 
-            with right_col:
-                if view_mode == "L1 Drill-down":
-                    st.caption(f"Viewing: {', '.join([str(x) for x in selected_l1_drill])}")
-                    
-                    if 'All' in selected_l1_drill or not selected_l1_drill:
-                        with st.spinner("Loading L3 index data..."):
-                            target_codes = df_hier['l3_code'].unique().tolist()
-                            df_sw_daily = load_sw_daily_data(date_str, target_codes)
-                        
-                        if df_sw_daily.empty:
-                            st.warning(f"No trading data for {date_str}.")
-                        else:
-                            up_count = len(df_sw_daily[df_sw_daily['pct_change'] > 0])
-                            down_count = len(df_sw_daily[df_sw_daily['pct_change'] < 0])
-                            c1, c2 = st.columns(2)
-                            c1.metric("Rising Indices", up_count)
-                            c2.metric("Falling Indices", down_count)
-                            
-                            fig = plot_sw_treemap(df_hier, df_sw_daily, level='L3')
-                            if fig:
-                                st.plotly_chart(fig, use_container_width=True, key="l1_tab_index_chart")
-                                st.caption("Source: sw_daily, sw_index_member")
-                    else:
-                        # Handle multiple L1 selection
-                        with st.spinner(f"Loading stocks for selected L1 industries..."):
-                            df_l1_stocks = pd.DataFrame()
-                            for l1_code in selected_l1_drill:
-                                df_part = load_stocks_by_l1(date_str, l1_code)
-                                df_l1_stocks = pd.concat([df_l1_stocks, df_part], ignore_index=True)
-                        
-                        if df_l1_stocks.empty:
-                            st.warning(f"No stock data for selected industries on {date_str}.")
-                        else:
-                            up_count = len(df_l1_stocks[df_l1_stocks['pct_change'] > 0])
-                            down_count = len(df_l1_stocks[df_l1_stocks['pct_change'] < 0])
-                            total_amt = df_l1_stocks['amount'].sum()
-                            
-                            c1, c2, c3, c4 = st.columns(4)
-                            c1.metric("Rising", up_count)
-                            c2.metric("Falling", down_count)
-                            c3.metric("Amount", f"{total_amt/100000000:.2f} B")
-                            c4.metric("Stocks", len(df_l1_stocks))
-                            
-                            fig = plot_l1_stock_treemap(df_l1_stocks, "Selected L1 Industries")
-                            if fig:
-                                st.plotly_chart(fig, use_container_width=True, key="l1_tab_stock_chart")
-                                st.caption("Source: stock_daily, sw_index_member")
-                                
-                elif view_mode == "Full View":
-                    with st.spinner(f"Loading {level} data for {date_str}..."):
-                        if level == 'Stock':
-                            df_hier_full = get_sw_members()
-                            target_codes = df_hier_full['ts_code'].unique().tolist()
-                            df_sw_daily = load_stock_daily_data(date_str, target_codes)
-                        else:
-                            if level == 'L1': target_codes = df_hier['l1_code'].unique().tolist()
-                            elif level == 'L2': target_codes = df_hier['l2_code'].unique().tolist()
-                            elif level == 'L3': target_codes = df_hier['l3_code'].unique().tolist()
-                            df_sw_daily = load_sw_daily_data(date_str, target_codes)
-                    
-                    if df_sw_daily.empty:
-                        st.warning(f"No trading data for {date_str}.")
-                    else:
-                        up_count = len(df_sw_daily[df_sw_daily['pct_change'] > 0])
-                        down_count = len(df_sw_daily[df_sw_daily['pct_change'] < 0])
-                        total_amt = df_sw_daily['amount'].sum()
-                        
-                        c1, c2, c3 = st.columns(3)
-                        c1.metric(f"Rising {level}", up_count)
-                        c2.metric(f"Falling {level}", down_count)
-                        c3.metric("Amount", f"{total_amt/100000000:.2f} B")
-                        
-                        if level == 'Stock':
-                            df_hier_full = get_sw_members()
-                            fig = plot_sw_treemap(df_hier_full, df_sw_daily, level='Stock')
-                        else:
-                            fig = plot_sw_treemap(df_hier, df_sw_daily, level=level)
-                        if fig:
-                            st.plotly_chart(fig, use_container_width=True, key="opt_a_chart")
-                            st.caption("Source: sw_daily, sw_index_member")
-                            
-                elif view_mode == "Top 100 Hot Stocks":
-                    with st.spinner(f"Loading Top {top_n} stocks..."):
-                        df_top = load_top_stocks(date_str, top_n)
-                    
-                    if df_top.empty:
-                        st.warning(f"No stock data for {date_str}.")
-                    else:
-                        up_count = len(df_top[df_top['pct_change'] > 0])
-                        down_count = len(df_top[df_top['pct_change'] < 0])
-                        
-                        c1, c2, c3 = st.columns(3)
-                        c1.metric("Rising", up_count)
-                        c2.metric("Falling", down_count)
-                        c3.metric("Display Count", len(df_top))
-                        
-                        fig_top = plot_sw_stock_treemap(df_top, f"Top {top_n} Stocks by Amount")
-                        if fig_top:
-                            st.plotly_chart(fig_top, use_container_width=True, key="top_n_chart")
-                            st.caption("Source: stock_daily")
+        latest_dt = pd.to_datetime(latest_trade_date) if latest_trade_date else datetime.now()
 
-        # ==================== Tab 2: Industry Trends ====================
-        with tab_trend:
-            from dashboard.sw_index_charts import plot_multi_index_price_normalized, plot_multi_index_valuation, plot_multi_index_amount
-            
-            # Left-right layout for Trend Controls
-            left_col_t, right_col_t = st.columns([1, 4])
-            
-            with left_col_t:
-                st.markdown("**Chart Controls**")
-                
-                # Date Range
-                today = datetime.now()
-                start_date_trend = st.date_input("Start Date", today - timedelta(days=365), key="sw_trend_start")
-                end_date_trend = st.date_input("End Date", today, key="sw_trend_end")
-                
-                st.divider()
-                st.markdown("**Select Industries (L1)**")
-                
-                # Use Checkboxes for Selection (Grouped by Sector)
-                l1_codes = l1_options['l1_code'].tolist()
-                
-                # Grouping Logic (Same as above)
-                consumer = [c for c in l1_codes if l1_dict.get(c, '') in ['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理']]
-                mfg = [c for c in l1_codes if l1_dict.get(c, '') in ['电子', '机械设备', '汽车', '电力设备', '国防军工', 'Light IndustryManufacturing', '建筑材料', '建筑装饰']]
-                finance = [c for c in l1_codes if l1_dict.get(c, '') in ['银行', 'Non-bankFinance', '房地产']]
-                tech = [c for c in l1_codes if l1_dict.get(c, '') in ['Calculate机', '传媒', '通信']]
-                resources = [c for c in l1_codes if l1_dict.get(c, '') in ['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']]
-                health = [c for c in l1_codes if l1_dict.get(c, '') in ['Pharmaceuticals & Biotechnology']]
-                others = [c for c in l1_codes if c not in consumer + mfg + finance + tech + resources + health]
-                
-                selected_l1_codes = []
-                
-                # Default selection (e.g. Bank '801780.SI' if in list, or first few)
-                # Let's verify standard codes. 
-                # Bank: 801780.SI (usually).
-                # To be safe, just default empty or first one if user clicks.
-                # Actually, user wants checkboxes. Let's make expanders for tidiness?
-                # Or just headers since it's in a column.
-                
-                cat_map = {'Consumption': consumer, 'Manufacturing': mfg, 'Finance': finance, 'Technology': tech, 'Resources': resources, 'Medical': health, 'Others': others}
-                
-                with st.expander("Industry Selection", expanded=True):
-                    # Add "Select All" logic if needed, but per group is better or just manual.
-                    # Let's keep it simple: List groups.
-                    for cat_name, cat_codes in cat_map.items():
-                        if cat_codes:
-                            st.markdown(f"**{cat_name}**")
-                            # Use cols for compact layout?
-                            cols = st.columns(2)
-                            for i, code in enumerate(cat_codes):
-                                name = l1_dict.get(code, code)
-                                label = f"{name}"
-                                # Check default? Maybe just uncheck all initially or keep session state?
-                                # Streamlit keys need to be unique.
-                                # Use session state to persist across reruns if needed, but checkbox does it auto.
-                                is_checked = st.checkbox(label, value=False, key=f"trend_cb_{code}")
-                                if is_checked:
-                                    selected_l1_codes.append(code)
-                
-            with right_col_t:
-                if not selected_l1_codes:
-                    st.info("Please select at least one industry to view trends.")
-                else:
-                    s_str = start_date_trend.strftime('%Y%m%d')
-                    e_str = end_date_trend.strftime('%Y%m%d')
-                    
-                    with st.spinner(f"Loading history for {len(selected_l1_codes)} indices..."):
-                        # Use new multi-index loader
-                        df_trend = load_sw_l1_daily_history(selected_l1_codes, s_str, e_str)
-                    
-                    if df_trend.empty:
-                        st.warning("No data found for selected range.")
-                    else:
-                        # Add L1 Name to DataFrame for clearer charts
-                        df_trend['l1_name'] = df_trend['ts_code'].map(l1_dict)
-                        
-                        # Tabs for Chart Types
-                        t_price, t_val, t_amt = st.tabs(["Price Trend (Normalized)", "Valuation (PE/PB)", "Transaction Amount"])
-                        
-                        with t_price:
-                            fig_norm = plot_multi_index_price_normalized(df_trend)
-                            if fig_norm:
-                                st.plotly_chart(fig_norm, use_container_width=True, key="sw_trend_norm")
-                                st.caption("Normalized to 100 at start date.")
-                                
-                        with t_val:
-                            c_pe, c_pb = st.columns(2)
-                            with c_pe:
-                                fig_pe = plot_multi_index_valuation(df_trend, 'pe')
-                                if fig_pe: st.plotly_chart(fig_pe, use_container_width=True, key="sw_trend_pe")
-                            with c_pb:
-                                fig_pb = plot_multi_index_valuation(df_trend, 'pb')
-                                if fig_pb: st.plotly_chart(fig_pb, use_container_width=True, key="sw_trend_pb")
-                                
-                        with t_amt:
-                            fig_amt = plot_multi_index_amount(df_trend)
-                            if fig_amt:
-                                st.plotly_chart(fig_amt, use_container_width=True, key="sw_trend_amt")
-                                
-                        st.caption("Source: sw_daily")
-                        
-                        st.divider()
-                        st.subheader("Individual Trend Details")
-                        
-                        # Loop through selected codes to show detailed dual-axis charts
-                        # Need to import original plotting functions if not available in context
-                        from dashboard.sw_index_charts import plot_sw_l1_price_volume, plot_sw_l1_valuation
-                        
-                        for code in selected_l1_codes:
-                            name = l1_dict.get(code, code)
-                            with st.expander(f"{code} - {name}", expanded=(len(selected_l1_codes)==1)):
-                                df_single = df_trend[df_trend['ts_code'] == code].copy()
-                                
-                                if not df_single.empty:
-                                    c1, c2 = st.columns(2)
-                                    with c1:
-                                        fig1 = plot_sw_l1_price_volume(df_single)
-                                        if fig1: st.plotly_chart(fig1, use_container_width=True, key=f"d_pv_{code}")
-                                    with c2:
-                                        fig2 = plot_sw_l1_valuation(df_single)
-                                        if fig2: st.plotly_chart(fig2, use_container_width=True, key=f"d_val_{code}")
-    
-    # --- Market Width Sub-category ---
-    elif subcategory_key == "market_width":
-        render_header("SW Industry Market Width", "chart")
-        
-        # Left-right layout
-        left_col, right_col = st.columns([1, 7])
-        
-        with left_col:
-            st.markdown("**Parameters**")
-            level = st.radio("Industry Level", ["L1", "L2", "L3"], index=0, key="mw_level", horizontal=True)
-            
-            ma_period = st.number_input("MA Period", min_value=1, value=20, step=1, key="mw_ma")
-            days = st.number_input("Display Days", min_value=5, max_value=500, value=30, step=5, key="mw_days")
-            
-            today = datetime.now()
-            if today.weekday() >= 5:
-                today = today - timedelta(days=today.weekday() - 4)
-            end_date = st.date_input("End Date", today, key="mw_end_date")
-            end_date_str = end_date.strftime('%Y%m%d')
-        
-        with st.spinner(f"Calculating MA{ma_period} market width for {level}..."):
-            df_width = calculate_market_width(end_date_str, days, ma_period, level)
-        
-        with right_col:
-            st.caption("Market Width = % of stocks with Close > MA. Heatmap shows changes across industries.")
-            
-            if df_width.empty:
-                st.warning("No market width data available.")
+        # 行业分组
+        def pick(names):
+            return [code for code, name in l1_dict.items() if name in names]
+
+        category_map = {
+            '消费': pick(['食品饮料', '家用电器', '商贸零售', '纺织服饰', '社会服务', '美容护理', '农林牧渔']),
+            '制造': pick(['电子', '机械设备', '汽车', '电力设备', '国防军工', '轻工制造', '建筑材料', '建筑装饰', '交通运输', '环保', '公用事业']),
+            '金融': pick(['银行', '非银金融', '房地产']),
+            '科技': pick(['计算机', '传媒', '通信']),
+            '资源': pick(['有色金属', '钢铁', '基础化工', '石油石化', '煤炭']),
+            '其他': pick(['医药生物', '综合'])
+        }
+
+        top_gainers = get_top_l1_gainers(latest_trade_date, 5)
+        default_codes = top_gainers['ts_code'].tolist() if not top_gainers.empty else l1_options['l1_code'].tolist()[:5]
+        default_primary = default_codes[0] if default_codes else None
+
+        def resolve_range(mode: str, preset: str, latest: pd.Timestamp, c_start, c_end):
+            if mode == "自定义区间" and c_start and c_end:
+                start_dt = pd.to_datetime(c_start)
+                end_dt = pd.to_datetime(c_end)
             else:
-                latest_date = df_width['trade_date'].max()
-                df_latest = df_width[df_width['trade_date'] == latest_date]
-                avg_width = df_latest['width_ratio'].mean()
-                max_width_row = df_latest.loc[df_latest['width_ratio'].idxmax()]
-                min_width_row = df_latest.loc[df_latest['width_ratio'].idxmin()]
-                
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Avg Market Width", f"{avg_width:.1f}%")
-                c2.metric("Strongest Industry", f"{max_width_row['index_name']} ({max_width_row['width_ratio']:.1f}%)")
-                c3.metric("Weakest Industry", f"{min_width_row['index_name']} ({min_width_row['width_ratio']:.1f}%)")
-                
-                fig = plot_market_width_heatmap(df_width, level, ma_period)
-                if fig:
-                    st.plotly_chart(fig, use_container_width=True, key="market_width_heatmap")
-                    st.caption("Source: stock_daily, sw_index_member")
-    
+                delta_map = {
+                    "最近一周": 7,
+                    "最近一月": 30,
+                    "最近三月": 90,
+                    "最近半年": 180,
+                    "最近一年": 365
+                }
+                if preset == "YTD":
+                    start_dt = datetime(latest.year, 1, 1)
+                else:
+                    start_dt = latest - timedelta(days=delta_map.get(preset, 180))
+                end_dt = latest
 
+            if end_dt > latest:
+                end_dt = latest
+            if start_dt > end_dt:
+                start_dt, end_dt = end_dt, end_dt
+            return start_dt, end_dt
+
+        def render_filters(key_prefix: str, default_sel: list):
+            st.markdown("**日期范围**")
+            preset_label = st.radio(
+                "快捷区间",
+                ["最近一周", "最近一月", "最近三月", "最近半年", "最近一年", "YTD"],
+                index=5,
+                key=f"{key_prefix}_range_preset"
+            )
+            custom_start = st.date_input("自定义开始日期", value=latest_dt - timedelta(days=180), key=f"{key_prefix}_custom_start")
+            custom_end = st.date_input("自定义结束日期", value=latest_dt, key=f"{key_prefix}_custom_end")
+            use_custom = st.checkbox("使用自定义区间", value=False, key=f"{key_prefix}_use_custom")
+
+            st.divider()
+            st.markdown("**一级行业筛选（复选）**")
+
+            state_key = f"{key_prefix}_selected"
+            if state_key not in st.session_state:
+                st.session_state[state_key] = list(default_sel)
+
+            col_all, col_none = st.columns(2)
+            all_checked = col_all.checkbox("全选", value=False, key=f"{key_prefix}_select_all")
+            none_checked = col_none.checkbox("全不选", value=False, key=f"{key_prefix}_select_none")
+
+            current_selected = set(st.session_state[state_key])
+            if all_checked:
+                current_selected = set(l1_all_codes)
+            if none_checked:
+                current_selected = set()
+
+            new_selected = set(current_selected)
+
+            for cat_name, cat_codes in category_map.items():
+                if not cat_codes:
+                    continue
+                cat_key = f"{key_prefix}_cat_{cat_name}"
+                cat_checked = st.checkbox(f"{cat_name}", value=False, key=cat_key)
+                if cat_checked:
+                    new_selected.update(cat_codes)
+                st.markdown("")
+                for code in cat_codes:
+                    label = f"{l1_dict.get(code, code)} ({code})"
+                    checked = st.checkbox(label, value=(code in new_selected), key=f"{key_prefix}_l1_{code}")
+                    if checked:
+                        new_selected.add(code)
+                    else:
+                        new_selected.discard(code)
+
+            st.session_state[state_key] = list(new_selected)
+
+            start_dt, end_dt = resolve_range("自定义区间" if use_custom else "快捷区间", preset_label, latest_dt, custom_start if use_custom else None, custom_end if use_custom else None)
+            return new_selected or default_sel, start_dt, end_dt
+
+        tab_price, tab_amount, tab_corr, tab_rank, tab_rank_flow, tab_detail, tab_valuation, tab_width = st.tabs([
+            "Normalized Industry Price Trends",
+            "Normalized Industry Amount Trends",
+            "行业收益率相关性",
+            "行业涨跌幅排名走势",
+            "行业排名流 (Sankey)",
+            "单个行业价格+成交额",
+            "单个行业估值趋势",
+            "Market Width 热力图"
+        ])
+
+        with tab_price:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_price", default_codes)
+            with col_r:
+                if not sel_codes:
+                    st.info("请选择至少一个行业。")
+                else:
+                    df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d'))
+                    if df_history.empty:
+                        st.warning("未查询到数据，请调整日期或选择。")
+                    else:
+                        df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                        fig = plot_multi_index_price_normalized(df_history)
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        st.caption("默认展示最近交易日涨幅Top5；可通过左侧筛选调整。")
+
+        with tab_amount:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_amount", default_codes)
+            with col_r:
+                if not sel_codes:
+                    st.info("请选择至少一个行业。")
+                else:
+                    df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d'))
+                    if df_history.empty:
+                        st.warning("未查询到数据，请调整日期或选择。")
+                    else:
+                        df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                        fig = plot_multi_index_amount_normalized(df_history)
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+
+        with tab_corr:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_corr", default_codes)
+            with col_r:
+                if not sel_codes:
+                    st.info("请选择至少一个行业。")
+                else:
+                    df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d'))
+                    if df_history.empty:
+                        st.warning("未查询到数据，请调整日期或选择。")
+                    else:
+                        df_history = df_history.sort_values('trade_date')
+                        pivot_close = df_history.pivot(index='trade_date', columns='ts_code', values='close')
+                        returns = pivot_close.pct_change().dropna(how='all')
+                        if returns.empty:
+                            st.warning("区间内无法计算收益率相关性。")
+                        else:
+                            corr = returns.corr()
+                            corr.index = [l1_dict.get(c, c) for c in corr.index]
+                            corr.columns = [l1_dict.get(c, c) for c in corr.columns]
+                            fig = plot_corr_heatmap(corr)
+                            if fig:
+                                st.plotly_chart(fig, use_container_width=True)
+                            st.caption("相关性基于日度收益率（收盘价PctChange）。")
+
+        with tab_rank:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                # 默认全选
+                sel_codes, s_dt, e_dt = render_filters("sw_rank", l1_all_codes)
+            with col_r:
+                df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d')) if sel_codes else pd.DataFrame()
+                if df_history.empty:
+                    st.warning("未查询到数据，请调整日期或选择。")
+                else:
+                    df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                    df_history = df_history.sort_values('trade_date')
+                    # 计算每日涨跌幅排名
+                    df_history['pct_change'] = df_history.groupby('ts_code')['close'].pct_change()
+                    rank_list = []
+                    for dt, grp in df_history.groupby('trade_date'):
+                        grp = grp.dropna(subset=['pct_change'])
+                        if grp.empty:
+                            continue
+                        grp = grp.sort_values('pct_change', ascending=False)
+                        grp['rank'] = range(1, len(grp) + 1)
+                        rank_list.append(grp[['trade_date', 'ts_code', 'l1_name', 'rank']])
+                    df_rank = pd.concat(rank_list) if rank_list else pd.DataFrame()
+                    if df_rank.empty:
+                        st.warning("区间内无法计算排名。")
+                    else:
+                        fig = plot_rank_trend(df_rank)
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        st.caption("纵轴为排名，数值越小表示涨幅越靠前。默认展示全部一级行业。")
+
+        with tab_rank_flow:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_rank_flow", l1_all_codes)
+            with col_r:
+                df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d')) if sel_codes else pd.DataFrame()
+                if df_history.empty:
+                    st.warning("未查询到数据，请调整日期或选择。")
+                else:
+                    df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                    df_history = df_history.sort_values('trade_date')
+                    df_history['pct_change'] = df_history.groupby('ts_code')['close'].pct_change()
+                    rank_list = []
+                    for dt, grp in df_history.groupby('trade_date'):
+                        grp = grp.dropna(subset=['pct_change'])
+                        if grp.empty:
+                            continue
+                        grp = grp.sort_values('pct_change', ascending=False)
+                        grp['rank'] = range(1, len(grp) + 1)
+                        rank_list.append(grp[['trade_date', 'ts_code', 'l1_name', 'rank']])
+                    df_rank = pd.concat(rank_list) if rank_list else pd.DataFrame()
+                    if df_rank.empty:
+                        st.warning("区间内无法计算排名。")
+                    else:
+                        fig = plot_rank_sankey(df_rank)
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        st.caption("Sankey 展示行业在各交易日的排名流动情况。")
+
+        with tab_detail:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_detail", [default_primary] if default_primary else [])
+            with col_r:
+                if not sel_codes:
+                    st.info("请选择至少一个行业。")
+                else:
+                    df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d'))
+                    if df_history.empty:
+                        st.warning("未查询到数据，请调整日期或选择。")
+                    else:
+                        df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                        for code in sel_codes:
+                            df_single = df_history[df_history['ts_code'] == code]
+                            if df_single.empty:
+                                st.warning(f"{code} 暂无数据")
+                                continue
+                            name = l1_dict.get(code, code)
+                            st.subheader(f"{name} ({code})")
+                            fig = plot_sw_l1_price_volume(df_single)
+                            if fig:
+                                st.plotly_chart(fig, use_container_width=True, key=f"pv_{code}")
+
+        with tab_valuation:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                sel_codes, s_dt, e_dt = render_filters("sw_val", [default_primary] if default_primary else [])
+            with col_r:
+                if not sel_codes:
+                    st.info("请选择至少一个行业。")
+                else:
+                    df_history = load_sw_l1_daily_history(sel_codes, s_dt.strftime('%Y%m%d'), e_dt.strftime('%Y%m%d'))
+                    if df_history.empty:
+                        st.warning("未查询到数据，请调整日期或选择。")
+                    else:
+                        df_history['l1_name'] = df_history['ts_code'].map(l1_dict)
+                        for code in sel_codes:
+                            df_single = df_history[df_history['ts_code'] == code]
+                            if df_single.empty:
+                                st.warning(f"{code} 暂无估值数据")
+                                continue
+                            name = l1_dict.get(code, code)
+                            st.subheader(f"{name} ({code})")
+                            fig = plot_sw_l1_valuation_quantiles(df_single)
+                            if fig:
+                                st.plotly_chart(fig, use_container_width=True, key=f"val_{code}")
+
+        with tab_width:
+            col_l, col_r = st.columns([1, 4])
+            with col_l:
+                st.markdown("**Market Width 参数**")
+                mw_level = st.radio("行业级别", ["L1", "L2", "L3"], index=0, horizontal=True, key="sw_mw_level")
+                mw_ma = st.number_input("MA Period", min_value=1, value=20, step=1, key="sw_mw_ma")
+                mw_days = st.number_input("显示天数", min_value=5, max_value=500, value=30, step=5, key="sw_mw_days")
+            with col_r:
+                with st.spinner(f"计算MA{mw_ma}宽度中..."):
+                    df_width = calculate_market_width(None, int(mw_days), int(mw_ma), mw_level)
+
+                if df_width.empty:
+                    st.warning("暂无Market Width数据")
+                else:
+                    fig = plot_market_width_heatmap(df_width, mw_level, int(mw_ma))
+                    if fig:
+                        st.plotly_chart(fig, use_container_width=True, key="market_width_heatmap")
+                    st.caption("Market Width = 收盘价高于MA的占比。默认截止最近交易日。")
     elif subcategory_key == "index_const":
         render_header("Index Constituents", "detail")
         

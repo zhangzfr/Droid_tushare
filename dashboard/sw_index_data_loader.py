@@ -24,6 +24,44 @@ def get_stock_db_connection():
         st.error(f"Error connecting to database at {STOCK_DB_PATH}: {e}")
         return None
 
+
+@st.cache_data
+def get_latest_sw_trade_date():
+    """获取申万行情的最近交易日。"""
+    conn = get_db_connection()
+    if not conn:
+        return None
+
+    try:
+        res = conn.execute("SELECT max(trade_date) AS trade_date FROM sw_daily").fetchone()
+        trade_date = res[0] if res else None
+    except Exception as e:
+        st.error(f"Error fetching latest SW trade date: {e}")
+        return None
+    finally:
+        conn.close()
+
+    return trade_date
+
+
+@st.cache_data
+def get_latest_stock_trade_date():
+    """获取个股行情的最近交易日。"""
+    conn = get_stock_db_connection()
+    if not conn:
+        return None
+
+    try:
+        res = conn.execute("SELECT max(trade_date) AS trade_date FROM daily").fetchone()
+        trade_date = res[0] if res else None
+    except Exception as e:
+        st.error(f"Error fetching latest stock trade date: {e}")
+        return None
+    finally:
+        conn.close()
+
+    return trade_date
+
 @st.cache_data
 def get_sw_hierarchy():
     """
@@ -120,6 +158,45 @@ def load_sw_daily_data(date_str: str, codes: list):
     finally:
         conn.close()
         
+    return df
+
+
+@st.cache_data
+def get_top_l1_gainers(trade_date: str, top_n: int = 5):
+    """
+    获取指定交易日涨幅居前的申万一级行业。
+    返回列: ts_code, l1_name, pct_change。
+    """
+    if not trade_date:
+        return pd.DataFrame()
+
+    conn = get_db_connection()
+    if not conn:
+        return pd.DataFrame()
+
+    try:
+        query = """
+            WITH l1 AS (
+                SELECT DISTINCT l1_code, l1_name
+                FROM sw_index_member_all
+                WHERE l1_code IS NOT NULL
+            )
+            SELECT d.ts_code AS ts_code,
+                   COALESCE(d.name, l.l1_name) AS l1_name,
+                   d.pct_change
+            FROM sw_daily d
+            JOIN l1 l ON d.ts_code = l.l1_code
+            WHERE d.trade_date = ?
+            ORDER BY d.pct_change DESC
+            LIMIT ?
+        """
+        df = conn.execute(query, [trade_date, top_n]).fetchdf()
+    except Exception as e:
+        st.error(f"Error fetching top L1 gainers: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
     return df
 
 
@@ -397,7 +474,7 @@ def load_stocks_by_l1(date_str: str, l1_code: str):
 
 
 @st.cache_data(ttl=3600)
-def calculate_market_width(end_date_str: str, days: int = 30, ma_period: int = 20, level: str = 'L1'):
+def calculate_market_width(end_date_str: str = None, days: int = 30, ma_period: int = 20, level: str = 'L1'):
     """
     Calculate market width for each industry over a date range.
     Market width = % of stocks with close > MA(ma_period)
@@ -414,6 +491,12 @@ def calculate_market_width(end_date_str: str, days: int = 30, ma_period: int = 2
     # 1. Get industry member mapping
     df_members = get_sw_members()
     if df_members.empty:
+        return pd.DataFrame()
+
+    # 自动取最近交易日
+    if not end_date_str:
+        end_date_str = get_latest_stock_trade_date()
+    if not end_date_str:
         return pd.DataFrame()
     
     # Get unique stock codes
@@ -433,9 +516,8 @@ def calculate_market_width(end_date_str: str, days: int = 30, ma_period: int = 2
         return pd.DataFrame()
     
     codes_placeholder = ",".join([f"'{c}'" for c in stock_codes])
-    
+
     try:
-        # Fetch enough data for MA calculation
         query = f"""
             SELECT ts_code, trade_date, close
             FROM daily
@@ -481,7 +563,6 @@ def calculate_market_width(end_date_str: str, days: int = 30, ma_period: int = 2
 
 
 @st.cache_data
-@st.cache_data
 def load_sw_l1_daily_history(l1_codes: list, start_date: str, end_date: str):
     """
     Fetch historical daily data for specific SW Level 1 indices.
@@ -492,6 +573,9 @@ def load_sw_l1_daily_history(l1_codes: list, start_date: str, end_date: str):
         start_date (str): YYYYMMDD
         end_date (str): YYYYMMDD
     """
+    if not l1_codes:
+        return pd.DataFrame()
+
     conn = get_db_connection()
     if not conn:
         return pd.DataFrame()
@@ -509,7 +593,6 @@ def load_sw_l1_daily_history(l1_codes: list, start_date: str, end_date: str):
         """
         df = conn.execute(query).fetchdf()
         
-        # Convert date column to datetime for plotting
         df['trade_date'] = pd.to_datetime(df['trade_date'])
         
     except Exception as e:
@@ -517,7 +600,5 @@ def load_sw_l1_daily_history(l1_codes: list, start_date: str, end_date: str):
         return pd.DataFrame()
     finally:
         conn.close()
-        
-    return df
         
     return df

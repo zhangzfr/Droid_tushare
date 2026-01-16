@@ -81,7 +81,6 @@ NAVIGATION = {
             "Index List": {"key": "index_list", "icon": "list"},
             "Index Heatmap": {"key": "index_map", "icon": "heatmap"},
             "Shenwan Index": {"key": "sw_index", "icon": "industry"},
-            "Market Width": {"key": "market_width", "icon": "bar"},
             "Index Constituents": {"key": "index_const", "icon": "pie"}
         }
     },
