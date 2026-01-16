@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 # Database paths
 INDEX_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_index.db'
+OPT_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_opt.db'
 
 # Global Index Code to Name Mapping (Complete Version)
 # Note: Index names are kept in Chinese as requested
@@ -74,6 +75,16 @@ def get_index_db_connection():
         return conn
     except Exception as e:
         st.error(f"Database connection failed: {e}")
+        return None
+
+
+def get_opt_db_connection():
+    """Connect to Options database."""
+    try:
+        conn = duckdb.connect(OPT_DB_PATH, read_only=True)
+        return conn
+    except Exception as e:
+        st.error(f"Options Database connection failed: {e}")
         return None
 
 
@@ -629,3 +640,130 @@ def calculate_liquidity_score(df: pd.DataFrame, ts_code: str):
         'float_mv': latest.get('float_mv', 0)
     }
 
+
+# ============================================================================
+# Options Data - opt_basic, opt_daily
+# ============================================================================
+
+@st.cache_data(ttl=3600)
+def load_opt_basic(exchange: str = None):
+    """
+    Load option basic information.
+    
+    Args:
+        exchange: Exchange code (e.g., 'SSE', 'SZSE', 'CFFEX')
+        
+    Returns:
+        DataFrame: ts_code, name, exercise_price, s_month, maturity_date, etc.
+    """
+    conn = get_opt_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        conditions = []
+        params = []
+        
+        if exchange:
+            conditions.append("exchange = ?")
+            params.append(exchange)
+            
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        
+        # Select key columns
+        query = f"""
+            SELECT ts_code, name, exchange, exercise_price, s_month, maturity_date, 
+                   call_put, opt_code, list_date, delist_date
+            FROM opt_basic
+            WHERE {where_clause}
+            ORDER BY s_month, exercise_price
+        """
+        df = conn.execute(query, params).fetchdf()
+    except Exception as e:
+        # Check if table exists
+        try:
+            conn.execute("SELECT * FROM opt_basic LIMIT 1")
+            st.error(f"Failed to load opt_basic: {e}")
+        except:
+            # Table might not exist yet if data not synced
+            pass
+        return pd.DataFrame()
+    finally:
+        conn.close()
+        
+    if not df.empty:
+        # Convert dates
+        for col in ['maturity_date', 'list_date', 'delist_date']:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format='%Y%m%d', errors='coerce')
+    
+    return df
+
+
+@st.cache_data(ttl=3600)
+def load_opt_daily(ts_code: str = None, start_date: str = None, end_date: str = None, ts_codes: list = None):
+    """
+    Load option daily quotes.
+    """
+    conn = get_opt_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        conditions = []
+        params = []
+        
+        if start_date:
+            conditions.append("trade_date >= ?")
+            params.append(start_date)
+        if end_date:
+            conditions.append("trade_date <= ?")
+            params.append(end_date)
+        
+        if ts_code:
+            conditions.append("ts_code = ?")
+            params.append(ts_code)
+        elif ts_codes:
+            placeholders = ",".join(["?"] * len(ts_codes))
+            conditions.append(f"ts_code IN ({placeholders})")
+            params.extend(ts_codes)
+            
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        
+        query = f"""
+            SELECT ts_code, trade_date, close, open, high, low, 
+                   vol, amount, oi
+            FROM opt_daily
+            WHERE {where_clause}
+            ORDER BY trade_date, ts_code
+        """
+        df = conn.execute(query, params).fetchdf()
+    except Exception as e:
+        st.error(f"Failed to load opt_daily: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+        
+    if not df.empty:
+        df['trade_date'] = pd.to_datetime(df['trade_date'], format='%Y%m%d', errors='coerce')
+        
+    return df
+
+
+@st.cache_data(ttl=3600)
+def get_available_opt_codes():
+    """Get available option codes mapping (ts_code -> name)."""
+    df = load_opt_basic()
+    if df.empty:
+        return []
+        
+    # Limit to subset if too many
+    # For now return list of tuples (ts_code, display_name)
+    # Display name format: "Name (Code) - Month Strike Type"
+    
+    df['display'] = df.apply(
+        lambda x: f"{x['name']} ({x['ts_code']}) - {x['s_month']} {x['call_put']} {x['exercise_price']}", 
+        axis=1
+    )
+    
+    return list(zip(df['ts_code'], df['display']))

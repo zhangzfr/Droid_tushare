@@ -109,7 +109,8 @@ NAVIGATION = {
             "Market Valuation": {"key": "mkt_valuation", "icon": "gauge"},
             "Market Sentiment": {"key": "mkt_sentiment", "icon": "pulse"},
             "Global Markets": {"key": "mkt_global", "icon": "globe"},
-            "Market Trading Data": {"key": "mkt_trading", "icon": "exchange"}
+            "Market Trading Data": {"key": "mkt_trading", "icon": "exchange"},
+            "Options Data": {"key": "mkt_option", "icon": "layers"}
         }
     },
     "VIX Calculator": {

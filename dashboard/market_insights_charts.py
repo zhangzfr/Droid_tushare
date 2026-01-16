@@ -261,6 +261,157 @@ def plot_turnover_heatmap(df: pd.DataFrame, ts_code: str):
     return fig
 
 
+# ============================================================================
+# Options Data Analysis
+# ============================================================================
+
+def plot_opt_distribution_heatmap(df: pd.DataFrame, metric: str = 'oi'):
+    """
+    Option Contract Distribution Heatmap (Strike Price vs Month).
+    
+    Args:
+        df: DataFrame with columns [exercise_price, s_month, oi/vol]
+        metric: 'oi' (Open Interest) or 'vol' (Volume)
+    """
+    if df.empty:
+        return None
+    
+    data = df.copy()
+    
+    # Filter valid data
+    if metric not in data.columns:
+        return None
+        
+    pivot = data.pivot_table(
+        index='exercise_price',
+        columns='s_month',
+        values=metric,
+        aggfunc='sum'
+    ).fillna(0)
+    
+    if pivot.empty:
+        return None
+        
+    # Heatmap
+    fig = px.imshow(
+        pivot,
+        color_continuous_scale='Reds' if metric == 'vol' else 'Blues',
+        aspect='auto',
+        text_auto='.0f' if metric == 'oi' else '.0f'
+    )
+    
+    metric_name = "持仓量(OI)" if metric == 'oi' else "成交量(Vol)"
+    title = f"期权{metric_name}分布热力图 (行权价 vs 到期月)"
+    
+    fig = apply_chart_style(fig, title=title)
+    fig.update_layout(
+        xaxis_title='到期月份',
+        yaxis_title='行权价',
+        coloraxis_colorbar_title=metric_name
+    )
+    
+    return fig
+
+
+def plot_opt_trend(df: pd.DataFrame, ts_code: str):
+    """
+    Option Price/Volume/OI Trend.
+    """
+    if df.empty:
+        return None
+        
+    data = df.sort_values('trade_date').copy()
+    
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Close Price
+    fig.add_trace(
+        go.Scatter(
+            x=data['trade_date'],
+            y=data['close'],
+            name="收盘价",
+            line=dict(color=COLORS['primary'], width=2)
+        ),
+        secondary_y=False
+    )
+    
+    # Open Interest (Area)
+    if 'oi' in data.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=data['trade_date'],
+                y=data['oi'],
+                name="持仓量(OI)",
+                fill='tozeroy',
+                line=dict(width=0),
+                marker_color='rgba(180, 180, 180, 0.3)'
+            ),
+            secondary_y=True
+        )
+        
+    # Volume (Bar)
+    if 'vol' in data.columns:
+        fig.add_trace(
+            go.Bar(
+                x=data['trade_date'],
+                y=data['vol'],
+                name="成交量",
+                marker_color=COLORS['accent'],
+                opacity=0.5
+            ),
+            secondary_y=True
+        )
+        
+    fig = apply_chart_style(fig, title=f"期权合约趋势 ({ts_code})")
+    
+    fig.update_yaxes(title_text="价格", secondary_y=False)
+    fig.update_yaxes(title_text="量 / 持仓", secondary_y=True)
+    fig.update_xaxes(title_text="日期")
+    
+    fig.update_layout(
+        hovermode='x unified',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+    
+    return fig
+
+
+def plot_opt_liquidity_scatter(df: pd.DataFrame):
+    """
+    Option Liquidity Scatter (Strike vs OI vs Volume).
+    """
+    if df.empty:
+        return None
+        
+    data = df.copy()
+    
+    # Ensure columns
+    needed = ['exercise_price', 'oi', 'vol', 'call_put', 's_month']
+    if not all(col in data.columns for col in needed):
+        return None
+        
+    # Create scatter
+    fig = px.scatter(
+        data,
+        x='exercise_price',
+        y='oi',
+        size='vol',
+        color='call_put',
+        hover_data=['s_month', 'ts_code'],
+        color_discrete_map={'Call': COLORS['danger'], 'Put': COLORS['success'], 'C': COLORS['danger'], 'P': COLORS['success']},
+        title="期权流动性分布 (行权价 vs OI vs 成交量)"
+    )
+    
+    fig = apply_chart_style(fig, title=None)
+    fig.update_layout(
+        xaxis_title='行权价',
+        yaxis_title='持仓量 (OI)',
+        legend_title='类型'
+    )
+    
+    return fig
+
+
 def plot_volume_price_scatter(df: pd.DataFrame, ts_code: str):
     """
     Volume-Price Scatter Plot。
