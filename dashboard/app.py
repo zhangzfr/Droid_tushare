@@ -177,18 +177,26 @@ with st.sidebar:
             if found:
                 break
     
-    def mk_nav_item(link, text, active=False, is_sub=False):
-        # Style calculation
-        bg_color = "#EBE3DC" if active else "transparent"
-        text_color = "#D97757" if active else "#5C5653"
-        font_weight = "600" if active else ( "400" if is_sub else "500" )
+    def mk_nav_item(link, text, icon_key=None, active=False, is_sub=False):
+        # Determine icon HTML
+        icon_html = ""
+        if icon_key and icon_key in ICONS:
+            icon_html = ICONS[icon_key]
         
-        # Padding adjustment
-        padding = "6px 12px 6px 12px" if is_sub else "8px 12px" # Added indent for sub-items conceptually via container, but let's keep it simple
-        margin = "2px" if is_sub else "4px"
-        
-        # HTML template - Simple text link
-        html = f"""<a href="{link}" target="_self" style="text-decoration: none; display: block; width: 100%;"><div style="display: flex; flex-direction: row; align-items: center; padding: {padding}; margin-bottom: {margin}; background-color: {bg_color}; border-radius: 6px; transition: background-color 0.2s;"><span style="color: {text_color}; font-weight: {font_weight}; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{text}</span></div></a>"""
+        # Build class string
+        classes = "nav-link"
+        if active:
+            classes += " active"
+        if is_sub:
+            classes += " sub-item"
+            
+        # HTML template - Clean, using CSS classes
+        html = f"""
+        <a href="{link}" target="_self" class="{classes}">
+            {icon_html}
+            <span>{text}</span>
+        </a>
+        """
         return html
 
     # Render Navigation
@@ -199,7 +207,12 @@ with st.sidebar:
         # Create clickable category
         if not config["subcategories"]:
             # Single item (Home)
-            nav_html = mk_nav_item(f"?page={config['key']}", category, active=is_active_cat)
+            nav_html = mk_nav_item(
+                f"?page={config['key']}", 
+                category, 
+                icon_key=config.get("icon"), 
+                active=is_active_cat
+            )
             st.markdown(nav_html, unsafe_allow_html=True)
         else:
             # Category with subcategories - USE EXPANDER
@@ -214,7 +227,13 @@ with st.sidebar:
                 for sub_name, sub_config in config["subcategories"].items():
                     is_active_sub = (sub_name == active_subcategory) and (category == active_category)
                     
-                    sub_nav_html += mk_nav_item(f"?page={sub_config['key']}", sub_name, active=is_active_sub, is_sub=True)
+                    sub_nav_html += mk_nav_item(
+                        f"?page={sub_config['key']}", 
+                        sub_name, 
+                        icon_key=sub_config.get("icon"), 
+                        active=is_active_sub, 
+                        is_sub=True
+                    )
                 
                 st.markdown(sub_nav_html, unsafe_allow_html=True)
 

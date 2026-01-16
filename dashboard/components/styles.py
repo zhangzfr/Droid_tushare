@@ -402,108 +402,152 @@ NAV_CSS = """
         display: none !important;
     }
 
-    
     /* Navigation Link Styles */
     a.nav-link {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
+        gap: 12px;
+        padding: 10px 14px;
         margin-bottom: 4px;
-        border-radius: 6px;
+        border-radius: 8px;
         text-decoration: none !important;
         color: #5C5653 !important;
         font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        font-weight: 400;
+        font-family: 'Outfit', sans-serif;
+        transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
     }
     
+    /* Hover State */
     a.nav-link:hover {
-        background-color: #F0E8E0;
+        background-color: rgba(0,0,0,0.03); /* Subtle grey */
         color: #1A1A1A !important;
+        transform: translateX(3px); /* Gentle slide */
     }
     
+    /* Active State - Premium Selection */
     a.nav-link.active {
-        background-color: #F0E8E0;
+        background-color: #FFF0EB; /* Light orange tint */
         color: #D97757 !important;
         font-weight: 600;
+        box-shadow: 0 1px 2px rgba(217, 119, 87, 0.05);
     }
     
+    /* Indicator Line (Left Border Effect) */
+    a.nav-link.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 16px;
+        width: 3px;
+        background-color: #D97757;
+        border-radius: 0 4px 4px 0;
+    }
+    
+    /* Icon Styling */
     a.nav-link svg {
         width: 18px;
         height: 18px;
         stroke-width: 2px;
-        opacity: 0.7;
+        color: #8C8580; /* Muted icon color */
+        transition: all 0.2s ease;
+    }
+    
+    a.nav-link:hover svg {
+        color: #4A4A4A;
     }
     
     a.nav-link.active svg {
-        opacity: 1;
-        stroke: #D97757;
+        color: #D97757;
+        transform: scale(1.05);
     }
-    
+
+    /* Header in Sidebar */
     .nav-header {
+        font-family: 'Space Grotesk', sans-serif;
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.1em;
         color: #8C8580;
-        margin-top: 24px;
-        margin-bottom: 8px;
-        padding-left: 12px;
+        margin-top: 28px;
+        margin-bottom: 12px;
+        padding-left: 14px;
+        opacity: 0.8;
     }
     
     .nav-divider {
         height: 1px;
-        background-color: #E8E0D8;
-        margin: 16px 0;
+        background: linear-gradient(90deg, transparent, #E8E0D8, transparent);
+        margin: 20px 0;
+    }
+    
+    /* Sub-item specific adjustments via CSS class if needed */
+    a.nav-link.sub-item {
+        padding-left: 16px; /* Visual hierarchy */
+        font-size: 13.5px;
+    }
+    
+    a.nav-link.sub-item svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 1.5px;
     }
 
-    /* ===== Sidebar Expander Styling ===== */
-    /* Target the expander container in sidebar */
+    /* ===== Sidebar Expander Styling (Collapsible Categories) ===== */
+    
+    /* Target the expander container */
     [data-testid="stSidebar"] [data-testid="stExpander"] {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        margin-bottom: 0px !important;
+        margin-bottom: 2px !important;
     }
 
-    /* Target the details element itself (the border often lives here) */
+    /* Target the details element */
     [data-testid="stSidebar"] [data-testid="stExpander"] details {
-        border-color: transparent !important;
         border: none !important;
-        box-shadow: none !important;
-        background-color: transparent !important;
+        padding: 0 !important;
     }
 
-    /* Target the summary (clickable header) */
+    /* Target the summary (Header of the Category) */
     [data-testid="stSidebar"] [data-testid="stExpander"] summary {
-        padding: 0px 12px 0px 4px !important; /* Align with nav links */
-        min-height: 0px !important;
+        padding: 8px 12px 8px 4px !important;
+        min-height: unset !important;
         height: auto !important;
-        background-color: transparent !important;
-        color: #8C8580 !important; /* Match .nav-header color */
-        transition: color 0.2s ease;
-        border: none !important;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
     }
 
     [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
-        color: #1A1A1A !important;
-        background-color: transparent !important;
+        background-color: rgba(0,0,0,0.02) !important;
     }
-
-    /* Text inside summary (The Category Name) */
+    
+    /* The text label inside summary */
     [data-testid="stSidebar"] [data-testid="stExpander"] summary p {
-        font-size: 13px !important; /* Slightly larger than tiny header */
+        font-family: 'Outfit', sans-serif !important;
+        font-size: 13px !important; 
         font-weight: 600 !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        color: #8C8580 !important;
         margin: 0 !important;
     }
     
-    /* Content inside expander */
+    /* When expanded, maybe highlight? */
+    [data-testid="stSidebar"] [data-testid="stExpander"] details[open] summary p {
+        color: #4A4A4A !important;
+    }
+
+    /* Content inside expander (The Sub-menu) */
     [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-        padding: 0px 0px 8px 10px !important; /* Indent sub-items */
-        border: none !important;
+        padding: 4px 0px 8px 12px !important; /* Left indentation for hierarchy */
+        border-left: 1px solid #F0E8E0; /* Threading line */
+        margin-left: 14px; /* Align line with parent icon area */
     }
     
     /* Remove default streamlit expander content border */
@@ -514,7 +558,15 @@ NAV_CSS = """
 
     /* Fix strict top padding for expanders */
     [data-testid="stSidebar"] .streamlit-expanderHeader {
-        margin-top: 8px !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Chevron Icon */
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary svg {
+        color: #8C8580 !important;
+        opacity: 0.6;
+        width: 14px !important;
+        height: 14px !important;
     }
 </style>
 """
