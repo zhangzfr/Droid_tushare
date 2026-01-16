@@ -300,14 +300,14 @@ def plot_opt_distribution_heatmap(df: pd.DataFrame, metric: str = 'oi'):
         text_auto='.0f' if metric == 'oi' else '.0f'
     )
     
-    metric_name = "持仓量(OI)" if metric == 'oi' else "成交量(Vol)"
-    title = f"期权{metric_name}分布热力图 (行权价 vs 到期月)"
+    metric_name = "Open Interest (OI)" if metric == 'oi' else "Volume"
+    title = f"Options {metric_name} Heatmap (Strike vs Maturity)"
     
     fig = apply_chart_style(fig, title=title)
     fig.update_layout(
-        xaxis_title='到期月份',
-        yaxis_title='行权价',
-        coloraxis_colorbar_title=metric_name
+        xaxis_title='Maturity Month',
+        yaxis_title='Strike Price',
+        coloraxis_colorbar_title=metric_name if metric != 'cnt' else 'Count'
     )
     
     return fig
@@ -329,7 +329,7 @@ def plot_opt_trend(df: pd.DataFrame, ts_code: str):
         go.Scatter(
             x=data['trade_date'],
             y=data['close'],
-            name="收盘价",
+            name="Close Price",
             line=dict(color=COLORS['primary'], width=2)
         ),
         secondary_y=False
@@ -341,7 +341,7 @@ def plot_opt_trend(df: pd.DataFrame, ts_code: str):
             go.Scatter(
                 x=data['trade_date'],
                 y=data['oi'],
-                name="持仓量(OI)",
+                name="Open Interest (OI)",
                 fill='tozeroy',
                 line=dict(width=0),
                 marker_color='rgba(180, 180, 180, 0.3)'
@@ -355,18 +355,18 @@ def plot_opt_trend(df: pd.DataFrame, ts_code: str):
             go.Bar(
                 x=data['trade_date'],
                 y=data['vol'],
-                name="成交量",
+                name="Volume",
                 marker_color=COLORS['accent'],
                 opacity=0.5
             ),
             secondary_y=True
         )
         
-    fig = apply_chart_style(fig, title=f"期权合约趋势 ({ts_code})")
+    fig = apply_chart_style(fig, title=f"Contract Trend ({ts_code})")
     
-    fig.update_yaxes(title_text="价格", secondary_y=False)
-    fig.update_yaxes(title_text="量 / 持仓", secondary_y=True)
-    fig.update_xaxes(title_text="日期")
+    fig.update_yaxes(title_text="Price", secondary_y=False)
+    fig.update_yaxes(title_text="Vol / OI", secondary_y=True)
+    fig.update_xaxes(title_text="Date", tickformat='%Y%m%d')
     
     fig.update_layout(
         hovermode='x unified',
@@ -399,14 +399,14 @@ def plot_opt_liquidity_scatter(df: pd.DataFrame):
         color='call_put',
         hover_data=['s_month', 'ts_code'],
         color_discrete_map={'Call': COLORS['danger'], 'Put': COLORS['success'], 'C': COLORS['danger'], 'P': COLORS['success']},
-        title="期权流动性分布 (行权价 vs OI vs 成交量)"
+        title="Liquidity Analysis (Strike vs OI vs Vol)"
     )
     
     fig = apply_chart_style(fig, title=None)
     fig.update_layout(
-        xaxis_title='行权价',
-        yaxis_title='持仓量 (OI)',
-        legend_title='类型'
+        xaxis_title='Strike Price',
+        yaxis_title='Open Interest (OI)',
+        legend_title='Type'
     )
     
     return fig
@@ -442,10 +442,10 @@ def plot_volume_price_scatter(df: pd.DataFrame, ts_code: str):
         showlegend=False
     ))
     
-    fig = apply_chart_style(fig, title="Trading Amount与PEChange关系")
+    fig = apply_chart_style(fig, title="Trading Amount vs PE Change")
     fig.update_layout(
         xaxis_title='Trading Amount (100M CNY)',
-        yaxis_title='PEChange Rate',
+        yaxis_title='PE Change Rate',
         yaxis_tickformat='.1%',
         coloraxis_colorbar_title='Date'
     )
@@ -471,7 +471,7 @@ def plot_global_indices_comparison(df_pivot: pd.DataFrame):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="Major GlobalIndexTrend对比 (Normalized)")
+    fig = apply_chart_style(fig, title="Major Global Index Trend Comparison (Normalized)")
     fig.update_layout(
         xaxis_title='Date',
         yaxis_title='Index (Starting Point=100)',
@@ -524,7 +524,7 @@ def plot_global_indices_raw(df: pd.DataFrame):
         )
     
     fig.update_layout(
-        title=dict(text="全球Index原始PriceTrend", font=dict(size=18)),
+        title=dict(text="Global Index Raw Price Trend", font=dict(size=18)),
         font_family="Inter, PingFang SC",
         height=max(400, rows * 200),
         showlegend=False,
@@ -562,7 +562,7 @@ def plot_global_volume(df: pd.DataFrame):
         color_continuous_scale='Blues'
     )
     
-    fig = apply_chart_style(fig, title="全球IndexAverage Volume对比")
+    fig = apply_chart_style(fig, title="Global Index Average Volume Comparison")
     fig.update_layout(
         xaxis_title='Average Volume',
         yaxis_title='',
@@ -592,7 +592,7 @@ def plot_global_volume_trend(df: pd.DataFrame):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="全球IndexVolumeTrend")
+    fig = apply_chart_style(fig, title="Global Index Volume Trend")
     fig.update_layout(
         xaxis_title='Date',
         yaxis_title='Volume',
@@ -619,7 +619,7 @@ def plot_global_correlation_heatmap(df_corr: pd.DataFrame):
         text_auto='.2f'
     )
     
-    fig = apply_chart_style(fig, title="全球IndexReturn率Correlation Matrix")
+    fig = apply_chart_style(fig, title="Global Index Return Correlation Matrix")
     fig.update_layout(coloraxis_colorbar_title='Correlation Coefficient')
     
     return fig
@@ -646,7 +646,7 @@ def plot_index_returns_bar(df_stats: pd.DataFrame):
         color_continuous_scale=[[0, '#C75B5B'], [0.5, '#FFFFFF'], [1, '#6BBF59']]
     )
     
-    fig = apply_chart_style(fig, title="全球IndexPeriod Return Comparison")
+    fig = apply_chart_style(fig, title="Global Index Period Return Comparison")
     fig.update_layout(
         xaxis_title='Cumulative Return',
         yaxis_title='',
@@ -685,9 +685,9 @@ def plot_risk_return_global(df_stats: pd.DataFrame):
     
     fig.update_traces(textposition='top center', textfont_size=10)
     
-    fig = apply_chart_style(fig, title="全球Index风险-Returnpoints析")
+    fig = apply_chart_style(fig, title="Global Index Risk-Return Analysis")
     fig.update_layout(
-        xaxis_title='Year化波动率 (风险)',
+        xaxis_title='Annualized Volatility (Risk)',
         yaxis_title='Annualized Return',
         xaxis_tickformat='.0%',
         yaxis_tickformat='.0%',
@@ -721,7 +721,7 @@ def plot_market_mv_trend(df: pd.DataFrame, ts_codes: list = None):
         color_discrete_sequence=PALETTE
     )
     
-    fig = apply_chart_style(fig, title="各SectorTotal Market CapTrend (100M CNY)")
+    fig = apply_chart_style(fig, title="Total Market Cap Trend by Sector (100M CNY)")
     fig.update_layout(
         xaxis_title='Date',
         yaxis_title='Total Market Cap (100M CNY)',
@@ -809,7 +809,7 @@ def plot_trading_amount_trend(df: pd.DataFrame, ts_codes: list = None):
     fig.update_yaxes(title_text='Turnover Rate (%)', secondary_y=True)
     
     # Apply style
-    fig = apply_chart_style(fig, title="Trading Amount与Turnover Rate趋势")
+    fig = apply_chart_style(fig, title="Trading Amount vs Turnover Rate Trend")
     fig.update_layout(
         barmode='group',
         hovermode='x unified',
@@ -878,7 +878,7 @@ def plot_sh_sz_comparison(df: pd.DataFrame, date: str = None):
             textposition='auto'
         ))
     
-    fig = apply_chart_style(fig, title="Shanghai vs Shenzhen市场对比")
+    fig = apply_chart_style(fig, title="Shanghai vs Shenzhen Market Comparison")
     fig.update_layout(
         xaxis_title='Exchange',
         yaxis_title='Value',
@@ -926,7 +926,7 @@ def plot_sector_heatmap(df: pd.DataFrame, metric: str = 'amount'):
         text_auto='.1f'
     )
     
-    fig = apply_chart_style(fig, title=f"Sector{metric}热力图")
+    fig = apply_chart_style(fig, title=f"Sector {metric} Heatmap")
     fig.update_layout(
         xaxis_title='Time',
         yaxis_title='Sector'
@@ -960,9 +960,9 @@ def plot_risk_warning_box(df: pd.DataFrame, metric: str = 'tr'):
         category_orders={'month': list(range(1, 13))}
     )
     
-    fig = apply_chart_style(fig, title=f"{metric}Month度pointsBox Plot")
+    fig = apply_chart_style(fig, title=f"{metric} Monthly Distribution Box Plot")
     fig.update_layout(
-        xaxis_title='Month份',
+        xaxis_title='Month',
         yaxis_title=metric,
         xaxis=dict(
             tickmode='array',
@@ -1104,5 +1104,149 @@ def plot_market_turnover_scatter(df: pd.DataFrame):
         yaxis_title='Turnover Rate (%)',
         hovermode='closest'
     )
+    
+    return fig
+
+# ============================================================================
+# Advanced Options Analytics (Requested by User)
+# ============================================================================
+
+
+# ============================================================================
+# Advanced Options Analytics (Requested by User) -- Optimized English Version
+# ============================================================================
+
+def plot_opt_underlying_counts(df: pd.DataFrame, top_n: int = 50):
+    """
+    Top Underlyings by Number of Option Contracts (Bar Chart).
+    """
+    if df.empty or 'underlying' not in df.columns:
+        return None
+        
+    counts = df.groupby('underlying')['ts_code'].count().sort_values(ascending=False).head(top_n).reset_index()
+    counts.columns = ['underlying', 'total_contracts']
+    
+    fig = px.bar(
+        counts,
+        x='underlying',
+        y='total_contracts',
+        text='total_contracts',
+        color='total_contracts',
+        color_continuous_scale='Blues'
+    )
+    
+    fig = apply_chart_style(fig, title=f"Total Contracts by Underlying (Top {top_n if 'top_n' in locals() else 20})")
+    fig.update_layout(
+        xaxis_title='Underlying Asset',
+        yaxis_title='Total Contracts',
+        coloraxis_showscale=False
+    )
+    
+    return fig
+
+
+def plot_opt_strike_distribution(df: pd.DataFrame):
+    """
+    Strike Price Distribution - Top 10 Underlyings.
+    """
+    if df.empty or 'underlying' not in df.columns or 'strike' not in df.columns:
+        return None
+        
+    # Get Top 10
+    top10 = df.groupby('underlying')['ts_code'].count().sort_values(ascending=False).head(10).index
+    data = df[df['underlying'].isin(top10)].copy()
+    
+    if data.empty:
+        return None
+        
+    fig = px.box(
+        data,
+        x='underlying',
+        y='strike',
+        color='call_put',
+        color_discrete_map={'C': COLORS['danger'], 'P': COLORS['success']},
+        notched=True
+    )
+    
+    fig = apply_chart_style(fig, title="Strike Price Distribution (Top 10 Underlyings)")
+    fig.update_layout(
+        xaxis_title='Underlying Asset',
+        yaxis_title='Strike Price',
+        legend_title='Call/Put'
+    )
+    
+    return fig
+
+
+def plot_opt_maturity_heatmap(df: pd.DataFrame):
+    """
+    Number of Contracts by Underlying and Maturity Year.
+    """
+    if df.empty or 'maturity_year' not in df.columns:
+        return None
+        
+    # Aggregate
+    pivot = df.pivot_table(
+        index='underlying',
+        columns='maturity_year',
+        values='ts_code',
+        aggfunc='count',
+        fill_value=0
+    )
+    
+    # Sort by total count
+    pivot['total'] = pivot.sum(axis=1)
+    pivot = pivot.sort_values('total', ascending=False).head(30) # Limit to top 30
+    pivot = pivot.drop(columns=['total'])
+    
+    if pivot.empty:
+        return None
+        
+    fig = px.imshow(
+        pivot,
+        color_continuous_scale='YlOrRd',
+        aspect='auto',
+        text_auto='d'
+    )
+    
+    fig = apply_chart_style(fig, title="Contract Count by Maturity Year (Top 30)")
+    fig.update_layout(
+        xaxis_title='Maturity Year (20XX)',
+        yaxis_title='Underlying Asset'
+    )
+    
+    return fig
+
+
+def plot_opt_strike_maturity_scatter(df: pd.DataFrame, underlying: str):
+    """
+    Strike Price vs Maturity Date Scatter Plot.
+    """
+    if df.empty or 'strike' not in df.columns:
+        return None
+        
+    data = df[df['underlying'] == underlying].copy()
+    
+    if data.empty:
+        return None
+        
+    fig = px.scatter(
+        data,
+        x='maturity_date',
+        y='strike',
+        color='call_put',
+        size_max=10,
+        opacity=0.7,
+        color_discrete_map={'C': COLORS['danger'], 'P': COLORS['success']},
+        hover_data=['ts_code', 'name']
+    )
+    
+    fig = apply_chart_style(fig, title=f"{underlying}: Strike Price vs Maturity Date")
+    fig.update_layout(
+        xaxis_title='Maturity Date (YYYYMMDD)',
+        yaxis_title='Strike Price',
+        legend_title='Call/Put'
+    )
+    fig.update_xaxes(tickformat='%Y%m%d')
     
     return fig

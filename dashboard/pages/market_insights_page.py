@@ -11,8 +11,8 @@ from dashboard.market_insights_loader import (
     load_index_global, get_available_global_indices, calculate_global_correlation,
     calculate_index_returns, create_normalized_pivot, calculate_market_sentiment,
     load_sz_daily_info, get_index_display_name,
-    load_opt_basic, load_opt_daily, get_available_opt_codes,
-    GLOBAL_INDICES, MARKET_CODES, SZ_DAILY_CODES
+    load_opt_basic, load_opt_daily, get_available_opt_codes, process_opt_basic_data, load_opt_daily_by_underlying, get_opt_stats_underlying_counts,
+    GLOBAL_INDICES, MARKET_CODES, SZ_DAILY_CODES, EXCHANGE_MAPPING
 )
 from dashboard.market_insights_charts import (
     plot_pe_trend, plot_pe_percentile_gauge, plot_pe_comparison_bar,
@@ -22,7 +22,8 @@ from dashboard.market_insights_charts import (
     plot_index_returns_bar, plot_risk_return_global, plot_market_mv_trend,
     plot_trading_amount_trend, plot_sh_sz_comparison, plot_sector_heatmap,
     plot_risk_warning_box, plot_liquidity_score_gauge, plot_market_turnover_scatter,
-    plot_opt_distribution_heatmap, plot_opt_trend, plot_opt_liquidity_scatter
+    plot_opt_distribution_heatmap, plot_opt_trend, plot_opt_liquidity_scatter,
+    plot_opt_underlying_counts, plot_opt_strike_distribution, plot_opt_maturity_heatmap, plot_opt_strike_maturity_scatter
 )
 
 def render_market_insights_page(subcategory_key):
@@ -701,171 +702,225 @@ def render_market_insights_page(subcategory_key):
                         - 中分(40-70)：流动性良好，平衡区域
                         - 低分(<40)：流动性一般，注意冲击成本
                         """))
+                        
     # --- Options Data ---
     elif subcategory_key == "mkt_option":
         render_header("Options Contract Data", "layers")
         
-        with st.expander("📘 Related Knowledge: Options Trading Analysis"):
+        with st.expander("📘 Analysis Guide"):
             st.markdown(textwrap.dedent("""
-            ### 📈 Options Data Analysis
-            
-            **Open Interest (OI)**:
-            - Represents total number of outstanding contracts.
-            - High OI indicates high liquidity and market interest.
-            - Analyzing OI distribution by Strike Price reveals market expectations (Support/Resistance levels).
-            
-            **Volume**:
-            - Daily trading activity.
-            - Surge in volume often precedes price movement.
-            
-            **Implied Volatility (IV)**:
-            - *Note: Currenly displaying raw market data (Price/Vol/OI).*
-            - Future updates will include IV Surface analysis.
+            ### 📈 Options Analysis
+            - **Total Contracts**: Overview of market breadth.
+            - **Maturity Heatmap**: Expiry concentration.
+            - **Strike Distribution**: Positioning of key assets.
+            - **Strike vs Maturity**: Term structure of specific assets.
+            - **Call/Put Heatmap**: Sentiment and liquidity pockets.
             """))
             
         st.divider()
-        
-        # Filters
-        left_col, right_col = st.columns([1, 5])
+
+        # -------------------------------------------------------------
+        # 1. Filters & Navigation (New Layout)
+        # -------------------------------------------------------------
+        left_col, right_col = st.columns([1, 4])
         
         with left_col:
-            st.markdown("**Exchange Selection**")
-            exchange = st.selectbox("Exchange", ["SSE", "SZSE", "CFFEX", "DCE", "CZCE", "SHFE"], index=0, key="opt_exchange")
+            st.markdown("### 1. Navigation")
             
-            st.divider()
+            # A. Exchange Selection
+            all_exchanges = list(EXCHANGE_MAPPING.keys())
+            # Add 'Other' if needed, but let's stick to defined ones first
             
-            st.markdown("**Contract Filter**")
-            available_opts = get_available_opt_codes()
+            sel_exchange = st.selectbox(
+                "Exchange",
+                options=all_exchanges,
+                index=2, # Default to SSE (index 2 in our dict keys list usually, or find it)
+                format_func=lambda x: f"{x} Exchange",
+                key="opt_exchange_sel"
+            )
             
-            # Simple text filter for dropdown
-            filter_text = st.text_input("Search Contract", "", placeholder="e.g. 300ETF", key="opt_search")
+            # B. Asset Selection (Filtered by Exchange)
+            available_assets = EXCHANGE_MAPPING.get(sel_exchange, [])
             
-            filtered_opts = [opt for opt in available_opts if filter_text.upper() in opt[1].upper()] if filter_text else available_opts
-            
-            # Limit list length for performance
-            if len(filtered_opts) > 100:
-                st.caption(f"Showing top 100 of {len(filtered_opts)} matches")
-                filtered_opts = filtered_opts[:100]
+            # Default logic
+            default_asset_idx = 0
+            if sel_exchange == 'SSE' and '华夏上证50ETF' in available_assets:
+                default_asset_idx = available_assets.index('华夏上证50ETF')
                 
-            selected_opt_code = st.selectbox(
-                "Select Contract", 
-                options=[x[0] for x in filtered_opts],
-                format_func=lambda x: next((name for code, name in filtered_opts if code == x), x),
-                key="opt_select"
-            ) if filtered_opts else None
+            selected_underlying = st.selectbox(
+                "Asset",
+                options=available_assets,
+                index=default_asset_idx,
+                key="opt_asset_sel"
+            )
             
             st.divider()
             
-            st.markdown("**Date Range**")
-            opt_years = st.radio("History", [1, 2, 3], index=0, format_func=lambda x: f"{x} Year", key="opt_years", horizontal=True)
-            opt_start = default_end - timedelta(days=365*opt_years)
+            st.markdown("### 2. Time Filter")
+            # Time Range
+            time_range = st.radio(
+                "Range", 
+                ["YTD", "1 Year", "3 Years", "5 Years"], 
+                index=1, 
+                key="opt_time_range"
+            )
+            
+            if time_range == "YTD":
+                start_date = datetime(default_end.year, 1, 1)
+            elif time_range == "1 Year":
+                start_date = default_end - timedelta(days=365)
+            elif time_range == "3 Years":
+                start_date = default_end - timedelta(days=365*3)
+            else:
+                start_date = default_end - timedelta(days=365*5)
+            
+            st.caption(f"Since: {start_date.strftime('%Y-%m-%d')}")
 
         with right_col:
+            # -------------------------------------------------------------
+            # 2. Main Tabs
+            # -------------------------------------------------------------
+            tabs = st.tabs([
+                "📊 Total Contracts", 
+                "📅 Maturity Heatmap", 
+                "📦 Strike Dist.", 
+                "🔵 Strike vs Maturity", 
+                "🔥 Call/Put Heatmap", 
+                "📈 Contract Trend", 
+                "💧 Liquidity Analysis"
+            ])
             
-            # Load Basic Info (Filtered by Exchange)
-            with st.spinner('Loading Contract Data...'):
-                df_basic = load_opt_basic(exchange)
+            # --- Tab 1: Total Contracts (Optimized) ---
+            with tabs[0]:
+                st.markdown("#### Total Contracts Overview (Fast Load)")
+                # Use optimized loader that only counts
+                with st.spinner("Loading Stats..."):
+                    df_counts = get_opt_stats_underlying_counts()
                 
-            if df_basic.empty:
-                st.warning(f"No contract data found for exchange {exchange}. Please check database.")
+                if not df_counts.empty:
+                    # Filter to show only relevant or top N
+                    # Or maybe filter by the selected exchange's assets highlight?
+                    # The user wants "Total Contracts" usually implies Market Wide.
+                    # But we can highlight the selected one.
+                    fig_1 = plot_opt_underlying_counts(df_counts.rename(columns={'count': 'ts_code'}), top_n=30) # Rename for compat
+                    if fig_1: st.plotly_chart(fig_1, use_container_width=True)
+                else:
+                    st.error("Stats unavailable.")
+            
+            
+            # --- Load Metadata for Selected Asset ONLY (Speedup) ---
+            # Instead of loading ALL basic info, we lazily load meaningful info.
+            # But functions like `plot_opt_maturity_heatmap` might expect more data if used for "All Assets".
+            # User wants "Overview" in Tab 1, 2, 3 usually to be broad?
+            # Tab 2 (Maturity Heatmap) for "All" might be slow if we process 100k rows.
+            # Let's optimize Tab 2 and 3 to use the SAME fast dataframe if possible, or load full if needed.
+            # actually `get_opt_stats_underlying_counts` aggregates.
+            
+            # For Tab 2 (Maturity Heatmap): Groups by Underlying + Year.
+            # We can create a optimized loader for this too, OR just load full basic (cached)
+            # if user clicks it. But `st.tabs` executes all at once unless we check visibility? 
+            # Streamlit runs linearly.
+            
+            # Let's try to load FULL basic but only columns we need (name, list_date, delist_date, exercise_price, maturity_date)
+            # `load_opt_basic` does exactly that minus selection.
+            # Optimization: If Tab 1 is fast now, user is happy.
+            # We proceed to load full data for other tabs but maybe filter `df_basic_all` faster.
+            
+            with st.spinner('Loading Active Contracts...'):
+                 # We can keep using load_opt_basic() as it is cached. 
+                 # If it's slow, it might be the regex in `process_opt_basic_data`.
+                 # We improved it to simple regex.
+                 df_basic_all = load_opt_basic()
+            
+            if df_basic_all.empty:
+                 st.warning("No data.")
             else:
-                # Top Level Stats
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Total Contracts", f"{len(df_basic)}")
-                col2.metric("Call Options", f"{len(df_basic[df_basic['call_put']=='C'])}")
-                col3.metric("Put Options", f"{len(df_basic[df_basic['call_put']=='P'])}")
-                
-                # Tabs
-                tab1, tab2, tab3 = st.tabs(["📊 Contract Distribution", "📈 Contract Trend", "💧 Liquidity Analysis"])
-                
-                with tab1:
-                    st.subheader("Open Interest & Volume Distribution")
-                    
-                    # Need daily data for latest OI/Vol
-                    # Fetching latest data for ALL contracts in exchange might be slow.
-                    # Instead, we can try to fetch a snapshot or just use basic info if daily not scalable.
-                    # Better approach: Load LAST trading day data for all contracts in this exchange?
-                    # Or just 1 month of data for aggregations.
-                    
-                    # For distribution, we want a heatmap of Strike vs Month
-                    # We need daily data. Let's fetch last 5 days for all contracts in exchange.
-                    
-                    check_date = default_end
-                    df_snapshot = pd.DataFrame()
-                    
-                    # Try to fetch recent data (retry a few days back if empty)
-                    for i in range(5):
-                        target_date = (check_date - timedelta(days=i)).strftime('%Y%m%d')
-                        # We need ts_codes.
-                        # If list is too huge, duckdb query might be better with a JOIN.
-                        # `load_opt_daily` accepts ts_codes list or single.
-                        # Let's add a robust query to `load_opt_daily` helper or just use SQL here?
-                        # Actually `load_opt_daily` takes list.
-                        if len(df_basic) > 2000:
-                             # Too many to fetch all at once maybe? DuckDB handles it fine.
-                             pass
-                             
-                        # Let's try fetching by date range only (all contracts) from loader if supported?
-                        # I added `load_opt_daily` with ts_codes support.
-                        # Let's fetch by ts_code list (might be large).
-                        
-                        # Optimization: Fetch ONE DAY of data for ALL symbols in DB is faster via SQL.
-                        # But `load_opt_daily` filters by ts_code.
-                        # Let's assume we proceed with the selected contract for Trend, but for Heatmap we need aggregates.
-                        # I will add a method to get snapshot in loader? OR just use existing and loop.
-                        # Let's filter df_basic to 'Active' contracts (delist_date > now)
-                        active_basic = df_basic[df_basic['delist_date'] > datetime.now()]
-                        
-                        if not active_basic.empty:
-                             # Just take top 500 active for viz to avoid overload
-                             batch_codes = active_basic['ts_code'].tolist()
-                             df_snapshot = load_opt_daily(start_date=target_date, end_date=target_date, ts_codes=batch_codes)
-                             if not df_snapshot.empty:
-                                 break
-                    
-                    if not df_snapshot.empty:
-                        # Merge with basic info for Strike/Month
-                        df_merge = pd.merge(df_snapshot, df_basic[['ts_code', 'exercise_price', 's_month', 'call_put']], on='ts_code', how='left')
-                        
-                        col_h1, col_h2 = st.columns(2)
-                        
-                        with col_h1:
-                            st.markdown("#### Call Option OI Heatmap")
-                            fig_hm_c = plot_opt_distribution_heatmap(df_merge[df_merge['call_put']=='C'], 'oi')
-                            if fig_hm_c: st.plotly_chart(fig_hm_c, use_container_width=True)
-                            
-                        with col_h2:
-                            st.markdown("#### Put Option OI Heatmap")
-                            fig_hm_p = plot_opt_distribution_heatmap(df_merge[df_merge['call_put']=='P'], 'oi')
-                            if fig_hm_p: st.plotly_chart(fig_hm_p, use_container_width=True)
-                            
-                        st.caption(f"Data Date: {df_snapshot['trade_date'].max().strftime('%Y-%m-%d')}")
-                    else:
-                        st.info("No trading data found for recent days (Holiday or Market Closed).")
+                 # Filter by time range
+                 df_basic_filtered = df_basic_all[
+                    (df_basic_all['list_date'] <= default_end) & 
+                    (df_basic_all['delist_date'] >= start_date)
+                 ].copy()
 
-                with tab2:
-                    st.subheader("Single Contract Trend Analysis")
-                    if selected_opt_code:
-                        with st.spinner(f"Loading history for {selected_opt_code}..."):
-                            start_str = opt_start.strftime('%Y%m%d')
-                            end_str = default_end.strftime('%Y%m%d')
-                            
-                            df_trend = load_opt_daily(ts_code=selected_opt_code, start_date=start_str, end_date=end_str)
-                            
-                            if not df_trend.empty:
-                                fig_trend = plot_opt_trend(df_trend, selected_opt_code)
-                                if fig_trend:
-                                    st.plotly_chart(fig_trend, use_container_width=True)
-                            else:
-                                st.warning("No historical data found for this contract.")
+                 # --- Tab 2: Maturity Heatmap ---
+                 with tabs[1]:
+                    st.markdown("#### Expiry Heatmap (All Assets)")
+                    fig_2 = plot_opt_maturity_heatmap(df_basic_filtered)
+                    if fig_2: st.plotly_chart(fig_2, use_container_width=True)
+                    
+                 # --- Tab 3: Strike Distribution ---
+                 with tabs[2]:
+                    st.markdown("#### Strike Price Distribution")
+                    # Filter for selected exchange only to reduce noise?
+                    # Or top 10 global.
+                    fig_3 = plot_opt_strike_distribution(df_basic_filtered)
+                    if fig_3: st.plotly_chart(fig_3, use_container_width=True)
+            
+            
+                 # --- Single Asset Tabs (4-7) ---
+                 df_basic_und = df_basic_filtered[df_basic_filtered['underlying'] == selected_underlying]
+                 
+                 # Tab 4
+                 with tabs[3]:
+                    st.markdown(f"#### {selected_underlying}: Strike Term Structure")
+                    if not df_basic_und.empty:
+                        fig_4 = plot_opt_strike_maturity_scatter(df_basic_und, selected_underlying)
+                        if fig_4: st.plotly_chart(fig_4, use_container_width=True)
                     else:
-                        st.info("Please select a contract from the sidebar.")
+                        st.info(f"No active contracts for {selected_underlying} in this period.")
 
-                with tab3:
-                    st.subheader("Liquidity Analysis (Strike vs Volume/OI)")
-                    if not df_snapshot.empty:
-                         fig_liq = plot_opt_liquidity_scatter(df_merge)
-                         if fig_liq:
-                             st.plotly_chart(fig_liq, use_container_width=True)
+                 # Load Daily for Tabs 5-7
+                 df_daily_und = pd.DataFrame()
+                 if selected_underlying:
+                     # Only load if we have basic info
+                     with st.spinner(f"Loading Market Data for {selected_underlying}..."):
+                          df_daily_und = load_opt_daily_by_underlying(
+                              selected_underlying, 
+                              start_date.strftime('%Y%m%d'), 
+                              default_end.strftime('%Y%m%d')
+                          )
+
+                 current_snapshot = pd.DataFrame()
+                 if not df_daily_und.empty:
+                    latest_dt = df_daily_und['trade_date'].max()
+                    current_snapshot = df_daily_und[df_daily_und['trade_date'] == latest_dt].copy()
+                    current_snapshot = pd.merge(current_snapshot, df_basic_und[['ts_code', 'exercise_price', 's_month', 'call_put', 'maturity_date']], on='ts_code', how='left')
+
+                 # Tab 5
+                 with tabs[4]:
+                    st.markdown(f"#### {selected_underlying}: Open Interest Heatmap")
+                    if not current_snapshot.empty:
+                        col_5a, col_5b = st.columns(2)
+                        with col_5a:
+                            st.caption("Call Options")
+                            fig_5a = plot_opt_distribution_heatmap(current_snapshot[current_snapshot['call_put']=='C'], 'oi')
+                            if fig_5a: st.plotly_chart(fig_5a, use_container_width=True)
+                        with col_5b:
+                            st.caption("Put Options")
+                            fig_5b = plot_opt_distribution_heatmap(current_snapshot[current_snapshot['call_put']=='P'], 'oi')
+                            if fig_5b: st.plotly_chart(fig_5b, use_container_width=True)
+                        st.caption(f"Snapshot: {latest_dt.strftime('%Y-%m-%d')}")
                     else:
-                        st.info("Need trading data for liquidity analysis.")
+                        st.info("No market data.")
+
+                 # Tab 6
+                 with tabs[5]:
+                    st.markdown(f"#### Contract Trend")
+                    if not df_daily_und.empty:
+                        und_codes = list(zip(df_basic_und['ts_code'], df_basic_und['name']))
+                        sel_trend_code = st.selectbox(
+                            "Select Contract", 
+                            [x[0] for x in und_codes],
+                            format_func=lambda x: next((n for c, n in und_codes if c == x), x),
+                            key="opt_trend_sel"
+                        )
+                        if sel_trend_code:
+                            df_trend_c = df_daily_und[df_daily_und['ts_code'] == sel_trend_code]
+                            fig_6 = plot_opt_trend(df_trend_c, sel_trend_code)
+                            if fig_6: st.plotly_chart(fig_6, use_container_width=True)
+
+                 # Tab 7
+                 with tabs[6]:
+                    st.markdown(f"#### Liquidity Analysis")
+                    if not current_snapshot.empty:
+                        fig_7 = plot_opt_liquidity_scatter(current_snapshot)
+                        if fig_7: st.plotly_chart(fig_7, use_container_width=True)

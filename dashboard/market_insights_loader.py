@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from datetime import datetime, timedelta
+import re
 
 # Database paths
 INDEX_DB_PATH = '/Users/robert/Developer/DuckDB/tushare_duck_index.db'
@@ -77,6 +78,16 @@ def get_index_db_connection():
         st.error(f"Database connection failed: {e}")
         return None
 
+
+# Exchange Mapping (Derived from user task file)
+EXCHANGE_MAPPING = {
+    'CZCE': ['菜粕', '花生', '尿素', '红枣', '锰硅', '白糖', '玻璃', 'PTA', '菜籽油', '甲醇', '纯碱', '棉花', '烧碱', '对二甲苯', '硅铁', '丙烯', '短纤', '白糖系列', '苹果', '瓶片', '动力煤'],
+    'DCE': ['PVC', '豆二', '豆一', '玉米淀粉', '玉米', '铁矿石', '棕榈油', '豆油', '塑料', '豆粕', '聚丙烯', '鸡蛋', 'LPG', '乙二醇', '纯苯', '苯乙烯', '原木', '生猪', '丙烯'],
+    'SSE': ['华泰柏瑞沪深300ETF', '易方达上证科创板50ETF', '华夏上证科创板50ETF', '华夏上证50ETF', '南方中证500ETF', '50ETF', '300ETF', '500ETF', '科创50ETF'],
+    'SZSE': ['易方达创业板ETF', '易方达深证100ETF', '嘉实中证500ETF', '嘉实沪深300ETF', '创业板ETF', '深证100ETF'],
+    'CFFEX': ['中证1000指数', '沪深300指数', '上证50指数', 'IO', 'MO', 'HO'],
+    'SHFE': ['沪铜', '沪金', '沪银', '沪铝', '沪锌', '沪铅', '沪镍', '沪锡', '螺纹钢', '线材', '热轧卷板', '不锈钢', '橡胶', '纸浆', '沥青', '燃料油']
+}
 
 def get_opt_db_connection():
     """Connect to Options database."""
@@ -696,8 +707,100 @@ def load_opt_basic(exchange: str = None):
         for col in ['maturity_date', 'list_date', 'delist_date']:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format='%Y%m%d', errors='coerce')
+                
+        # Process and Extract Info (Regex)
+        df = process_opt_basic_data(df)
     
     return df
+
+
+def process_opt_basic_data(df: pd.DataFrame):
+    """
+    Process opt_basic data: extract underlying, standardized fields.
+    """
+    if df.empty:
+        return df
+    
+    # Ensure no duplicate columns (crucial fix for 'Grouper not 1-dimensional' error)
+    df = df.loc[:, ~df.columns.duplicated()]
+    
+    df = df.copy()
+    
+    # User provided regex pattern:
+    # Matches: "Underlying" + "期权" + "YYMM" + "Call/Put" + "Strike"
+    # e.g., "华夏上证50ETF期权2401认购2.250"
+    pattern = r'^(.+?)期权(\d{4})(认沽|认购)([\d\.]+)$'
+    
+    extracted = df['name'].str.extract(pattern, expand=True)
+    extracted.columns = ['underlying', 'maturity_ym', 'direction', 'strike_from_name']
+    
+    # Join
+    df = df.join(extracted)
+    
+    # Fallback for underlying: if regex failed, try to use name start
+    # Many commodity options might be "豆粕2405C3000" (no '期权' keyword) in some feeds,
+    # but user confirmed the list of underlyings covering both ETFs and commodities using the above regex.
+    # So we assume the dataset names are standardized to contain '期权'.
+    # If not, we fill NaN 'underlying' with a simpler guess.
+    # If not, we fill NaN 'underlying' with a simpler guess, stripping '期权' and trailing numbers.
+    df['underlying'] = df['underlying'].fillna(df['name'].str.replace(r'期权.*$', '', regex=True).str.replace(r'[0-9].*$', '', regex=True))
+    
+    # Standardize Call/Put
+    # Map '认购'->'C', '认沽'->'P'
+    direction_map = {'认购': 'C', '认沽': 'P'}
+    if 'direction' in df.columns:
+        df['call_put_regex'] = df['direction'].map(direction_map)
+        
+        if 'call_put' in df.columns:
+            df['call_put'] = df['call_put'].fillna(df['call_put_regex'])
+        else:
+            df['call_put'] = df['call_put_regex']
+        
+    # Standardize Strike
+    df['exercise_price'] = pd.to_numeric(df['exercise_price'], errors='coerce')
+    if 'strike_from_name' in df.columns:
+         df['strike'] = df['exercise_price'].fillna(pd.to_numeric(df['strike_from_name'], errors='coerce'))
+    else:
+         df['strike'] = df['exercise_price']
+         
+    # Standardize Maturity
+    if 'maturity_date' in df.columns:
+        df['maturity_year'] = df['maturity_date'].dt.year.astype(str).str[-2:]
+        df['maturity_month'] = df['maturity_date'].dt.month.astype(str).str.zfill(2)
+        
+        # Fallback to regex
+        if 'maturity_ym' in df.columns:
+            df['maturity_year'] = df['maturity_year'].fillna(df['maturity_ym'].str[:2])
+            df['maturity_month'] = df['maturity_month'].fillna(df['maturity_ym'].str[2:])
+
+    df['maturity_ym_clean'] = df['maturity_year'] + df['maturity_month']
+    
+    return df
+
+
+@st.cache_data(ttl=3600)
+def load_opt_daily_by_underlying(underlying: str, start_date: str = None, end_date: str = None):
+    """
+    Load daily data for ALL contracts of a specific underlying.
+    """
+    # 1. Get List of TS_CODES for this underlying
+    df_basic = load_opt_basic() # Cached
+    if df_basic.empty or 'underlying' not in df_basic.columns:
+        return pd.DataFrame()
+        
+    target_codes = df_basic[df_basic['underlying'] == underlying]['ts_code'].tolist()
+    
+    if not target_codes:
+        return pd.DataFrame()
+        
+    # 2. Fetch daily data
+    # Optimization: If list is huge (e.g. >1000 contracts history), this query might be heavy.
+    # But usually active contracts are fewer.
+    # We pass the list to SQL.
+    
+    return load_opt_daily(start_date=start_date, end_date=end_date, ts_codes=target_codes)
+
+
 
 
 @st.cache_data(ttl=3600)
@@ -767,3 +870,44 @@ def get_available_opt_codes():
     )
     
     return list(zip(df['ts_code'], df['display']))
+
+
+@st.cache_data(ttl=3600)
+def get_opt_stats_underlying_counts():
+    """
+    Fast SQL aggregation for Total Contracts by Underlying.
+    Avoids loading full dataframe for the first tab.
+    """
+    conn = get_opt_db_connection()
+    if not conn:
+        return pd.DataFrame()
+    
+    try:
+        # We need to extract underlying from name using SQL regex if possible, 
+        # but DuckDB regex extraction might be complex to match Python's exactly.
+        # Alternatively, since we have the mapping, we can try to join or just load the names and process in pandas (lighter).
+        # Actually, loading just names is fast.
+        
+        query = "SELECT name, list_date, delist_date, exercise_price, maturity_date, call_put FROM opt_basic"
+        df = conn.execute(query).fetchdf()
+        
+        # Convert dates (Essential for process_opt_basic_data)
+        for col in ['maturity_date', 'list_date', 'delist_date']:
+             if col in df.columns:
+                 df[col] = pd.to_datetime(df[col], format='%Y%m%d', errors='coerce')
+        
+        # Process in Python (Memory efficient if only a few columns)
+        df = process_opt_basic_data(df)
+        
+        if 'underlying' in df.columns:
+            counts = df['underlying'].value_counts().reset_index()
+            counts.columns = ['underlying', 'count']
+            return counts
+        else:
+            return pd.DataFrame()
+            
+    except Exception as e:
+        st.error(f"Aggregation failed: {e}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
