@@ -1808,8 +1808,9 @@ bond:
       limit: 2000
       requires_date: true
       earliest_date: '20100101'
-      latest_date: null
       date_column: trade_date
+      # 回购市场存在周末/节假日撮合数据，使用自然日避免被股票交易日过滤
+      date_type: natural
       date_type: trade
       date_param: trade_date
       date_param_mode: range
