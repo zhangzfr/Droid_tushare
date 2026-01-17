@@ -461,6 +461,10 @@ def plot_sw_l1_price_volume(df):
     if df.empty:
         return None
         
+    df = df.copy()
+    if pd.api.types.is_datetime64_any_dtype(df['trade_date']):
+        df['trade_date'] = df['trade_date'].dt.strftime('%Y%m%d')
+
     # Dual Axis: Left=Close, Right=Amount
     fig = go.Figure()
 
@@ -483,7 +487,13 @@ def plot_sw_l1_price_volume(df):
 
     fig.update_layout(
         title='Price & Amount Trend',
-        xaxis=dict(title='Date'),
+        xaxis=dict(
+            title='Date',
+            type='category',
+            tickmode='auto',
+            tickangle=-45,
+            showgrid=False
+        ),
         yaxis=dict(title='Index Point'),
         yaxis2=dict(
             title='Amount',
@@ -491,9 +501,9 @@ def plot_sw_l1_price_volume(df):
             side='right',
             showgrid=False
         ),
-        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, borderwidth=0),
         height=500,
-        margin=dict(l=10, r=10, t=40, b=10),
+        margin=dict(l=10, r=10, t=40, b=80),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
@@ -508,6 +518,10 @@ def plot_sw_l1_valuation(df):
     if df.empty or 'pe' not in df.columns or 'pb' not in df.columns:
         return None
     
+    df = df.copy()
+    if pd.api.types.is_datetime64_any_dtype(df['trade_date']):
+        df['trade_date'] = df['trade_date'].dt.strftime('%Y%m%d')
+
     # Dual Axis: Left=PE, Right=PB
     fig = go.Figure()
 
@@ -530,7 +544,13 @@ def plot_sw_l1_valuation(df):
 
     fig.update_layout(
         title='Valuation Trend (PE & PB)',
-        xaxis=dict(title='Date'),
+        xaxis=dict(
+            title='Date',
+            type='category',
+            tickmode='auto',
+            tickangle=-45,
+            showgrid=False
+        ),
         yaxis=dict(title='PE Ratio'),
         yaxis2=dict(
             title='PB Ratio',
@@ -538,9 +558,9 @@ def plot_sw_l1_valuation(df):
             side='right',
             showgrid=False
         ),
-        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, borderwidth=0),
         height=400,
-        margin=dict(l=10, r=10, t=40, b=10),
+        margin=dict(l=10, r=10, t=40, b=80),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
@@ -694,7 +714,8 @@ def plot_corr_heatmap(corr_df: pd.DataFrame):
         height=600,
         margin=dict(l=10, r=10, t=40, b=10),
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(borderwidth=0)
     )
     return fig
 
@@ -744,11 +765,17 @@ def plot_rank_trend(rank_df: pd.DataFrame):
 
     fig.update_layout(
         title='行业涨跌幅排名走势 (数值越小排名越高)',
-        xaxis=dict(title='Date', type='category', tickmode='auto'),
-        yaxis=dict(title='Rank', autorange='reversed'),
+        xaxis=dict(
+            title='Date', 
+            type='category', 
+            tickmode='auto',
+            tickangle=-45,
+            showgrid=False
+        ),
+        yaxis=dict(title='Rank', autorange='reversed', showgrid=True, gridcolor='rgba(128,128,128,0.2)'),
         height=800,
-        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
-        margin=dict(l=40, r=160, t=40, b=10),
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, borderwidth=0),
+        margin=dict(l=40, r=160, t=40, b=80),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         hovermode='x'
@@ -869,21 +896,41 @@ def plot_rank_sankey(rank_df: pd.DataFrame):
 
     # 方向提示与行业图例
     legend_ann = []
+    
+    # 底部日期标注
+    for i, d in enumerate(dates):
+        # 仅显示部分日期以避免重叠 (e.g., first, last, and some in between)
+        # 或者全部显示如果数量不多。这里简单处理：显示全部但旋转
+        # Simple Logic: Add date text at bottom
+        legend_ann.append(dict(
+            x=x_map[d], 
+            y=-0.05, # Below chart
+            xref='paper', yref='paper',
+            text=str(d),
+            showarrow=False,
+            align='center', 
+            textangle=-45,
+            font=dict(size=10, color='#666')
+        ))
+
+    # Top Direction Text
     legend_ann.append(dict(
         x=0.0, y=1.08, xref='paper', yref='paper',
         text='Left = 最早交易日 → Right = 最新交易日',
-        showarrow=False, align='left', font=dict(size=12)
+        showarrow=False, align='left', font=dict(size=12, color='#888')
     ))
+    
+    # Right Side Industry Labels
     for i, name in enumerate(display_names):
         legend_ann.append(dict(
-            x=1.05, y=1 - i * 0.04,
+            x=1.02, y=1 - i * 0.04,
             xref='paper', yref='paper',
             text=name,
             showarrow=False,
             font=dict(size=11, color=color_map.get(name, '#333')),
             align='left'
         ))
-    fig.update_layout(annotations=legend_ann)
+    fig.update_layout(annotations=legend_ann, margin=dict(b=80)) # Increase bottom margin for dates
     return fig
 
 
@@ -940,7 +987,9 @@ def plot_sw_l1_valuation_quantiles(df):
     if df.empty or 'pe' not in df.columns or 'pb' not in df.columns:
         return None
 
-    df_sorted = df.sort_values('trade_date')
+    df_sorted = df.sort_values('trade_date').copy()
+    if pd.api.types.is_datetime64_any_dtype(df_sorted['trade_date']):
+        df_sorted['trade_date'] = df_sorted['trade_date'].dt.strftime('%Y%m%d')
 
     def _quantiles(series):
         series = series.dropna()
@@ -998,12 +1047,26 @@ def plot_sw_l1_valuation_quantiles(df):
 
     fig.update_layout(
         height=650,
-        margin=dict(l=10, r=10, t=40, b=10),
-        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+        margin=dict(l=10, r=10, t=40, b=80),
+        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5, borderwidth=0),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
-    fig.update_xaxes(title_text='Date', row=2, col=1)
+    fig.update_xaxes(
+        title_text='Date', 
+        row=2, col=1,
+        type='category',
+        tickmode='auto',
+        tickangle=-45,
+        showgrid=False
+    )
+    fig.update_xaxes(
+        type='category',
+        tickmode='auto',
+        showgrid=False,
+        row=1, col=1
+    )
+    
     fig.update_yaxes(title_text='PE', row=1, col=1)
     fig.update_yaxes(title_text='PB', row=2, col=1)
 

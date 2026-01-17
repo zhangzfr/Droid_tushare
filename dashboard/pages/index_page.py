@@ -239,54 +239,133 @@ def render_index_page(subcategory_key):
             use_custom = st.checkbox("使用自定义区间", value=False, key=f"{key_prefix}_use_custom")
 
             st.divider()
+            st.markdown(
+                """
+                <style>
+                /* Checkbox Group Styling */
+                [data-testid="stCheckbox"] {
+                    margin-bottom: 0.5rem;
+                }
+                div.stButton > button {
+                    width: 100%;
+                    border-radius: 8px;
+                    border: 1px solid #e0e0e0;
+                }
+                </style>
+                """, unsafe_allow_html=True
+            )
             st.markdown("**一级行业筛选（复选）**")
 
-            state_key = f"{key_prefix}_selected"
-            if state_key not in st.session_state:
-                st.session_state[state_key] = list(default_sel)
+            # --- Logic Update: Default to ALL, and Link Categories ---
+            
+            # Session State Initialization
+            state_key_selected = f"{key_prefix}_selected"
+            state_key_cat_states = f"{key_prefix}_cat_states" # Store per-category checkbox states
+            
+            # If not initialized, select ALL by default
+            if state_key_selected not in st.session_state:
+                st.session_state[state_key_selected] = list(l1_all_codes)
+            
+            if state_key_cat_states not in st.session_state:
+                st.session_state[state_key_cat_states] = {cat: True for cat in category_map.keys()} 
+            
+            current_selected_set = set(st.session_state[state_key_selected])
 
+            # Global Controls
             col_all, col_none = st.columns(2)
-            all_checked = col_all.checkbox("全选", value=False, key=f"{key_prefix}_select_all")
-            none_checked = col_none.checkbox("全不选", value=False, key=f"{key_prefix}_select_none")
+            
+            # "Select All" Button Logic
+            if col_all.button("全选", key=f"{key_prefix}_btn_all"):
+                current_selected_set = set(l1_all_codes)
+                st.session_state[state_key_selected] = list(l1_all_codes)
+                for cat in category_map:
+                    st.session_state[state_key_cat_states][cat] = True
+                st.rerun()
 
-            current_selected = set(st.session_state[state_key])
-            if all_checked:
-                current_selected = set(l1_all_codes)
-            if none_checked:
-                current_selected = set()
+            if col_none.button("全不选", key=f"{key_prefix}_btn_none"):
+                current_selected_set = set()
+                st.session_state[state_key_selected] = []
+                for cat in category_map:
+                    st.session_state[state_key_cat_states][cat] = False
+                st.rerun()
 
-            new_selected = set(current_selected)
+            new_selected_set = set(current_selected_set)
+            
+            # Check if all children of a category are present/absent
+            def are_all_children_selected(cat_codes, current_set):
+                return all(c in current_set for c in cat_codes)
 
             for cat_name, cat_codes in category_map.items():
-                if not cat_codes:
-                    continue
-                cat_key = f"{key_prefix}_cat_{cat_name}"
-                cat_checked = st.checkbox(f"{cat_name}", value=False, key=cat_key)
-                if cat_checked:
-                    new_selected.update(cat_codes)
-                st.markdown("")
-                for code in cat_codes:
-                    label = f"{l1_dict.get(code, code)} ({code})"
-                    checked = st.checkbox(label, value=(code in new_selected), key=f"{key_prefix}_l1_{code}")
-                    if checked:
-                        new_selected.add(code)
-                    else:
-                        new_selected.discard(code)
+                if not cat_codes: continue
+                
+                # Checkbox logic:
+                # We track the "Category Checkbox" state in session_state[state_key_cat_states][cat_name]
+                # If interaction flips this state, we apply to all children.
+                
+                prev_cat_state = st.session_state[state_key_cat_states].get(cat_name, False)
+                
+                # Render Category Checkbox directly (No extra column nesting to avoid Level 3 depth error)
+                cat_key = f"{key_prefix}_cat_cb_{cat_name}"
+                cat_checked = st.checkbox(f"**{cat_name}**", value=prev_cat_state, key=cat_key)
+                
+                if cat_checked != prev_cat_state:
+                     # State Changed by User Click
+                     if cat_checked: 
+                         new_selected_set.update(cat_codes)
+                     else:
+                         new_selected_set.difference_update(cat_codes)
+                     
+                     st.session_state[state_key_cat_states][cat_name] = cat_checked
+                     st.session_state[state_key_selected] = list(new_selected_set)
+                     st.rerun()
 
-            st.session_state[state_key] = list(new_selected)
+                # Render Children
+                with st.container():
+                    st.markdown('<div style="margin-left: 20px;">', unsafe_allow_html=True)
+                    child_cols = st.columns(3)
+                    for i, code in enumerate(cat_codes):
+                        label = f"{l1_dict.get(code, code)}"
+                        child_key = f"{key_prefix}_l1_{code}"
+                        is_sel = code in current_selected_set
+                        
+                        with child_cols[i % 3]:
+                            child_checked = st.checkbox(label, value=is_sel, key=child_key)
+                            
+                            if child_checked != is_sel:
+                                # Child state changed by user interaction
+                                if child_checked:
+                                    new_selected_set.add(code)
+                                else:
+                                    new_selected_set.discard(code)
+                                
+                                # Update Global Set immediately
+                                st.session_state[state_key_selected] = list(new_selected_set)
+                                
+                                # Logic to update Parent State
+                                if not child_checked:
+                                     st.session_state[state_key_cat_states][cat_name] = False
+                                else:
+                                    if are_all_children_selected(cat_codes, new_selected_set):
+                                        st.session_state[state_key_cat_states][cat_name] = True
+                                    else:
+                                        st.session_state[state_key_cat_states][cat_name] = False
+                                
+                                st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
 
+            # Return final list.
             start_dt, end_dt = resolve_range("自定义区间" if use_custom else "快捷区间", preset_label, latest_dt, custom_start if use_custom else None, custom_end if use_custom else None)
-            return new_selected or default_sel, start_dt, end_dt
+            return list(new_selected_set), start_dt, end_dt
 
-        tab_price, tab_amount, tab_corr, tab_rank, tab_rank_flow, tab_detail, tab_valuation, tab_width = st.tabs([
-            "Normalized Industry Price Trends",
-            "Normalized Industry Amount Trends",
-            "行业收益率相关性",
-            "行业涨跌幅排名走势",
-            "行业排名流 (Sankey)",
-            "单个行业价格+成交额",
-            "单个行业估值趋势",
-            "Market Width 热力图"
+        tab_price, tab_amount, tab_corr_merged, tab_rank, tab_rank_flow, tab_detail, tab_valuation, tab_width = st.tabs([
+            "Price Trends",
+            "Turnover Trends",
+            "Correlation",
+            "Rank Trends",
+            "Rank Flow",
+            "Industry Price/Vol",
+            "Industry Valuation",
+            "Market Breadth"
         ])
 
         with tab_price:
@@ -324,7 +403,7 @@ def render_index_page(subcategory_key):
                         if fig:
                             st.plotly_chart(fig, use_container_width=True)
 
-        with tab_corr:
+        with tab_corr_merged:
             col_l, col_r = st.columns([1, 4])
             with col_l:
                 sel_codes, s_dt, e_dt = render_filters("sw_corr", default_codes)
@@ -337,18 +416,35 @@ def render_index_page(subcategory_key):
                         st.warning("未查询到数据，请调整日期或选择。")
                     else:
                         df_history = df_history.sort_values('trade_date')
-                        pivot_close = df_history.pivot(index='trade_date', columns='ts_code', values='close')
-                        returns = pivot_close.pct_change().dropna(how='all')
-                        if returns.empty:
-                            st.warning("区间内无法计算收益率相关性。")
+                        
+                        # Merged Logic: Radio button to select metric
+                        corr_metric = st.radio("Correlation Metric", ["Price Return", "PE", "PB"], horizontal=True, key="sw_corr_metric_select")
+                        
+                        pivot_data = pd.DataFrame()
+                        
+                        if corr_metric == "Price Return":
+                            pivot_close = df_history.pivot(index='trade_date', columns='ts_code', values='close')
+                            pivot_data = pivot_close.pct_change().dropna(how='all')
+                            caption_text = "相关性基于日度收益率（收盘价PctChange）。"
                         else:
-                            corr = returns.corr()
+                            metric_col = corr_metric.lower()
+                            if metric_col not in df_history.columns:
+                                st.error(f"Missing {corr_metric} data.")
+                            else:
+                                pivot_data = df_history.pivot(index='trade_date', columns='ts_code', values=metric_col)
+                                pivot_data = pivot_data.dropna(how='all')
+                                caption_text = f"相关性基于日度{corr_metric}绝对值。"
+
+                        if pivot_data.empty or len(pivot_data) < 2:
+                             st.warning("有效数据不足以计算相关性。")
+                        else:
+                            corr = pivot_data.corr()
                             corr.index = [l1_dict.get(c, c) for c in corr.index]
                             corr.columns = [l1_dict.get(c, c) for c in corr.columns]
                             fig = plot_corr_heatmap(corr)
                             if fig:
                                 st.plotly_chart(fig, use_container_width=True)
-                            st.caption("相关性基于日度收益率（收盘价PctChange）。")
+                            st.caption(caption_text)
 
         with tab_rank:
             col_l, col_r = st.columns([1, 4])
