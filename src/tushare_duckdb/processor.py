@@ -24,7 +24,19 @@ class DataProcessor:
         # date_param_mode: 'single'(默认，逐日) | 'range'(范围) | 'full_paging'(智能分页)
 
         param_grid = []
-        if ts_codes and any(ts_codes):
+        if api_config_entry.get('fetch_by_ts_code'):
+            try:
+                ts_code_rows = self.conn.execute("SELECT DISTINCT ts_code FROM pledge_stat").fetchall()
+                ts_codes_from_db = [r[0] for r in ts_code_rows if r and r[0]]
+                if not ts_codes_from_db:
+                    logger.warning(f"{table_name}: pledge_stat 无可用 ts_code，跳过")
+                    return 0
+                param_grid = [{'ts_code': code} for code in ts_codes_from_db]
+                logger.info(f"{table_name}: 从 pledge_stat 读取 {len(param_grid)} 个 ts_code 逐个拉取")
+            except Exception as e:
+                logger.error(f"{table_name}: 读取 pledge_stat ts_code 失败: {e}")
+                return 0
+        elif ts_codes and any(ts_codes):
             param_grid = [{'ts_code': code} for code in ts_codes if code]
         elif required_params:
             param_grid = generate_param_grid(required_params)

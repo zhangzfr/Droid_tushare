@@ -76,6 +76,8 @@ python scripts/backfill_pledge_stat.py
 python scripts/backfill_pledge_detail.py --smart
 ```
 
+> 推荐使用脚本更新 `pledge_detail`：该接口无日期过滤，使用主 CLI 会对每只股票全量拉取，易耗时和触发限频；脚本已按 `pledge_stat` 中的 ts_code 分批拉取并支持智能/强制模式。
+
 ### Data Validation
 Check for gaps or inconsistencies in your local database:
 - Use the main menu (Option 14) or dedicated scripts in `scripts/`.

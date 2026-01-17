@@ -61,6 +61,18 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
     logger.info(f"正在处理类别: {category.upper()} | 数据库: {db_path.split('/')[-1]}")
     logger.info(f"选择表: {', '.join(selected_tables_list)}")
 
+    # pledge_detail 专用提醒：优先使用脚本
+    if category == 'reference' and selected_tables_list == ['pledge_detail']:
+        prompt = (
+            "⚠️ pledge_detail 无日期过滤，主 CLI 会对所有股票全量拉取，耗时且易限频。\n"
+            "建议改用脚本：python scripts/backfill_pledge_detail.py --smart\n"
+            "仍要在 CLI 继续执行吗？(y/n，默认 n): "
+        )
+        go = input(prompt).strip().lower()
+        if go not in ['y', 'yes', '1']:
+            logger.info("已取消 pledge_detail 的 CLI 执行，请使用脚本更新。")
+            return 0
+
     with get_connection(db_path, read_only=False) as conn:
         if not conn:
             return 0
