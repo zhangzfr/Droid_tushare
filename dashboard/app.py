@@ -40,6 +40,7 @@ from dashboard.pages.fx_page import render_fx_edu_page
 from dashboard.pages.stock_page import render_stock_edu_page
 from dashboard.pages.market_insights_page import render_market_insights_page
 from dashboard.pages.finance_page import render_finance_page
+from dashboard.pages.dc_page import render_dc_page
 
 # Apply Custom CSS
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -82,6 +83,13 @@ NAVIGATION = {
             "Index Heatmap": {"key": "index_map", "icon": "heatmap"},
             "Shenwan Index": {"key": "sw_index", "icon": "industry"},
             "Index Constituents": {"key": "index_const", "icon": "pie"}
+        }
+    },
+    "DC Index": {
+        "key": "dc",
+        "icon": "trend",
+        "subcategories": {
+            "DC Overview": {"key": "dc_overview", "icon": "trend"}
         }
     },
     "Market Data": {
@@ -288,6 +296,9 @@ if active_category and active_category in NAVIGATION:
         
     elif category_key == "market_insights":
         render_market_insights_page(subcategory_key)
+
+    elif category_key == "dc":
+        render_dc_page(subcategory_key)
         
     else:
         st.error(f"Unknown category: {category_key}")
