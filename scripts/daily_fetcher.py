@@ -191,6 +191,10 @@ DAILY_TABLES = {
         'sw_daily',           # 申万行业指数日线
         'tdx_daily',          # 通达信行业指数日线
         'index_global',       # 国际指数日线
+        'dc_index',
+        'tdx_index',
+        'dc_member',
+        'tdx_member',
     ],
     
     # 排除: index_member (index_weight 改为月度维护)

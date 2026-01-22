@@ -41,6 +41,7 @@ from dashboard.pages.stock_page import render_stock_edu_page
 from dashboard.pages.market_insights_page import render_market_insights_page
 from dashboard.pages.finance_page import render_finance_page
 from dashboard.pages.dc_page import render_dc_page
+from dashboard.pages.tdx_index_page import render_tdx_index_page
 
 # Apply Custom CSS
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -107,6 +108,13 @@ NAVIGATION = {
         "icon": "finance",
         "subcategories": {
             "Financial Analysis": {"key": "fin_analysis", "icon": "finance"}
+        }
+    },
+    "TDX Index": {
+        "key": "tdx",
+        "icon": "chart",
+        "subcategories": {
+            "板块指数分析": {"key": "tdx_analysis", "icon": "chart"}
         }
     },
     "Market Insights": {
@@ -299,6 +307,9 @@ if active_category and active_category in NAVIGATION:
 
     elif category_key == "dc":
         render_dc_page(subcategory_key)
+        
+    elif category_key == "tdx":
+        render_tdx_index_page()
         
     else:
         st.error(f"Unknown category: {category_key}")

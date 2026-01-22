@@ -1223,7 +1223,105 @@ index:
       date_column: trade_date
       date_type: natural
       date_param_mode: range
-
+    # === 以下为新增的成员/分类表 ===
+    dc_member:
+      api_table: dc_member
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      fields:
+      - trade_date
+      - ts_code
+      - con_code
+      - name
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 8000
+      requires_paging: true
+    tdx_member:
+      api_table: tdx_member
+      unique_keys:
+      - ts_code
+      - con_code
+      - trade_date
+      fields:
+      - trade_date
+      - ts_code
+      - con_code
+      - con_name
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 3000
+      requires_paging: true
+    ths_member:
+      api_table: ths_member
+      unique_keys:
+      - ts_code
+      - con_code
+      fields:
+      - ts_code
+      - con_code
+      - con_name
+      - weight
+      - in_date
+      - out_date
+      - is_new
+      requires_date: true
+      date_column: trade_date
+      date_type: trade
+      limit: 6000
+      requires_paging: true
+    sw_index_classify_2014:
+      api_table: index_classify
+      unique_keys:
+      - index_code
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      fixed_params:
+        src: SW2014
+      requires_date: false
+    sw_index_classify_2021:
+      api_table: index_classify
+      unique_keys:
+      - index_code
+      fields:
+      - index_code
+      - industry_name
+      - level
+      - industry_code
+      - is_pub
+      - parent_code
+      - src
+      fixed_params:
+        src: SW2021
+      requires_date: false
+    sw_index_member_all:
+      api_table: index_member_all
+      unique_keys:
+      - ts_code
+      - in_date
+      fields:
+      - l1_code
+      - l1_name
+      - l2_code
+      - l2_name
+      - l3_code
+      - l3_name
+      - ts_code
+      - name
+      - in_date
+      - out_date
+      - is_new
+      requires_date: false
 
 
 fund:
