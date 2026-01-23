@@ -150,7 +150,7 @@ def print_comparison_table(before: dict, after: dict, table_name: str, date_colu
 # - 月频表 (api_date_format: YYYYMM): cn_pmi, cn_m, sf_month, cn_cpi, cn_ppi
 # - 季频表 (api_date_format: YYYYQN): cn_gdp
 # - 财务数据 (finance category): 全部为季度报告
-# - 用户指定排除: trade_cal, slb_*, moneyflow_cnt_ths, index_weight
+# - 用户指定排除: trade_cal, slb_*, index_weight
 
 DAILY_TABLES = {
     'stock': [
@@ -177,7 +177,8 @@ DAILY_TABLES = {
         'moneyflow_ind_ths',  # 同花顺行业资金流
         'moneyflow_ind_dc',   # 东财行业资金流
         'moneyflow_mkt_dc',   # 东财大盘资金流
-        'moneyflow_cnt_ths',  # 排除: moneyflow_cnt_ths (获取逻辑待完善)
+        'moneyflow_cnt_ths',  # 同花顺概念资金流
+        'moneyflow_hsgt',     # 沪深港通资金流向
     ],
     
     'index': [
@@ -217,6 +218,7 @@ DAILY_TABLES = {
     ],
     
     'option': [
+        'opt_basic',          # 期权基础信息
         'opt_daily',          # 期权日线行情
     ],
     
@@ -267,6 +269,8 @@ DELAYED_TABLES = {
     'margin_detail': 5,    # 融资融券明细
     'shibor_quote': 3,     # SHIBOR报价
     'fund_nav': 5,         # 基金净值（延迟公布较多）
+    'bond_blk': 5,
+    'bond_blk_detail': 5,
 }
 
 # 默认回溯天数（用于普通增量更新，用户可通过 --lookback 覆盖）

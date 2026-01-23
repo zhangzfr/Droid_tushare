@@ -445,6 +445,16 @@ TABLE_SCHEMAS = {
             last_updated TIMESTAMP,
             PRIMARY KEY (ts_code, trade_date, name)
         )""",
+    'moneyflow_hsgt': """
+        CREATE TABLE moneyflow_hsgt (
+            trade_date VARCHAR PRIMARY KEY,  -- 交易日期
+            ggt_ss DOUBLE,                   -- 港股通(上海)净买入额(百万)
+            ggt_sz DOUBLE,                   -- 港股通(深圳)净买入额(百万)
+            hgt DOUBLE,                      -- 沪股通净买入额(百万)
+            sgt DOUBLE,                      -- 深股通净买入额(百万)
+            north_money DOUBLE,              -- 北向资金净买入(百万)
+            south_money DOUBLE               -- 南向资金净买入(百万)
+        )""",
 
     # === index 相关 ===
     'index_basic': """

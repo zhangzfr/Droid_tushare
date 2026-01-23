@@ -799,6 +799,27 @@ moneyflow:
       requires_paging: true
       date_column: trade_date
       date_type: trade
+    moneyflow_hsgt:
+      fields:
+      - trade_date
+      - ggt_ss
+      - ggt_sz
+      - hgt
+      - sgt
+      - north_money
+      - south_money
+      limit: 300
+      earliest_date: '20141117'
+      latest_date: null
+      unique_keys:
+      - trade_date
+      requires_date: true
+      requires_paging: false
+      date_column: trade_date
+      date_type: trade
+      date_param_mode: range
+      start_param: start_date
+      end_param: end_date
 
 index_member:
   db_path: ${DB_ROOT}/tushare_duck_index_weight.db

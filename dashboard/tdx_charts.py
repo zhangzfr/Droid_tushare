@@ -298,8 +298,12 @@ def plot_capital_vs_return_scatter(df_daily: pd.DataFrame, df_index: pd.DataFram
     merged = capital_sum.merge(latest_data, on='ts_code', how='inner')
     merged = merged.merge(df_index[['ts_code', 'name', 'idx_type']], on='ts_code', how='left')
     
-    # Filter out zeros
-    merged = merged[(merged['cumulative_bm_net'] != 0) & (merged['5day'].notna())]
+    # Filter out zeros and NaN values (especially float_mv for bubble size)
+    merged = merged[
+        (merged['cumulative_bm_net'] != 0) & 
+        (merged['5day'].notna()) & 
+        (merged['float_mv'].notna())
+    ]
     
     # Plot
     fig = px.scatter(

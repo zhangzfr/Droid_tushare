@@ -33,6 +33,9 @@ def render_tdx_index_page():
     tracking capital flows, sentiment shifts, and valuation opportunities.
     """)
     
+    # Load index metadata early (needed for sidebar selectors)
+    df_index = load_tdx_index()
+    
     # ============ Sidebar: Filters ============
     with st.sidebar:
         st.header("Filter Conditions")
@@ -59,6 +62,33 @@ def render_tdx_index_page():
         stats = get_idx_type_stats()
         if selected_idx_type != "all" and selected_idx_type in stats:
             st.caption(f"Current category contains **{stats[selected_idx_type]:,}** sectors")
+        
+        # 1b. Specific Index Selector (NEW)
+        st.subheader("Select Specific Indices")
+        
+        # Load index list for selected type
+        if selected_idx_type == "all":
+            available_indices = df_index[['ts_code', 'display_name']].drop_duplicates()
+        else:
+            available_indices = df_index[df_index['idx_type'] == selected_idx_type][['ts_code', 'display_name']].drop_duplicates()
+        
+        # Create searchable multi-select
+        if not available_indices.empty:
+            index_options = available_indices.set_index('ts_code')['display_name'].to_dict()
+            
+            selected_indices = st.multiselect(
+                "Choose indices to analyze (leave empty for all)",
+                options=list(index_options.keys()),
+                format_func=lambda x: index_options.get(x, x),
+                help="Select one or more specific indices. If empty, all indices in the selected category will be shown.",
+                max_selections=20  # Limit to prevent performance issues
+            )
+            
+            if selected_indices:
+                st.caption(f"**{len(selected_indices)}** indices selected")
+        else:
+            selected_indices = []
+            st.info("No indices available for current filter")
         
         # 2. Date Range
         st.subheader("Analysis Period")
@@ -100,7 +130,11 @@ def render_tdx_index_page():
         idx_type_filter = None if selected_idx_type == "all" else selected_idx_type
         
         df_daily = load_tdx_daily(limit_days=limit_days, idx_type_filter=idx_type_filter)
-        df_index = load_tdx_index()
+        
+        # Apply specific index selection filter
+        if selected_indices:
+            df_daily = df_daily[df_daily['ts_code'].isin(selected_indices)]
+            df_index = df_index[df_index['ts_code'].isin(selected_indices)]
         
         # Note: Advanced filters disabled temporarily due to data coverage issues
         # Will be re-enabled after validating data quality
@@ -118,6 +152,89 @@ def render_tdx_index_page():
     
     # Display data summary
     st.success(f"✅ Loaded **{len(df_daily):,}** quote records for **{df_daily['ts_code'].nunique()}** sectors")
+    
+    # ============ Latest Trading Day Overview ============
+    st.markdown("---")
+    st.subheader("📈 Latest Trading Day - Top Performers by Category")
+    
+    # Get latest trading date
+    latest_date = df_daily['trade_date'].max()
+    latest_date_dt = pd.to_datetime(latest_date, format='%Y%m%d')
+    st.caption(f"Trading Date: {latest_date_dt.strftime('%Y-%m-%d')}")
+    
+    # Create tabs for each idx_type
+    overview_tab1, overview_tab2, overview_tab3, overview_tab4 = st.tabs([
+        "🏭 Industry Sectors",
+        "💡 Theme/Concept Sectors", 
+        "🗺️ Regional Sectors",
+        "🎨 Style Sectors"
+    ])
+    
+    idx_type_mapping = {
+        0: "行业板块",
+        1: "概念板块",
+        2: "地区板块",
+        3: "风格板块"
+    }
+    
+    overview_tabs = [overview_tab1, overview_tab2, overview_tab3, overview_tab4]
+    
+    for tab_idx, tab in enumerate(overview_tabs):
+        with tab:
+            current_idx_type = idx_type_mapping[tab_idx]
+            
+            # Filter data for this idx_type
+            type_codes = df_index[df_index['idx_type'] == current_idx_type]['ts_code'].unique()
+            type_daily = df_daily[
+                (df_daily['ts_code'].isin(type_codes)) & 
+                (df_daily['trade_date'] == latest_date)
+            ]
+            
+            if type_daily.empty:
+                st.info(f"No data available for {current_idx_type}")
+                continue
+            
+            # Merge with index info for names (use unique subset to avoid duplicates)
+            unique_index_names = df_index[['ts_code', 'name']].drop_duplicates(subset=['ts_code'])
+            type_merged = type_daily.merge(
+                unique_index_names, 
+                on='ts_code', 
+                how='left'
+            )
+            
+            # Drop any remaining duplicates by ts_code
+            type_merged = type_merged.drop_duplicates(subset=['ts_code'])
+            
+            # Display Top Gainers and Losers side by side
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**🔥 Top 10 Gainers**")
+                top_gainers = type_merged.nlargest(10, 'pct_change')[['name', 'pct_change', 'close']]
+                top_gainers.columns = ['Sector Name', 'Return (%)', 'Close']
+                st.dataframe(
+                    top_gainers.style.format({
+                        'Return (%)': '{:.2f}',
+                        'Close': '{:.2f}'
+                    }).background_gradient(cmap='Greens', subset=['Return (%)']),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            
+            with col2:
+                st.markdown("**❄️ Top 10 Losers**")
+                top_losers = type_merged.nsmallest(10, 'pct_change')[['name', 'pct_change', 'close']]
+                top_losers.columns = ['Sector Name', 'Return (%)', 'Close']
+                st.dataframe(
+                    top_losers.style.format({
+                        'Return (%)': '{:.2f}',
+                        'Close': '{:.2f}'
+                    }).background_gradient(cmap='Reds_r', subset=['Return (%)']),
+                    use_container_width=True,
+                    hide_index=True
+                )
+    
+    st.markdown("---")
     
     # ============ Main Tabs ============
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
