@@ -27,6 +27,7 @@ quant-ml-qlib
 
 # 5. Exclude utils diretory
 utils/
+backup/
 quant-ml-qlib/
 extension/
 docs/Tushare/

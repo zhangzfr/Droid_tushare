@@ -168,7 +168,8 @@ def fetch_and_store_data(category, start_date=None, end_date=None, years=None, s
         logger.info(f"日期范围: {start_date} ~ {end_date}，共 {len(dates)} 个{'交易日' if date_type == 'trade' else '日期'}")
 
         # === 特殊处理：index_weight 从数据库动态提取 index_codes ===
-        if category == 'index_weight' and table_exists(conn, 'index_weight'):
+        # 注意：category 是 'index_member'（类别名），表名是 'index_weight'
+        if category == 'index_member' and table_exists(conn, 'index_weight'):
             db_index_codes = conn.execute(
                 "SELECT DISTINCT index_code FROM index_weight ORDER BY index_code"
             ).fetchall()
